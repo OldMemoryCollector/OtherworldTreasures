@@ -1,0 +1,16 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# 材质/图片资源（不上传）
+OtherworldTreasures/images/
+
+# C# 构建产物
+bin/
+obj/
+
+# 导出产物
+*.pck
+
+# IDE
+.vscode/

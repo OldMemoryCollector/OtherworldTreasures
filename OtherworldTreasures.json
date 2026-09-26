@@ -1,0 +1,14 @@
+{
+  "id": "OtherworldTreasures",
+  "name": "异次元乱入",
+  "author": "旧忆收藏家",
+  "description": "来自其他世界的奇妙宝物。",
+  "version": "0.1.0",
+  "min_game_version": "0.107.1",
+  "has_pck": true,
+  "has_dll": true,
+  "dependencies": [
+    { "id": "STS2-RitsuLib", "min_version": "0.2.27" }
+  ],
+  "affects_gameplay": true
+}

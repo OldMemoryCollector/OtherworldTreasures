@@ -1,0 +1,16 @@
+{
+    "OTHERWORLD_TREASURES_KEYWORD_EXCLUDE.title": "除外",
+    "OTHERWORLD_TREASURES_KEYWORD_EXCLUDE.description": "将卡牌移入除外池，无法通过常规手段取回。",
+
+    "OTHERWORLD_TREASURES_KEYWORD_CHOICE.title": "抉择",
+    "OTHERWORLD_TREASURES_KEYWORD_CHOICE.description": "打出时从多个效果中选择一个。",
+
+    "OTHERWORLD_TREASURES_KEYWORD_ANNIHILATE.title": "湮灭",
+    "OTHERWORLD_TREASURES_KEYWORD_ANNIHILATE.description": "回合结束时，若此牌仍在手牌中，则将其除外。",
+
+    "OTHERWORLD_TREASURES_KEYWORD_REWIND.title": "回溯",
+    "OTHERWORLD_TREASURES_KEYWORD_REWIND.description": "回到上一回合开始时的状态：恢复生命、格挡与状态层数，敌人的意图也会一并还原。对带回合计数的遗物使用时，把计数退回上一回合。",
+
+    "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.title": "加速",
+    "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.description": "快进到下一回合的状态：对自己使用时结算身上的持续状态，对敌人使用时推进其意图。对带回合计数的遗物使用时，把计数推进一回合。"
+}

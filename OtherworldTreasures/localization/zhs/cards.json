@@ -1,0 +1,31 @@
+{
+    "OTHERWORLD_TREASURES_CARD_SCROLL_OF_WONDER.title": "惊奇卡牌",
+    "OTHERWORLD_TREASURES_CARD_SCROLL_OF_WONDER.description": "抽到时打出。抽一张牌。打出一张随机卡牌并将其除外。",
+    "OTHERWORLD_TREASURES_CARD_SCROLL_OF_WONDER.tip.title": "随机范围",
+    "OTHERWORLD_TREASURES_CARD_SCROLL_OF_WONDER.tip.description": "不会生成诅咒、状态、任务、事件、先古与衍生卡牌。",
+
+    "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.title": "缩小灯",
+    "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.description": "将一名敌人[gold]缩小[/gold]。已被缩小的敌人无法再次缩小。",
+
+    "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_CARD.title": "时光布",
+    "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_CARD.description": "加速时间或回溯时间。",
+
+    "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_REWIND.title": "回溯",
+    "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_REWIND.description": "回到上一回合的状态。",
+    "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_ACCELERATE.title": "加速",
+    "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_ACCELERATE.description": "快进到下一回合的状态。",
+
+    "OTHERWORLD_TREASURES_CARD_SUNFLOWER_CARD.title": "向日葵",
+    "OTHERWORLD_TREASURES_CARD_SUNFLOWER_CARD.description": "召唤【向日葵】为你作战。血量 {Hp}，每回合开始提供 {Energy} 点能量。",
+    "OTHERWORLD_TREASURES_CARD_PEA_SHOOTER_CARD.title": "豌豆射手",
+    "OTHERWORLD_TREASURES_CARD_PEA_SHOOTER_CARD.description": "召唤【豌豆射手】为你作战。血量 {Hp}，每回合开始时对前方的第一位敌人造成 {Damage} 点伤害。",
+    "OTHERWORLD_TREASURES_CARD_WALL_NUT_CARD.title": "坚果墙",
+    "OTHERWORLD_TREASURES_CARD_WALL_NUT_CARD.description": "召唤【坚果墙】为你作战。血量 {Hp}，每回合开始获得 {Block} 点格挡。",
+
+    "OTHERWORLD_TREASURES_CARD_PLANT_GROWTH_CARD.title": "施肥",
+    "OTHERWORLD_TREASURES_CARD_PLANT_GROWTH_CARD.description": "[gold]植培[/gold]{Hp:diff()}。",
+    "OTHERWORLD_TREASURES_CARD_PLANT_GROWTH_EXCLUDE_CARD.title": "施肥",
+    "OTHERWORLD_TREASURES_CARD_PLANT_GROWTH_EXCLUDE_CARD.description": "[gold]植培[/gold]{Hp:diff()}。",
+    "OTHERWORLD_TREASURES_CARD_PLANT_GROWTH_ANNIHILATE_CARD.title": "施肥",
+    "OTHERWORLD_TREASURES_CARD_PLANT_GROWTH_ANNIHILATE_CARD.description": "[gold]植培[/gold]{Hp:diff()}。"
+}

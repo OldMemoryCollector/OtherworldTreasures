@@ -1,0 +1,8 @@
+{
+    "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.title": "除外池",
+    "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.description": "通过除外效果移出战斗的卡牌，无法通过常规手段取回。",
+    "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.empty": "除外池是空的。",
+
+    "OTHERWORLD_TREASURES_PLANT_GROWTH.title": "植培{Hp}",
+    "OTHERWORLD_TREASURES_PLANT_GROWTH.description": "为场上的植物提升[blue]{Hp}[/blue]点最大生命值，并回复等量生命。"
+}
