@@ -5,8 +5,11 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
+using MegaCrit.Sts2.Core.Rewards;
+using OtherworldTreasures.Scripts.Rewards;
 using STS2RitsuLib;
 using STS2RitsuLib.CardPiles;
+using STS2RitsuLib.Combat.Rewards;
 using STS2RitsuLib.Interop;
 using HarmonyLib;
 using Logger = MegaCrit.Sts2.Core.Logging.Logger;
@@ -22,30 +25,25 @@ public class Entry
     // 自定义牌堆：除外池（类似消耗堆，但卡牌无法通过常规手段取回）
     public static PileType ExclusionPile;
 
+    // 自定义奖励：生命水晶（战后奖励小概率出现，领取后生命上限 +10）
+    public static RewardType LifeCrystalRewardType;
+
     public static void Init()
     {
         var assembly = Assembly.GetExecutingAssembly();
         RitsuLibFramework.EnsureGodotScriptsRegistered(assembly, Logger);
         ModTypeDiscoveryHub.RegisterModAssembly(ModId, assembly);
 
-        // Harmony patches (ShouldGlowGold Postfix)
+        // 注册自定义奖励：生命水晶。无动态状态，读档时工厂直接重建新实例
+        LifeCrystalRewardType = ModRewardRegistry.For(ModId)
+            .RegisterOwned(
+                "life_crystal",
+                (save, player, json) => new LifeCrystalReward(player))
+            .RewardType;
+
+        // Harmony patches
         var harmony = new Harmony("sts2.otherworldtreasures.patches");
         harmony.PatchAll();
-
-        // 临时诊断：右键遗物链路（原素瓶战斗中无法使用，排查后移除）
-        var relicPatchType = AccessTools.TypeByName(
-            "STS2RitsuLib.Interactions.RightClick.Patches.ModRightClickRelicPatch");
-        var tryHandleMethod = AccessTools.Method(relicPatchType, "TryHandle");
-        harmony.Patch(tryHandleMethod, prefix: new HarmonyMethod(
-            typeof(DebugRightClickPatches), nameof(DebugRightClickPatches.RelicHolderTryHandlePrefix)));
-        var dispatchMethod = AccessTools.Method(
-            typeof(STS2RitsuLib.Interactions.RightClick.ModRightClickRegistry), "TryDispatch");
-        harmony.Patch(dispatchMethod, postfix: new HarmonyMethod(
-            typeof(DebugRightClickPatches), nameof(DebugRightClickPatches.DispatchPostfix)));
-        var requestMethod = AccessTools.Method(
-            typeof(STS2RitsuLib.Interactions.RightClick.ModRightClickRegistry), "TryRequestSyncedModelAction");
-        harmony.Patch(requestMethod, postfix: new HarmonyMethod(
-            typeof(DebugRightClickPatches), nameof(DebugRightClickPatches.RequestSyncedPostfix)));
 
         // 第三方模组异常防护：给「皮皮倒带: Rewind」的 RewindButton.OnTurnStarted 挂 Finalizer 吞异常。
         // 它在战斗 UI 被重建后会持有已释放节点并抛 ObjectDisposedException，而该异常抛在回合循环内部，

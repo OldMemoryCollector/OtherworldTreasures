@@ -18,9 +18,8 @@ using STS2RitsuLib.Scaffolding.Content;
 namespace OtherworldTreasures.Scripts.Cards;
 
 // 时光布（衍生卡）：抉择 —— 加速时间或回溯时间。
-// - 抉择部分已实现（复用原版"选择一张牌"界面）
-// - 回溯/加速的具体效果与目标选择待实现
-// 目标：先选加速/回溯，再选目标（自己 / 敌人 / 遗物）。
+// 打出后两步交互：先用原版"选择一张牌"界面选择加速/回溯，
+// 再走原版目标选择系统点选目标（自己 / 敌人 / 顶部遗物图标）。
 [RegisterCard(typeof(TokenCardPool))]
 public class TimeClothCard : ModCardTemplate, IDerivedCard
 {
@@ -28,7 +27,7 @@ public class TimeClothCard : ModCardTemplate, IDerivedCard
     private const CardType type = CardType.Skill;
     // 衍生牌：不是先古牌，用普通技能牌样式
     private const CardRarity rarity = CardRarity.Token;
-    // TODO(框架阶段)：目标选择需要"先选模式、再选目标"，暂时用 Self 占位
+    // 卡本身不走出牌目标系统：目标在 OnPlay 里用自定义 StartTargeting 单独选择
     private const TargetType targetType = TargetType.Self;
     private const bool shouldShowInCardLibrary = true;
 

@@ -1,16 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Entities.RestSite;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.RelicPools;
 using MegaCrit.Sts2.Core.Rooms;
+using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib;
 using STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels;
 using STS2RitsuLib.Interactions.RightClick;
@@ -35,6 +40,10 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
     private static int s_currentUses = 2;
     private static int s_maxUses = 2;
 
+    // 角标字号：RitsuLib 的角标字号继承自原版数量标签（很大），必须用 RichText 指定字号，
+    // 与库拉的骰子保持一致
+    private const int BadgeFontSize = 16;
+
     public int CurrentUses => s_currentUses;
     public int MaxUses => s_maxUses;
 
@@ -54,6 +63,53 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
     public event Action RelicExtraIconAmountLabelsInvalidated;
 
     private bool _potionSlotAdjusted;
+
+    // 药水栏扣减的"延后"标记：药水栏满时原版减槽会越界（见 TryLosePotionSlot 注释），
+    // 所以先记账，等玩家用掉/丢掉一个药水腾出空位后再扣。
+    // static 供战斗中的克隆实例共享，SavedProperty 让它跨存档/重启保留（同孢子囊的做法）。
+    private static bool s_pendingSlotLoss;
+    private bool _pendingSlotLoss;
+
+    [SavedProperty]
+    public bool PendingSlotLoss
+    {
+        get => _pendingSlotLoss;
+        set
+        {
+            AssertMutable();
+            _pendingSlotLoss = value;
+        }
+    }
+
+    private AshenFlask? LiveRelic => Owner?.Relics?.OfType<AshenFlask>().FirstOrDefault();
+
+    // 存档权威：读档后用存档值校正 static（进程重启后 static 会回到默认值）
+    private void SyncFromSave()
+    {
+        var live = LiveRelic ?? this;
+        if (live._pendingSlotLoss != s_pendingSlotLoss)
+        {
+            s_pendingSlotLoss = live._pendingSlotLoss;
+            Entry.Logger.Info($"[AshenFlask] 从存档同步待扣药水栏：{s_pendingSlotLoss}");
+        }
+    }
+
+    // 把 static 写回玩家手里那件（可变）遗物，随存档保存
+    private void Persist()
+    {
+        var live = LiveRelic;
+        if (live != null && !ReferenceEquals(live, this))
+        {
+            if (live.IsMutable)
+            {
+                live.PendingSlotLoss = s_pendingSlotLoss;
+            }
+        }
+        else if (IsMutable)
+        {
+            PendingSlotLoss = s_pendingSlotLoss;
+        }
+    }
 
     protected override string IconBaseName => "ashen_flask";
 
@@ -87,6 +143,8 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
         // 新档获得时若不重置会继承旧档的注火次数/上限，导致"新开档就是满强化瓶"）
         s_currentUses = 2;
         s_maxUses = 2;
+        s_pendingSlotLoss = false;
+        PendingSlotLoss = false;
         RefreshBadge();
         Entry.Logger.Info($"[AshenFlask] Reset static state for new run: uses={s_currentUses}/{s_maxUses}");
 
@@ -95,15 +153,72 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
         Entry.Logger.Info($"[AshenFlask] EnsureModelIdentity => {identity.Value}");
         if (Owner != null && !_potionSlotAdjusted)
         {
-            await PlayerCmd.LoseMaxPotionCount(1, Owner);
-            _potionSlotAdjusted = true;
-            Entry.Logger.Info($"[AshenFlask] -1 potion slot. potionSlots after={Owner.MaxPotionCount}");
+            await TryLosePotionSlot();
         }
+    }
+
+    // -1 药水栏。
+    // 原版 SetMaxPotionCountInternal 在"药水栏已满"时有个越界 bug：它用
+    // _potionSlots.IndexOf(null) 找空位，全满时返回 -1，却仍然执行 _potionSlots[-1] = ...，
+    // 直接抛异常（表现为获得原素瓶时卡住）。所以这里先看有没有空槽：没有就先记账。
+    private async Task TryLosePotionSlot()
+    {
+        var player = Owner;
+        if (player == null || _potionSlotAdjusted)
+        {
+            return;
+        }
+        if (player.Potions.Count() >= player.MaxPotionCount)
+        {
+            s_pendingSlotLoss = true;
+            Persist();
+            Entry.Logger.Info("[AshenFlask] 药水栏已满，延后扣除药水栏（等玩家用掉一个药水）");
+            return;
+        }
+        await PlayerCmd.LoseMaxPotionCount(1, player);
+        _potionSlotAdjusted = true;
+        s_pendingSlotLoss = false;
+        Persist();
+        Entry.Logger.Info($"[AshenFlask] -1 potion slot. potionSlots after={player.MaxPotionCount}");
+    }
+
+    // 药水栏腾出空位后补扣（用掉/丢掉药水、以及每回合开始时都会走一遍）
+    private async Task FlushPendingSlotLoss()
+    {
+        SyncFromSave();
+        if (!s_pendingSlotLoss || _potionSlotAdjusted)
+        {
+            return;
+        }
+        await TryLosePotionSlot();
+    }
+
+    public override async Task AfterPotionUsed(PotionModel potion, Creature? target)
+    {
+        await base.AfterPotionUsed(potion, target);
+        await FlushPendingSlotLoss();
+    }
+
+    public override async Task AfterPotionDiscarded(PotionModel potion)
+    {
+        await base.AfterPotionDiscarded(potion);
+        await FlushPendingSlotLoss();
+    }
+
+    // 兜底：上面两个钩子对遗物的触发条件有限（原版说明里"战斗外才给遗物"），
+    // 每回合开始再检查一次，确保空位出现后一定能补扣
+    public override async Task AfterPlayerTurnStart(PlayerChoiceContext choiceContext, Player player)
+    {
+        await FlushPendingSlotLoss();
+        await base.AfterPlayerTurnStart(choiceContext, player);
     }
 
     // 遗物移除：+1 药水栏
     public override async Task AfterRemoved()
     {
+        // 还欠着的扣减也一并取消
+        s_pendingSlotLoss = false;
+        Persist();
         if (Owner != null && _potionSlotAdjusted)
         {
             await PlayerCmd.GainMaxPotionCount(1, Owner);
@@ -202,15 +317,16 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
     // 遗物角标：显示 CurrentUses / MaxUses
     public IReadOnlyList<ExtraIconAmountLabelSpec> GetRelicExtraIconAmountLabelSpecs()
     {
+        // 局外（图鉴/收藏）不显示角标，避免把上一局的次数带进图鉴
+        if (!(RunManager.Instance?.IsInProgress ?? false))
+        {
+            return new List<ExtraIconAmountLabelSpec>();
+        }
         return new List<ExtraIconAmountLabelSpec>
         {
-            new ExtraIconAmountLabelSpec(
-                Text: $"{s_currentUses}/{s_maxUses}",
-                Corner: ExtraIconAmountLabelCorner.BottomRight,
-                CustomRect: new Rect2(),
-                FontColor: Colors.White,
-                FontOutlineColor: Colors.Black
-            )
+            ExtraIconAmountLabelSpec.RichText(
+                ExtraIconAmountLabelCorner.BottomRight,
+                $"[font_size={BadgeFontSize}]{s_currentUses}/{s_maxUses}[/font_size]")
         };
     }
 }

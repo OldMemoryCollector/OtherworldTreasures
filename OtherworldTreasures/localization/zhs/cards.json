@@ -7,6 +7,9 @@
     "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.title": "缩小灯",
     "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.description": "将一名敌人[gold]缩小[/gold]。已被缩小的敌人无法再次缩小。",
 
+    "OTHERWORLD_TREASURES_CARD_AIR_CANNON_BASH_CARD.title": "碰",
+    "OTHERWORLD_TREASURES_CARD_AIR_CANNON_BASH_CARD.description": "造成 {Damage} 点伤害。抽 1 张牌。",
+
     "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_CARD.title": "时光布",
     "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_CARD.description": "加速时间或回溯时间。",
 

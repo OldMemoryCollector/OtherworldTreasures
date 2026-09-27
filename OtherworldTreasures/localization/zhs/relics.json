@@ -15,7 +15,7 @@
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_3.title": "三点强化",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_3.desc": "本回合伤害/格挡 ×3 + 获得 3 点能量{Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_4.title": "四点结界",
-    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_4.desc": "本场战斗中获得 4 层【无实体】{Status}",
+    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_4.desc": "本场战斗中获得 8 层【缓冲】、8 层【无实体】和 8 层【人工制品】{Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.title": "五点爆炸",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.desc": "将 300 × 联机人数 点伤害平均分配给所有敌人{Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_6.title": "六点实现愿望",
@@ -26,12 +26,32 @@
     "OTHERWORLD_TREASURES_RELIC_ASHEN_FLASK.combatDescription": "右键点击遗物恢复 15% 生命值。",
     "OTHERWORLD_TREASURES_RELIC_ASHEN_FLASK.flavor": "自古以来，不死人总是在营火间穿梭，而原素瓶也一直随之旅行。",
 
+    "OTHERWORLD_TREASURES_RELIC_MYTHIC_CHARM.title": "神话护身符",
+    "OTHERWORLD_TREASURES_RELIC_MYTHIC_CHARM.description": "战斗开始时获得 1 层【缓冲】和 1 层【人工制品】。每回合开始时恢复 1 点生命值，当前生命值低于上限一半时改为恢复 2 点。",
+    "OTHERWORLD_TREASURES_RELIC_MYTHIC_CHARM.flavor": "来自泰拉瑞亚的配饰，在塔里它带给你自然恢复的力量。",
+
+    "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.title": "孢子囊",
+    "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.description": "每次受到攻击时，给予攻击者中毒，初始为 1 层。每赢得两场战斗，层数增加 1 层；同一场战斗内，从第二个回合起，施加的中毒每回合再 +1。",
+    "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.flavor": "来自泰拉瑞亚的配饰，被激怒时会喷出剧毒的孢子云。",
+
+    "OTHERWORLD_TREASURES_RELIC_CROSS_NECKLACE.title": "十字章护身符",
+    "OTHERWORLD_TREASURES_RELIC_CROSS_NECKLACE.description": "抽到状态牌或诅咒牌时，将其消耗并抽 1 张牌。回合结束时，消耗手牌中的状态牌与诅咒牌，获得 2 点格挡。",
+    "OTHERWORLD_TREASURES_RELIC_CROSS_NECKLACE.flavor": "来自泰拉瑞亚的配饰，据说能让佩戴者在受创的瞬间获得片刻庇护。",
+
     "OTHERWORLD_TREASURES_RELIC_SHRINK_RAY.title": "缩小灯",
     "OTHERWORLD_TREASURES_RELIC_SHRINK_RAY.description": "右键点击获得一张【缩小灯】卡牌，可无限获得。",
     "OTHERWORLD_TREASURES_RELIC_SHRINK_RAY.flavor": "哆啦A梦的道具之一。被它的光照到的东西，都会变小。",
 
+    "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.title": "空气炮",
+    "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.description": "战斗开始时，将一张 1 费【碰】卡牌加入手牌。",
+    "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.flavor": "哆啦A梦的道具之一。套在手上，喊一声就能发射压缩空气。",
+
+    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.title": "桃太郎丸子",
+    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.description": "拥有 3 颗丸子。右键点击后选择一名敌人收服：只能收服当前生命不超过 10 点、最大生命不超过 80 的敌人，首领无法收服。收服后回满血、生命上限降低 20%，它会保留原本的招式与意图为你作战，无法被治疗，死亡后永久消失。",
+    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.flavor": "哆啦A梦的道具之一。喂给凶暴的怪兽吃下去，它就会变得像小狗一样温顺。",
+
     "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.title": "哆啦A梦的四次元口袋",
-    "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.description": "接下来 5 次从精英战斗获得的遗物，改为来自哆啦A梦的道具。",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.description": "获得时立即得到一件哆啦A梦的道具。接下来 3 次从精英战斗获得的遗物，改为来自哆啦A梦的道具。",
     "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.flavor": "帮帮我吧！哆啦A梦~~~",
 
     "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.title": "任意门",

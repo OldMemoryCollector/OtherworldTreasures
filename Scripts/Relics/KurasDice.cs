@@ -161,16 +161,6 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
             
             Entry.Logger.Info($"[KurasDice] Enter combat! Rolled {CurrentRoll}, FaceUsed={GlobalUsedFaces.Contains(CurrentRoll)}");
             RefreshBadge();
-
-            // 调试：打印消耗堆按钮的真实坐标
-            var exhaustBtn = MegaCrit.Sts2.Core.Nodes.Rooms.NCombatRoom.Instance?.Ui?.ExhaustPile;
-            if (exhaustBtn != null)
-            {
-                var gpos = exhaustBtn.GlobalPosition;
-                var size = exhaustBtn.Size;
-                var center = gpos + size * 0.5f;
-                Entry.Logger.Info($"[DEBUG] ExhaustPile Center=({center.X:F0},{center.Y:F0}) Size=({size.X:F0},{size.Y:F0})");
-            }
         }
         await base.AfterRoomEntered(room);
     }
@@ -338,13 +328,15 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         Entry.Logger.Info("[KurasDice] +3 Energy gained");
     }
 
-    // 四点结界：4 层无实体
+    // 四点结界：8 层缓冲 + 8 层无实体 + 8 层人工制品
     private async Task AbilityBarrier(ModRightClickExecutionContext ctx)
     {
-        Entry.Logger.Info("[KurasDice] AbilityBarrier: 4 Intangible");
+        Entry.Logger.Info("[KurasDice] AbilityBarrier: 8 Buffer + 8 Intangible + 8 Artifact");
         NPowerUpVfx.CreateGhostly(Owner.Creature);
         SfxCmd.Play(FmodSfx.buff);
-        await PowerCmd.Apply<IntangiblePower>(ctx.PlayerChoiceContext!, Owner.Creature, 4m, Owner.Creature, null!, false);
+        await PowerCmd.Apply<BufferPower>(ctx.PlayerChoiceContext!, Owner.Creature, 8m, Owner.Creature, null!, false);
+        await PowerCmd.Apply<IntangiblePower>(ctx.PlayerChoiceContext!, Owner.Creature, 8m, Owner.Creature, null!, false);
+        await PowerCmd.Apply<ArtifactPower>(ctx.PlayerChoiceContext!, Owner.Creature, 8m, Owner.Creature, null!, false);
     }
 
     // 五点爆炸：平均伤害所有敌人

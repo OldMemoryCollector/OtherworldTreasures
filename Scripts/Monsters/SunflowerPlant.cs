@@ -15,15 +15,15 @@ public class SunflowerPlant : PlantSummonBase
     // 每回合提供的能量
     public const int EnergyPerTurn = 1;
 
-    // 生命值（偏低）：遗物/卡牌文本里的数字都读这个常量
-    public const int MaxHpValue = 15;
-
     // 身体贴图 / 阳光贴图；文件不存在时跳过对应视觉，功能不受影响
     private const string BodyPath = "res://OtherworldTreasures/images/monsters/sunflower.png";
     private const string SunPath = "res://OtherworldTreasures/images/fx/sun.png";
 
     // 阳光在画面上的目标边长（像素）
     private const float SunSizePx = 200f;
+
+    // 生命值（偏低）：遗物/卡牌文本里的数字都读这个常量
+    public const int MaxHpValue = 15;
 
     // 生命值（偏低）
     public override int MinInitialHp => MaxHpValue;

@@ -13,7 +13,7 @@ using OtherworldTreasures.Scripts.Powers;
 
 namespace OtherworldTreasures.Scripts.Relics;
 
-// 竹蜻蜓：战斗开始时起飞（被攻击时受到伤害 −50%），被攻击 3 次后失效；落地 10 回合后再次起飞。
+// 竹蜻蜓：战斗开始时起飞（被攻击时受到伤害 −50%），被攻击 5 次后失效；落地 10 回合后再次起飞。
 // 起飞能力由 BambooCopterFlightPower 承载，本遗物只负责"起飞 → 落地 → 再次起飞"的循环。
 [RegisterRelic(typeof(SharedRelicPool))]
 public class BambooCopter : ModRelicTemplate, IDoraemonItem
@@ -43,7 +43,7 @@ public class BambooCopter : ModRelicTemplate, IDoraemonItem
         BigIconPath: "res://OtherworldTreasures/images/relics/Bamboo_Copter.jpg"
     );
 
-    // 悬浮提示：预览「起飞」能力（减伤 50% + 3 次承受上限）
+    // 悬浮提示：预览「起飞」能力（减伤 50% + 5 次承受上限）
     protected override IEnumerable<IHoverTip> AdditionalHoverTips => base.AdditionalHoverTips
         .Append(HoverTipFactory.FromPower<BambooCopterFlightPower>((int)FlightCharges));
 
@@ -65,7 +65,7 @@ public class BambooCopter : ModRelicTemplate, IDoraemonItem
         await base.AfterRoomEntered(room);
     }
 
-    // 玩家回合开始：若已落地则累计等待回合，满 2 回合后再次起飞
+    // 玩家回合开始：若已落地则累计等待回合，满 10 回合后再次起飞
     public override async Task AfterPlayerTurnStart(PlayerChoiceContext choiceContext, Player player)
     {
         if (player == Owner && player.Creature != null)
@@ -104,6 +104,6 @@ public class BambooCopter : ModRelicTemplate, IDoraemonItem
             return;
         }
         await PowerCmd.Apply<BambooCopterFlightPower>(choiceContext, creature, FlightCharges, creature, null);
-        Entry.Logger.Info("[BambooCopter] Take off! (damage taken -30%)");
+        Entry.Logger.Info("[BambooCopter] Take off! (damage taken -50%)");
     }
 }

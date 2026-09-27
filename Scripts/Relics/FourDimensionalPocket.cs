@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -13,12 +14,13 @@ using STS2RitsuLib.Scaffolding.Content;
 
 namespace OtherworldTreasures.Scripts.Relics;
 
-// 四次元口袋：接下来 5 次从精英战斗获得的遗物，改为来自「哆啦A梦道具」池。
+// 四次元口袋：获得时立即得到一件哆啦A梦道具；接下来 3 次从精英战斗获得的遗物，改为来自「哆啦A梦道具」池。
 // 道具池 = 所有实现了 IDoraemonItem 的遗物（可扩展：新增道具自动入池）。
+// 道具总数多于获得次数，随机抽取意味着总有道具无法获得。
 [RegisterRelic(typeof(SharedRelicPool))]
 public class FourDimensionalPocket : ModRelicTemplate
 {
-    private const int initialCharges = 5;
+    private const int initialCharges = 3;
 
     // 跨战斗实例持久化：遗物在战斗中会被克隆，普通实例字段会丢失
     private static int s_remaining = initialCharges;
@@ -40,23 +42,38 @@ public class FourDimensionalPocket : ModRelicTemplate
 
     public override int DisplayAmount => s_remaining;
 
-    // 悬浮提示：预览道具池中的 5 件哆啦A梦道具（只取各自的遗物说明，不嵌套子提示）
+    // 悬浮提示：预览道具池中的哆啦A梦道具（只取各自的遗物说明，不嵌套子提示）
     protected override IEnumerable<IHoverTip> AdditionalHoverTips => base.AdditionalHoverTips.Concat(new IHoverTip[]
     {
         ModelDb.Relic<AnywhereDoor>().HoverTip,
         ModelDb.Relic<ShrinkRay>().HoverTip,
         ModelDb.Relic<BambooCopter>().HoverTip,
         ModelDb.Relic<WhatIfPhoneBooth>().HoverTip,
-        ModelDb.Relic<TimeCloth>().HoverTip
+        ModelDb.Relic<TimeCloth>().HoverTip,
+        ModelDb.Relic<AirCannon>().HoverTip,
+        ModelDb.Relic<MomotaroDumplings>().HoverTip
     });
 
     // 每局新 run 重新获得遗物时重置 static 状态（避免继承旧档的剩余次数）
+    // 并立即随机获得一件哆啦A梦道具（原版 LargeCapsule 同款做法）
     public override async Task AfterObtained()
     {
         s_remaining = initialCharges;
         Status = RelicStatus.Normal;
         InvokeDisplayAmountChanged();
         Entry.Logger.Info($"[FourDimensionalPocket] AfterObtained: charges reset to {s_remaining}");
+
+        var item = PickRandomItem(Owner);
+        if (item != null)
+        {
+            Entry.Logger.Info($"[FourDimensionalPocket] Starting item: {item.GetType().Name}");
+            await RelicCmd.Obtain(item, Owner);
+        }
+        else
+        {
+            Entry.Logger.Info("[FourDimensionalPocket] No available Doraemon item on obtain");
+        }
+
         await base.AfterObtained();
     }
 

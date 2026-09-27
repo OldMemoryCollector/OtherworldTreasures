@@ -47,9 +47,6 @@ public abstract class PlantSummonBase : ModMonsterTemplate
     // 所以这里自己摆：豌豆射手/向日葵稍微后移一点 + 下移半个身位（半身位≈110px），让骨手露出来。
     public virtual Vector2 LayoutOffset => new Vector2(100f, 120f);
 
-    // 这一击由谁接下（用来决定溢出怎么处理，见 ModifyHpLostAfterOsty）
-    private Creature? _absorber;
-
     // 受击特效落点重定向：原版攻击的 HitVfx 打在"攻击目标"（玩家）身上，
     // 但这一击实际由我们的植物承受 → 把受击特效改到植物身上，玩家不再有受击表现。
     // 只处理"打向玩家"的、看起来是受击类的特效；骨手保留原版表现。
@@ -66,8 +63,9 @@ public abstract class PlantSummonBase : ModMonsterTemplate
         {
             return;
         }
-        var absorber = PickAbsorber(target.Player);
-        if (absorber?.Monster is PlantSummonBase)
+        var absorber = PetAbsorb.PickAbsorber(target.Player);
+        // 骨手保留原版表现；植物与驯服的怪物都该在自己身上显示受击
+        if (absorber != null && absorber.Monster is not Osty)
         {
             target = absorber;
         }
@@ -227,166 +225,21 @@ public abstract class PlantSummonBase : ModMonsterTemplate
     // 形象在画面上的高度（像素），供特效定位用
     protected float BodyHeightPx => (PlantFx.LoadTexture(GetBodyTexturePath())?.GetHeight() ?? 0) * BodyScale;
 
-    // 召唤物之间的承伤优先级（数字越小越先挨打）：
-    // 坚果墙 → 骨手（原版 Osty）→ 豌豆射手 → 向日葵 → 玩家自己
-    private static int AbsorbPriority(Creature pet) => pet.Monster switch
-    {
-        WallNutPlant => 0,
-        Osty => 1,
-        PeaShooterPlant => 2,
-        SunflowerPlant => 3,
-        _ => int.MaxValue, // 其它随从不参与我们的优先级链
-    };
+    // === 承伤链 ===
+    // 顺序（坚果墙 > 骨手 > 驯服的怪物 > 豌豆射手 > 向日葵 > 玩家）统一由 PetAbsorb 实现：
+    // 玩家可能同时拥有我们的植物和【桃太郎丸子】驯服的怪物，两边都调用同一份逻辑才能保证顺序一致。
 
-    // 替主人承受"被强化的攻击"伤害。
-    // 多个随从（我们的植物 + 原版骨手）同时在场时，按上面的优先级统一挑一个承伤者，
-    // 这样无论原版 DieForYouPower 在本 hook 之前还是之后跑，结果都一致：
-    // 坚果墙活着就由坚果墙吃，只有它死了下一击才会轮到骨手，然后豌豆射手/向日葵，最后才轮到玩家。
     public override Creature ModifyUnblockedDamageTarget(Creature target, decimal amount, ValueProp props, Creature? dealer)
-    {
-        var owner = Creature.PetOwner;
-        if (owner == null)
-        {
-            return target;
-        }
-        if (!props.IsPoweredAttack())
-        {
-            return target;
-        }
-        // 只介入"打向主人 或 主人的随从"的伤害，避免影响其它目标（例如玩家打敌人）
-        if (target != owner.Creature && target.PetOwner != owner)
-        {
-            return target;
-        }
+        => PetAbsorb.ModifyTarget(Creature.PetOwner, target, props);
 
-        var absorber = PickAbsorber(owner);
-        if (absorber == null)
-        {
-            return target; // 没有可承伤的召唤物 → 玩家自己吃
-        }
-
-        // 标记"这一击由谁接下"：后面要靠它决定溢出怎么处理
-        _absorber = absorber;
-        return absorber;
-    }
-
-    // 只在我们自己的植物里挑一个活着的（供"骨手吃不下的溢出"继续往下传）
-    private static Creature? PickPlantAbsorber(Player owner)
-    {
-        var pets = owner.PlayerCombatState?.Pets;
-        if (pets == null)
-        {
-            return null;
-        }
-        Creature? best = null;
-        var bestRank = int.MaxValue;
-        foreach (var pet in pets)
-        {
-            if (pet == null || !pet.IsAlive || pet.Monster is not PlantSummonBase)
-            {
-                continue;
-            }
-            var rank = AbsorbPriority(pet);
-            if (rank < bestRank)
-            {
-                bestRank = rank;
-                best = pet;
-            }
-        }
-        return best;
-    }
-
-    // 按优先级挑一个活着的召唤物（含原版骨手）
-    private static Creature? PickAbsorber(Player owner)
-    {
-        var pets = owner.PlayerCombatState?.Pets;
-        if (pets == null)
-        {
-            return null;
-        }
-        Creature? best = null;
-        var bestRank = int.MaxValue;
-        foreach (var pet in pets)
-        {
-            if (pet == null || !pet.IsAlive)
-            {
-                continue;
-            }
-            var rank = AbsorbPriority(pet);
-            if (rank < bestRank)
-            {
-                bestRank = rank;
-                best = pet;
-            }
-        }
-        return best;
-    }
-
-    // 单次伤害减免钩子：默认原样承受，坚果墙用它限制单次最多吃多少
-    protected virtual decimal GetAbsorbedDamage(decimal amount) => amount;
-
-    // 新一轮伤害开始时清掉"这一击由谁接下"的标记
-    // （原版在结算前会对原目标调用 BeforeOsty，此时重置最安全）
     public override decimal ModifyHpLostBeforeOsty(Creature target, decimal amount, ValueProp props, Creature? dealer, CardModel? cardSource)
     {
-        var owner = Creature.PetOwner;
-        if (owner != null && target == owner.Creature)
-        {
-            _absorber = null;
-        }
+        PetAbsorb.ResetBeforeDamage(Creature.PetOwner, target);
         return amount;
     }
 
-    // 原版在 AfterOsty 阶段会调用两次：
-    //   1) target = 转移后的目标（我们植物 / 骨手）→ 它该掉的血
-    //   2) target = 原目标（玩家），amount = 溢出的那部分（OverkillDamage）
-    // 溢出处理规则（用户定义）：
-    //   - 由我们自己的植物接下 → 溢出吞掉，绝不落到玩家身上
-    //   - 由骨手接下       → 溢出在**同一击内**继续传给我们自己的植物；没有活着的植物才回给玩家
-    // 注意：这两种情况在参数上无法区分（target 都是玩家），所以必须靠 _absorber 标记；
-    // 没有标记时绝不能返回 0，否则玩家会对所有攻击免疫。
     public override decimal ModifyHpLostAfterOsty(Creature target, decimal amount, ValueProp props, Creature? dealer, CardModel? cardSource)
-    {
-        var owner = Creature.PetOwner;
-        if (owner == null)
-        {
-            return amount;
-        }
-        if (target == Creature)
-        {
-            // 植物自己攒的格挡必须在这里手动消耗：原版伤害流程里，对"打向随从"的伤害取的是**主人**的格挡
-            // （CreatureCmd: creature = originalTarget.PetOwner?.Creature ?? originalTarget），
-            // 随从自己的格挡全程用不上 —— 不补这一步，坚果墙加格挡就会"看起来没效果"。
-            var blocked = Creature.DamageBlockInternal(amount, props);
-            return Math.Max(GetAbsorbedDamage(amount) - blocked, 0m);
-        }
-        if (target != owner.Creature || _absorber == null)
-        {
-            return amount;
-        }
-
-        var absorber = _absorber;
-        _absorber = null;
-
-        // 我们自己接下的 → 溢出吞掉
-        if (absorber.Monster is PlantSummonBase)
-        {
-            return 0m;
-        }
-
-        // 骨手等原版随从接下的 → 溢出同一击内继续传给我们的植物
-        var next = PickPlantAbsorber(owner);
-        if (next == null || amount <= 0m)
-        {
-            return amount; // 没有植物可接 → 按原版回给玩家
-        }
-        // Unpowered：这是同一份伤害的延续，不要再吃一次力量/易伤等修正，也避免再次被转移
-        var cascadeProps = props | ValueProp.Unpowered;
-        TaskHelper.RunSafely(CreatureCmd.Damage(
-            new BlockingPlayerChoiceContext(), new List<Creature> { next }, amount, cascadeProps, dealer, null, null));
-        Entry.Logger.Info($"[Plant] 溢出伤害 {amount} 由 {absorber.Monster?.Id.Entry} 转给 {next.Monster?.Id.Entry}");
-        return 0m;
-    }
+        => PetAbsorb.ModifyOverflow(Creature.PetOwner, target, amount, props, dealer);
 
     // 每回合的行动：必定 1 次；另有 DoubleActionChance 的概率再行动 1 次。
     // 向日葵/豌豆射手是回能或攻击翻倍，坚果墙是格挡翻倍，三种植物的概率一致。

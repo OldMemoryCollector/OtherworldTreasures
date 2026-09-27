@@ -8,11 +8,13 @@ using Godot;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Commands.Builders;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Merchant;
 using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Factories;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Map;
@@ -36,7 +38,6 @@ using OtherworldTreasures.Scripts.Monsters;
 using OtherworldTreasures.Scripts.Potions;
 using OtherworldTreasures.Scripts.Relics;
 using OtherworldTreasures.Scripts.TimeCloth;
-using STS2RitsuLib.Interactions.RightClick;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace OtherworldTreasures.Scripts;
@@ -51,7 +52,6 @@ namespace OtherworldTreasures.Scripts;
 public static class GamePatches
 {
     public static readonly HashSet<CardModel> ForceGlowGoldCards = new();
-    internal static bool FirstTimeLogged;
 }
 
 /// <summary>
@@ -144,12 +144,7 @@ public static class Patch_RelicModel_Title
 {
     static void Postfix(RelicModel __instance, ref LocString __result)
     {
-        if (__instance is not KurasDice dice) return;
-        if (!GamePatches.FirstTimeLogged)
-        {
-            GamePatches.FirstTimeLogged = true;
-            Entry.Logger.Info($"[KurasDice DEBUG] Id.Entry='{dice.Id.Entry}'");
-        }
+        if (__instance is not KurasDice) return;
         __result = KurasDiceL10n.Title;
     }
 }
@@ -174,11 +169,6 @@ public static class Patch_RelicModel_Description
     static void Postfix(RelicModel __instance, ref LocString __result)
     {
         if (__instance is not KurasDice) return;
-        
-        int roll = KurasDice.LastRolledValue;
-        bool used = roll > 0 && KurasDice.GlobalUsedFaces.Contains(roll);
-        Entry.Logger.Info($"[DescriptionPatch] Roll={roll}, Used={used}, Faces=[{string.Join(",", KurasDice.GlobalUsedFaces)}]");
-        
         __result = KurasDiceL10n.CurrentText();
     }
 }
@@ -296,85 +286,83 @@ public static class Patch_PowerModel_BigIconPath_BambooCopter
     }
 }
 
-// === 临时诊断：右键遗物"输入→分发"链路（排查原素瓶战斗中无法使用） ===
-// 1) 右键事件是否到达顶栏遗物格；2) 分发是否被守卫条件拦截；3) TryDispatch 结果
-public static class DebugRightClickPatches
+// === Patch 7: TamedPetPower → 自定义「驯服」图标 ===
+[HarmonyPatch(typeof(PowerModel), "PackedIconPath", MethodType.Getter)]
+public static class Patch_PowerModel_PackedIconPath_TamedPet
 {
-    // Prefix：挂在 RitsuLib internal ModRightClickRelicPatch.TryHandle（静态）
-    public static void RelicHolderTryHandlePrefix(NRelicInventoryHolder holder)
+    static void Postfix(PowerModel __instance, ref string __result)
+    {
+        if (__instance is OtherworldTreasures.Scripts.Powers.TamedPetPower)
+            __result = "res://OtherworldTreasures/images/powers/Tamed_Pet.png";
+    }
+}
+
+[HarmonyPatch(typeof(PowerModel), "IconPath", MethodType.Getter)]
+public static class Patch_PowerModel_IconPath_TamedPet
+{
+    static void Postfix(PowerModel __instance, ref string __result)
+    {
+        if (__instance is OtherworldTreasures.Scripts.Powers.TamedPetPower)
+            __result = "res://OtherworldTreasures/images/powers/Tamed_Pet.png";
+    }
+}
+
+[HarmonyPatch(typeof(PowerModel), "BigIconPath", MethodType.Getter)]
+public static class Patch_PowerModel_BigIconPath_TamedPet
+{
+    static void Postfix(PowerModel __instance, ref string __result)
+    {
+        // 「驯服」的大图复用桃太郎丸子的遗物图（256×256 同一张，不单独维护文件）
+        if (__instance is OtherworldTreasures.Scripts.Powers.TamedPetPower)
+            __result = "res://OtherworldTreasures/images/relics/Momotaro_Dumplings.png";
+    }
+}
+
+// === 桃太郎丸子：敌人对我方的状态效果也作用于随从 ===
+// 敌人招式里的减益（如直接削力量、上虚弱/脆弱/中毒）走 PowerCmd.Apply，目标取自
+// combatState.PlayerCreatures（只含玩家角色，不含宠物）。这里在收口的非泛型重载上补一层：
+// 只要是"敌方对我方玩家角色"施加的效果，就同样施加一份给驯服的随从。
+// 注意：随从用 ModelDb 里的原版模型新建实例，绝不能复用原 power 实例（那会让一个实例被两个生物共享）。
+// 局限：联机多名玩家时同一效果可能对同一随从重复施加（每个客户端各跑一次），单人无此问题。
+[HarmonyPatch(typeof(PowerCmd), nameof(PowerCmd.Apply),
+    new Type[] { typeof(PlayerChoiceContext), typeof(PowerModel), typeof(Creature), typeof(decimal), typeof(Creature), typeof(CardModel), typeof(bool) })]
+public static class Patch_PowerCmd_Apply_ToTamedPets
+{
+    static void Prefix(PlayerChoiceContext choiceContext, PowerModel power, Creature target, decimal amount,
+        Creature? applier, CardModel? cardSource, bool silent)
     {
         try
         {
-            var model = holder.Relic?.Model;
-            bool inputHandled = ((Node)holder).GetViewport().IsInputHandled();
-            bool inSelection = NTargetManager.Instance.IsInSelection;
-            Entry.Logger.Info(
-                $"[RC-DEBUG] holder right-click reached: relic={model?.GetType().Name} " +
-                $"id={model?.Id} inputHandled={inputHandled} inSelection={inSelection}");
-        }
-        catch (Exception e)
-        {
-            Entry.Logger.Info($"[RC-DEBUG] holder prefix error: {e.Message}");
-        }
-    }
-
-    // Postfix：挂在 public ModRightClickRegistry.TryDispatch
-    public static void DispatchPostfix(ModRightClickContext context, ref bool __result)
-    {
-        Entry.Logger.Info(
-            $"[RC-DEBUG] TryDispatch: model={context.Model?.GetType().Name} " +
-            $"id={context.Model?.Id} dispatched={__result}");
-    }
-
-    // Postfix：挂在 private TryRequestSyncedModelAction——区分"无身份令牌"与"战斗队列忙"
-    public static void RequestSyncedPostfix(ModRightClickContext context, bool __result)
-    {
-        bool inCombat = false;
-        int combatState = -1;
-        try
-        {
-            inCombat = MegaCrit.Sts2.Core.Combat.CombatManager.Instance.IsInProgress;
-            var runMgr = MegaCrit.Sts2.Core.Runs.RunManager.Instance;
-            var syncProp = runMgr?.GetType().GetProperty("ActionQueueSynchronizer");
-            var sync = syncProp?.GetValue(runMgr);
-            if (sync != null)
+            if (applier == null || applier.Side != CombatSide.Enemy)
             {
-                var csProp = sync.GetType().GetProperty("CombatState");
-                combatState = Convert.ToInt32(csProp?.GetValue(sync));
+                return;
+            }
+            if (target == null || !target.IsPlayer)
+            {
+                return;
+            }
+            var owner = target.Player;
+            if (owner == null)
+            {
+                return;
+            }
+
+            var canonical = ModelDb.GetByIdOrNull<PowerModel>(power.Id);
+            if (canonical == null)
+            {
+                return;
+            }
+
+            foreach (var pet in TamedPets.ActiveInTameOrder(owner))
+            {
+                TaskHelper.RunSafely(PowerCmd.Apply(
+                    choiceContext, canonical.ToMutable(), pet, amount, applier, cardSource, silent));
             }
         }
         catch (Exception e)
         {
-            Entry.Logger.Info($"[RC-DEBUG] combatState reflect error: {e.Message}");
+            Entry.Logger.Info($"[MomotaroDumplings] 状态同步到随从失败（已忽略）：{e.Message}");
         }
-
-        bool hasToken = false;
-        bool sameRefInInventory = false;
-        try
-        {
-            var regType = AccessTools.TypeByName(
-                "STS2RitsuLib.Interactions.RightClick.ModModelIdentityRegistry");
-            var m = AccessTools.Method(regType, "TryGetToken");
-            object[] args = { context.Model, null };
-            hasToken = (bool)(m?.Invoke(null, args) ?? false);
-
-            if (context.Model is MegaCrit.Sts2.Core.Models.RelicModel rm && context.Player != null)
-            {
-                foreach (var r in context.Player.Relics)
-                {
-                    if (ReferenceEquals(r, rm)) { sameRefInInventory = true; break; }
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Entry.Logger.Info($"[RC-DEBUG] reflect error: {e.Message}");
-        }
-
-        Entry.Logger.Info(
-            $"[RC-DEBUG] RequestSynced result={__result} inCombat={inCombat} " +
-            $"combatState={combatState}(need 2) hasIdentityToken={hasToken} " +
-            $"holderModelIsInventoryInstance={sameRefInInventory}");
     }
 }
 
@@ -1179,4 +1167,83 @@ public static class Patch_VfxCmd_PlayOnCreature_HitRedirect
 public static class Patch_VfxCmd_PlayOnCreatureCenter_HitRedirect
 {
     static void Prefix(ref Creature target, string path) => PlantSummonBase.RedirectHitVfx(ref target, path);
+}
+
+// === 桃太郎丸子：驯服随从无法被治疗 ===
+// 原版没有"禁疗"钩子/能力，CreatureCmd.Heal 是唯一治疗入口，直接前缀跳过。
+// 驯服瞬间的回满血走 CreatureCmd.SetCurrentHp，不经过这里，所以不会误伤。
+[HarmonyPatch(typeof(CreatureCmd), nameof(CreatureCmd.Heal),
+    new Type[] { typeof(Creature), typeof(decimal), typeof(bool) })]
+public static class Patch_CreatureCmd_TamedPetNoHeal
+{
+    static bool Prefix(Creature creature)
+    {
+        if (creature != null && TamedPets.IsTamed(creature))
+        {
+            return false;
+        }
+        return true;
+    }
+}
+
+// === 桃太郎丸子：驯服随从的攻击目标 ===
+// 原版怪物招式走 `DamageCmd.Attack(...).FromMonster(this)`，而 FromMonster 会把目标硬编码成
+// 玩家方（AttackCommand.GetPossibleTargets: _sourceType == Monster 时直接返回 PlayerCreatures），
+// 所以随从用原招式会"和敌人一起打玩家"。这里把攻击者是被驯服随从的攻击目标翻转成敌方，
+// 并且只打单体（随机一名存活敌人，用 run 的随机源，联机各端结果一致）。
+[HarmonyPatch(typeof(AttackCommand), "GetPossibleTargets")]
+public static class Patch_AttackCommand_TamedPetTargets
+{
+    static void Postfix(AttackCommand __instance, ref IReadOnlyList<Creature> __result)
+    {
+        var attacker = __instance.Attacker;
+        if (attacker == null || !TamedPets.IsTamed(attacker))
+        {
+            return;
+        }
+        if (__result.Count == 0)
+        {
+            return;
+        }
+        // 只在"整组目标都是玩家侧"时才翻转（即原版 FromMonster 的默认目标），不影响显式指定其它目标的攻击
+        foreach (var target in __result)
+        {
+            if (target.Side != CombatSide.Player)
+            {
+                return;
+            }
+        }
+        var combatState = attacker.CombatState;
+        if (combatState == null)
+        {
+            return;
+        }
+        var enemies = combatState.Enemies.Where(e => e.IsAlive).ToList();
+        if (enemies.Count == 0)
+        {
+            return;
+        }
+        __result = new List<Creature> { combatState.RunState.Rng.CombatTargets.NextItem(enemies) };
+    }
+}
+
+// === 桃太郎丸子：随从站位 / 朝向 / 血条 ===
+// 挂在 NCombatRoom.AddCreature 之后（含战斗开场重召与当场驯服两条路径）
+[HarmonyPatch(typeof(NCombatRoom), nameof(NCombatRoom.AddCreature))]
+public static class Patch_NCombatRoom_TamedPetLayout
+{
+    static void Postfix(Creature creature)
+    {
+        try
+        {
+            if (TamedPets.IsTamed(creature))
+            {
+                TamedPets.ApplyLayout();
+            }
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Info($"[MomotaroDumplings] 随从排版失败（已忽略）：{e.Message}");
+        }
+    }
 }

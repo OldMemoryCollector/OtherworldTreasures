@@ -3,5 +3,11 @@
   "OTHERWORLD_TREASURES_POWER_AMPLIFY_POWER.description": "本回合造成的伤害与获得的格挡变为 3 倍。",
 
   "OTHERWORLD_TREASURES_POWER_BAMBOO_COPTER_FLIGHT_POWER.title": "起飞",
-  "OTHERWORLD_TREASURES_POWER_BAMBOO_COPTER_FLIGHT_POWER.description": "被攻击时受到的伤害减少 50%。被攻击 5 次后失效。"
+  "OTHERWORLD_TREASURES_POWER_BAMBOO_COPTER_FLIGHT_POWER.description": "被攻击时受到的伤害减少 50%。被攻击 5 次后失效。",
+
+  "OTHERWORLD_TREASURES_POWER_TAMED_PET.title": "驯服",
+  "OTHERWORLD_TREASURES_POWER_TAMED_PET.description": "造成的攻击伤害减少 50%。",
+
+  "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.title": "孢子囊",
+  "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description": "本回合受到攻击时，对攻击者施加 {Amount} 层中毒。"
 }

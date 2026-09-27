@@ -5,6 +5,9 @@
 # 材质/图片资源（不上传）
 OtherworldTreasures/images/
 
+# 原版游戏抽取素材（不入库）
+豌豆射手13和向日葵18png/
+
 # C# 构建产物
 bin/
 obj/
