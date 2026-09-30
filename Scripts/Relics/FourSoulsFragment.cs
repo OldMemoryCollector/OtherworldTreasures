@@ -7,6 +7,8 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.HoverTips;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.RelicPools;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
@@ -193,6 +195,13 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
             corner,
             $"[font_size={BadgeFontSize}][color=#{hex}]{CountOf(kind)}[/color][/font_size]");
     }
+
+    // 悬浮提示：补充"四魂强化"的具体效果与分配规则（与库拉的骰子/任意门同做法：
+    // 主描述只写开关与来源，细节放进独立的一条悬浮提示）
+    protected override IEnumerable<IHoverTip> AdditionalHoverTips => base.AdditionalHoverTips.Append(
+        new HoverTip(
+            new LocString("relics", "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.tip.title"),
+            new LocString("relics", "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.tip.description")));
 
     // === 获取 ===
 

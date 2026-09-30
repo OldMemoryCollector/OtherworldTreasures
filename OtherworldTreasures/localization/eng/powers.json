@@ -21,7 +21,7 @@
   "OTHERWORLD_TREASURES_POWER_ALIEN_TERROR.description": "This enemy deals [blue]10%[/blue] less damage per stack, up to a maximum of [blue]50%[/blue].",
 
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.title": "Magma Body",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.description": "At the start of each turn, add [blue]1[/blue] [gold]Burn[/gold] Status card to your hand (not added if your hand is full). Gain +[blue]1[/blue] Energy max each turn. At the end of your turn, [gold]Incinerate[/gold] all Status cards in your hand, healing [green]2[/green] HP for each card [gold]Incinerated[/gold]. Immune to the end-of-turn damage from [gold]Burn[/gold] Status cards in your own hand.",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.description": "At the start of each turn, add [blue]1[/blue] [gold]Burn[/gold] Status card to your hand (not added if your hand is full). Raise your Energy max by [blue]1[/blue] each turn. At the end of your turn, [gold]Incinerate[/gold] all Status cards in your hand, healing [green]2[/green] HP for each card [gold]Incinerated[/gold]. Immune to the end-of-turn damage from [gold]Burn[/gold] Status cards in your own hand.",
 
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.title": "Solar Flare",
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.description": "The first time you apply [gold]Burn[/gold] each turn, apply [green]2[/green] additional [gold]Burn[/gold]. At the start of each turn, add [blue]1[/blue] [gold]Burn[/gold] Status card to your hand (not added if your hand is full).",
@@ -36,7 +36,7 @@
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.description": "Each turn, when you [gold]Incinerate[/gold] your [blue]3[/blue]rd Status card, deal [blue]6[/blue] damage to ALL enemies and gain [green]6[/green] [gold]Block[/gold]. Triggers once per turn.",
 
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.title": "Supercombustion",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.description": "Whenever you gain extra Energy from cards or powers this turn, your next Attack deals +[blue]3[/blue] damage. Triggers up to [blue]3[/blue] times per turn.",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.description": "Whenever you gain extra Energy from cards or powers this turn, your next Attack deals [blue]3[/blue] additional damage. Triggers up to [blue]3[/blue] times per turn.",
 
   "OTHERWORLD_TREASURES_POWER_FOUR_SOULS.title": "Four Souls",
   "OTHERWORLD_TREASURES_POWER_FOUR_SOULS.description": "Holds: {Souls}."

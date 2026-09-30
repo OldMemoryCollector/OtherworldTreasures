@@ -9,9 +9,9 @@
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.desc.broken": "已实现愿望，永久失效。",
 
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_1.title": "一点恢复",
-    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_1.desc": "休息[blue]1[/blue]次 + 获得[green]10[/green]点[gold]再生[/gold]{Status}",
+    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_1.desc": "休息[blue]1[/blue]次；获得[green]10[/green]点[gold]再生[/gold]{Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_2.title": "二点复制",
-    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_2.desc": "本场战斗中所有卡牌获得+[blue]1[/blue][gold]重放[/gold]{Status}",
+    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_2.desc": "本场战斗中所有卡牌获得[blue]1[/blue]层[gold]重放[/gold]{Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_3.title": "三点强化",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_3.desc": "本回合造成的伤害与获得的[gold]格挡[/gold]变为[blue]3[/blue]倍，并获得[blue]3[/blue]点能量{Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_4.title": "四点结界",
@@ -19,7 +19,7 @@
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.title": "五点爆炸",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.desc": "对每名玩家造成[blue]300[/blue]点伤害，平均分配给所有敌人{Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_6.title": "六点实现愿望",
-    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_6.desc": "获得[blue]999[/blue]金币 + 满血 + 升级所有卡 + 获得[blue]6[/blue]件遗物 + 该遗物永久失效{Status}",
+    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_6.desc": "获得[blue]999[/blue]金币；恢复全部生命值；升级你的所有卡牌；获得[blue]6[/blue]件遗物；该遗物永久失效{Status}",
 
     "OTHERWORLD_TREASURES_RELIC_ASHEN_FLASK.title": "不死人的原素瓶",
     "OTHERWORLD_TREASURES_RELIC_ASHEN_FLASK.description": "移除[blue]1[/blue]个药水栏。右键点击遗物恢复[blue]15%[/blue]最大生命值，可使用[blue]2[/blue]次。篝火处注火可提升[blue]1[/blue]上限并回复所有次数。击败精英或Boss后有[blue]50%[/blue]几率补充[blue]1[/blue]次使用次数。",
@@ -31,7 +31,7 @@
     "OTHERWORLD_TREASURES_RELIC_MYTHIC_CHARM.flavor": "来自泰拉瑞亚的配饰，在塔里它带给你自然恢复的力量。",
 
     "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.title": "孢子囊",
-    "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.description": "每次受到攻击时，给予攻击者中毒，初始为[green]1[/green]层。每赢得[blue]3[/blue]场战斗，层数增加[green]1[/green]层；同一场战斗内，从第[blue]2[/blue]回合起，施加的中毒每回合再+[green]1[/green]。",
+    "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.description": "每次受到攻击时，给予攻击者中毒，初始为[green]1[/green]层。每赢得[blue]3[/blue]场战斗，层数增加[green]1[/green]层；同一场战斗内，从第[blue]2[/blue]回合起，施加的中毒每回合再增加[green]1[/green]层。",
     "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.flavor": "来自泰拉瑞亚的配饰，被激怒时会喷出剧毒的孢子云。",
 
     "OTHERWORLD_TREASURES_RELIC_CROSS_NECKLACE.title": "十字章护身符",
@@ -40,40 +40,40 @@
 
     "OTHERWORLD_TREASURES_RELIC_SHRINK_RAY.title": "缩小灯",
     "OTHERWORLD_TREASURES_RELIC_SHRINK_RAY.description": "右键点击获得[blue]1[/blue]张[gold]缩小灯[/gold]卡牌，可无限获得。",
-    "OTHERWORLD_TREASURES_RELIC_SHRINK_RAY.flavor": "哆啦A梦的道具之一。被它的光照到的东西，都会变小。",
+    "OTHERWORLD_TREASURES_RELIC_SHRINK_RAY.flavor": "哆啦A梦的道具之一。被光照到的东西会缩小，照得越久缩得越小；想变回原样，得用放大灯。",
 
     "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.title": "空气炮",
     "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.description": "战斗开始时，将[blue]1[/blue]张[blue]1[/blue]费[gold]碰[/gold]卡牌加入手牌。",
-    "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.flavor": "哆啦A梦的道具之一。套在手上，喊一声就能发射压缩空气。",
+    "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.flavor": "哆啦A梦的道具之一。套在手上，就能像大炮一样打出压缩空气，把人轰飞却不会受伤。",
 
     "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.title": "桃太郎丸子",
     "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.description": "拥有[blue]3[/blue]颗丸子。右键点击后选择[blue]1[/blue]名敌人收服：只能收服当前生命不超过[green]10[/green]点、最大生命不超过[green]80[/green]的敌人，首领无法收服。收服后回满血、生命上限降低[blue]20%[/blue]，它会保留原本的招式与意图为你作战，造成的伤害减少[blue]50%[/blue]，无法被治疗，死亡后永久消失。",
-    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.flavor": "哆啦A梦的道具之一。喂给凶暴的怪兽吃下去，它就会变得像小狗一样温顺。",
+    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.flavor": "哆啦A梦的道具之一。桃太郎用来收服同伴的丸子，给动物吃下，它就会对你言听计从。",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.title": "哆啦A梦的四次元口袋",
     "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.description": "获得时立即得到[blue]1[/blue]件哆啦A梦的道具。接下来[blue]3[/blue]次从精英战斗获得的遗物，改为来自哆啦A梦的道具。",
-    "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.flavor": "帮帮我吧！哆啦A梦~~~",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.flavor": "哆啦A梦的道具之一。正式名称是「机器人专用四次元空间内藏秘密道具收纳口袋」，连着四次元世界，装再多东西也不会变重。",
 
     "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.title": "任意门",
     "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.description": "右键点击开启自由传送，开启后可直接前往任意未通过的节点。可使用[blue]3[/blue]次，再次右键点击可关闭。",
     "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.combatDescription": "右键点击开启自由传送，开启后可直接前往任意未通过的节点。",
-    "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.flavor": "哆啦A梦的道具之一。打开门，就能去往任何地方。",
+    "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.flavor": "哆啦A梦的道具之一。心里想着要去的地方再开门，就能到那里；可它到不了海底，也不能穿越时间。",
     "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.tip.title": "穿越",
     "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.tip.description": "开启自由传送后，地图上所有未通过的节点都会点亮为可前往；未开启时与平时一样。沿地图连线正常移动不会消耗次数，只有直接飞往不相邻的节点时才消耗[blue]1[/blue]次。当剩余最后[blue]1[/blue]次机会时，无法选择终点是已走过的节点的路线",
 
     "OTHERWORLD_TREASURES_RELIC_BAMBOO_COPTER.title": "竹蜻蜓",
     "OTHERWORLD_TREASURES_RELIC_BAMBOO_COPTER.description": "战斗开始时起飞，被攻击时受到的伤害减少[blue]50%[/blue]，被攻击[blue]5[/blue]次后失效。",
-    "OTHERWORLD_TREASURES_RELIC_BAMBOO_COPTER.flavor": "哆啦A梦的道具之一。戴在头上就能飞起来。",
+    "OTHERWORLD_TREASURES_RELIC_BAMBOO_COPTER.flavor": "哆啦A梦的道具之一。内置反重力装置，戴在头上就能飞，靠心里想着方向来操控——只是电池撑不了太久。",
 
     "OTHERWORLD_TREASURES_RELIC_WHAT_IF_PHONE_BOOTH.title": "如果电话亭",
     "OTHERWORLD_TREASURES_RELIC_WHAT_IF_PHONE_BOOTH.description": "重新开始本次战斗，以[blue]1[/blue]个新的时间线。",
-    "OTHERWORLD_TREASURES_RELIC_WHAT_IF_PHONE_BOOTH.flavor": "哆啦A梦的道具之一。如果......",
+    "OTHERWORLD_TREASURES_RELIC_WHAT_IF_PHONE_BOOTH.flavor": "哆啦A梦的道具之一。对着话筒说出你想要的世界，现实就会变成那样；说完挂上电话，铃声响过之后便会成真。",
     "OTHERWORLD_TREASURES_RELIC_WHAT_IF_PHONE_BOOTH.tip.title": "新的时间线",
     "OTHERWORLD_TREASURES_RELIC_WHAT_IF_PHONE_BOOTH.tip.description": "改变抽卡顺序等。",
 
     "OTHERWORLD_TREASURES_RELIC_TIME_CLOTH.title": "时光布",
     "OTHERWORLD_TREASURES_RELIC_TIME_CLOTH.description": "右键点击获得[blue]1[/blue]张[gold]时光布[/gold]卡牌，每场战斗只能获得[blue]1[/blue]张。",
-    "OTHERWORLD_TREASURES_RELIC_TIME_CLOTH.flavor": "哆啦A梦的道具之一。盖上去，时间就会前进或后退。",
+    "OTHERWORLD_TREASURES_RELIC_TIME_CLOTH.flavor": "哆啦A梦的道具之一。把东西包起来，时间就会前进或后退——旧的变新，新的变旧。",
 
     "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.title": "戴夫的种子",
     "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.description": "右击遗物，从[blue]3[/blue]张召唤卡中选择[blue]1[/blue]张召唤植物为你作战（消耗该卡的费用）。植物会保护你不受伤害。每场战斗只能召唤[blue]1[/blue]次。召唤之后再右击遗物，可获得[blue]1[/blue]张[gold]施肥[/gold]卡。",
@@ -89,13 +89,15 @@
 
     "OTHERWORLD_TREASURES_RELIC_OMNITRIX.title": "原型Omnitrix",
     "OTHERWORLD_TREASURES_RELIC_OMNITRIX.description": "右键点击变身成为外星英雄，持续[blue]3[/blue]回合。变身后获得该英雄的能力（专属牌组与固有被动）。目前仅【火焰人】的能力已完成，选择其他英雄只会替换角色形象、不获得能力。",
-    "OTHERWORLD_TREASURES_RELIC_OMNITRIX.flavor": "小小年纪所向无敌，神秘超能力，双手并用变身启动，实在好神奇，捍卫和平维护正义，叫他第一名 Ben 10。",
+    "OTHERWORLD_TREASURES_RELIC_OMNITRIX.flavor": "小小年纪所向无敌，神秘超能力，双手并用变身启动，实在好神奇，捍卫和平维护正义，叫他第一名。Ben 10。",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.title": "四魂之玉",
-    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.description": "远古的宝玉，据说能实现持有者的愿望。取得时会自行破碎，化作[gold]四魂之玉碎片[/gold]，并使地图上除 Boss 之外的敌人也带上四魂碎片。",
-    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.flavor": "玉中封着四种魂魄：荒魂、和魂、幸魂、奇魂。得之者，得四魂。",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.description": "相传能实现持有者的愿望，也会让持有者的力量大涨。取得时会自行破碎，化作[gold]四魂之玉碎片[/gold]，并使地图上除Boss之外的敌人也带上碎片。",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.flavor": "数百年前，巫女翠子夺走大妖怪的魂魄，与自己的灵魂一同释出，只余下这颗魂的结晶。翠子与妖怪的争斗，至今仍在玉中永无休止。",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.title": "四魂之玉碎片",
-    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.description": "右键开启或关闭（战斗中不可切换）。开启时，你按持有碎片获得强化，地图上出现持有四魂的敌人；击败它们即可夺走其四魂。荒魂加力量、和魂加覆甲、幸魂加再生、奇魂加生命上限。[blue]4[/blue]个角标分别是四种魂的数量。",
-    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.flavor": "碎成四片的玉，各自寄宿着一种魂魄。"
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.description": "右键可开启或关闭（战斗中不可切换）；开启后，你和敌人都会按其四魂获得强化。地图上会出现持有碎片的敌人，击败它们即可夺走其碎片。",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.tip.title": "四魂强化",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.tip.description": "荒魂为敌人带来力量、和魂带来覆甲、幸魂带来再生、奇魂带来生命上限，效果等同于初代的带火精英。每枚碎片只会分配给一名敌人，但一名敌人可以拥有多枚碎片。",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.flavor": "玉碎之后，碎片散落各地，每一片都寄宿着魂魄。魂有四者——荒魂司勇、和魂司亲、幸魂司爱、奇魂司智。"
 }

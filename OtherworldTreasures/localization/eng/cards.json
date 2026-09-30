@@ -90,7 +90,7 @@
     "OTHERWORLD_TREASURES_CARD_HEATBLAST_BURST_TAKEOFF.title": "Burst Takeoff",
     "OTHERWORLD_TREASURES_CARD_HEATBLAST_BURST_TAKEOFF.description": "Gain {EnergyGain} Energy. Draw {DrawCards} card(s). Add [blue]1[/blue] [gold]Burn[/gold] Status card to your hand.",
     "OTHERWORLD_TREASURES_CARD_HEATBLAST_SUPERCOMBUSTION.title": "Supercombustion",
-    "OTHERWORLD_TREASURES_CARD_HEATBLAST_SUPERCOMBUSTION.description": "Whenever you gain extra Energy from cards or powers this turn, your next Attack deals +{BonusDamage} damage. Triggers up to {MaxTriggers} times per turn.",
+    "OTHERWORLD_TREASURES_CARD_HEATBLAST_SUPERCOMBUSTION.description": "Whenever you gain extra Energy from cards or powers this turn, your next Attack deals {BonusDamage} additional damage. Triggers up to {MaxTriggers} times per turn.",
     "OTHERWORLD_TREASURES_CARD_HEATBLAST_METEOR_IMPACT.title": "Meteor Impact",
     "OTHERWORLD_TREASURES_CARD_HEATBLAST_METEOR_IMPACT.description": "Deal {Damage} damage. For each [blue]0[/blue]-cost card played this turn, deal {DamagePerZeroCost} additional damage. If you have gained at least {EnergyThreshold} extra Energy this turn, apply {Scorch} [gold]Burn[/gold] to the target.",
 

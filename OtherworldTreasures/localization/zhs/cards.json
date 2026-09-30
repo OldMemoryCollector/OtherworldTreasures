@@ -90,7 +90,7 @@
     "OTHERWORLD_TREASURES_CARD_HEATBLAST_BURST_TAKEOFF.title": "爆裂起飞",
     "OTHERWORLD_TREASURES_CARD_HEATBLAST_BURST_TAKEOFF.description": "获得{EnergyGain}点能量。抽{DrawCards}张牌。将[blue]1[/blue]张[gold]灼伤[/gold]状态牌加入手牌。",
     "OTHERWORLD_TREASURES_CARD_HEATBLAST_SUPERCOMBUSTION.title": "超燃加速",
-    "OTHERWORLD_TREASURES_CARD_HEATBLAST_SUPERCOMBUSTION.description": "本回合每当你通过卡牌或能力获得额外能量，下一次攻击造成+{BonusDamage}伤害。每回合最多触发{MaxTriggers}次。",
+    "OTHERWORLD_TREASURES_CARD_HEATBLAST_SUPERCOMBUSTION.description": "本回合每当你通过卡牌或能力获得额外能量，下一次攻击额外造成{BonusDamage}点伤害。每回合最多触发{MaxTriggers}次。",
     "OTHERWORLD_TREASURES_CARD_HEATBLAST_METEOR_IMPACT.title": "流星冲击",
     "OTHERWORLD_TREASURES_CARD_HEATBLAST_METEOR_IMPACT.description": "造成{Damage}点伤害。本回合每打出[blue]1[/blue]张[blue]0[/blue]费牌，额外造成{DamagePerZeroCost}点伤害。若本回合累计获得至少{EnergyThreshold}点额外能量，给予目标{Scorch}层[gold]灼伤[/gold]。",
 
