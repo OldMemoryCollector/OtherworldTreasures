@@ -1,6 +1,6 @@
 {
     "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.title": "除外池",
-    "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.description": "通过除外效果移出战斗的卡牌，无法通过常规手段取回。",
+    "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.description": "通过[gold]除外[/gold]效果移出战斗的卡牌，无法通过常规手段取回。",
     "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.empty": "除外池是空的。",
 
     "OTHERWORLD_TREASURES_CARDPILE_OMNITRIX_STASH.title": "暂存堆",

@@ -1,6 +1,6 @@
 {
     "OTHERWORLD_TREASURES_RELIC_DECK_OF_WONDERS.title": "Deck of Wonders",
-    "OTHERWORLD_TREASURES_RELIC_DECK_OF_WONDERS.description": "At the start of combat, shuffle 5 [gold]Scrolls of Wonder[/gold] into your draw pile.",
+    "OTHERWORLD_TREASURES_RELIC_DECK_OF_WONDERS.description": "At the start of combat, shuffle [blue]5[/blue] [gold]Scrolls of Wonder[/gold] into your draw pile.",
     "OTHERWORLD_TREASURES_RELIC_DECK_OF_WONDERS.flavor": "“挑一张卡吧，哪张都行。等等！不！别动那张！”——之前一个主人的遗言",
 
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.title": "Kula's Dice",
@@ -11,9 +11,9 @@
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_1.title": "One – Restore",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_1.desc": "Rest once and gain [green]10[/green] [gold]Regen[/gold]. {Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_2.title": "Two – Duplicate",
-    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_2.desc": "All cards gain +1 [gold]Replay[/gold] for the rest of combat. {Status}",
+    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_2.desc": "All cards gain +[blue]1[/blue] [gold]Replay[/gold] for the rest of combat. {Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_3.title": "Three – Amplify",
-    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_3.desc": "Damage dealt and Block gained are tripled this turn, and gain [blue]3[/blue] Energy. {Status}",
+    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_3.desc": "Damage dealt and [gold]Block[/gold] gained are tripled this turn, and gain [blue]3[/blue] Energy. {Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_4.title": "Four – Barrier",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_4.desc": "Gain [green]8[/green] [gold]Buffer[/gold], [green]8[/green] [gold]Intangible[/gold], and [green]8[/green] [gold]Artifact[/gold] for the rest of combat. {Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.title": "Five – Explode",
@@ -22,7 +22,7 @@
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_6.desc": "Gain [blue]999[/blue] Gold, heal to full, upgrade every card, gain [blue]6[/blue] relics, and permanently disable this relic. {Status}",
 
     "OTHERWORLD_TREASURES_RELIC_ASHEN_FLASK.title": "Estus Flask",
-    "OTHERWORLD_TREASURES_RELIC_ASHEN_FLASK.description": "Removes one potion slot. Right-click this relic to restore [blue]15%[/blue] of your Max HP. Has 2 uses; kindling at a campfire refills it and raises the cap. Defeating an Elite or a Boss has a chance to restore one use.",
+    "OTHERWORLD_TREASURES_RELIC_ASHEN_FLASK.description": "Removes one potion slot. Right-click this relic to restore [blue]15%[/blue] of your Max HP. Has [blue]2[/blue] uses; kindling at a campfire refills it and raises the cap by [blue]1[/blue]. Defeating an Elite or a Boss has a [blue]50%[/blue] chance to restore one use.",
     "OTHERWORLD_TREASURES_RELIC_ASHEN_FLASK.combatDescription": "Right-click this relic to restore [blue]15%[/blue] of your Max HP.",
     "OTHERWORLD_TREASURES_RELIC_ASHEN_FLASK.flavor": "自古以来，不死人总是在营火间穿梭，而原素瓶也一直随之旅行。",
 
@@ -31,11 +31,11 @@
     "OTHERWORLD_TREASURES_RELIC_MYTHIC_CHARM.flavor": "来自泰拉瑞亚的配饰，在塔里它带给你自然恢复的力量。",
 
     "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.title": "Spore Sac",
-    "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.description": "Whenever you take attack damage, apply Poison to the attacker, starting at [green]1[/green]. Every two combat wins adds [green]1[/green] more; within the same combat, from the second turn onward the Poison applied increases by [green]1[/green] each turn.",
+    "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.description": "Whenever you take attack damage, apply Poison to the attacker, starting at [green]1[/green]. Every three combat wins adds [green]1[/green] more; within the same combat, from the second turn onward the Poison applied increases by [green]1[/green] each turn.",
     "OTHERWORLD_TREASURES_RELIC_SPORE_SAC.flavor": "来自泰拉瑞亚的配饰，被激怒时会喷出剧毒的孢子云。",
 
     "OTHERWORLD_TREASURES_RELIC_CROSS_NECKLACE.title": "Ankh Charm",
-    "OTHERWORLD_TREASURES_RELIC_CROSS_NECKLACE.description": "When you draw a Status or Curse card, Exhaust it and draw [blue]1[/blue] card. At the end of your turn, Exhaust the Status and Curse cards in your hand and gain [green]2[/green] Block.",
+    "OTHERWORLD_TREASURES_RELIC_CROSS_NECKLACE.description": "When you draw a Status or Curse card, Exhaust it and draw [blue]1[/blue] card. At the end of your turn, Exhaust the Status and Curse cards in your hand and gain [green]2[/green] [gold]Block[/gold].",
     "OTHERWORLD_TREASURES_RELIC_CROSS_NECKLACE.flavor": "来自泰拉瑞亚的配饰，据说能让佩戴者在受创的瞬间获得片刻庇护。",
 
     "OTHERWORLD_TREASURES_RELIC_SHRINK_RAY.title": "Shrink Ray",
@@ -43,26 +43,26 @@
     "OTHERWORLD_TREASURES_RELIC_SHRINK_RAY.flavor": "哆啦A梦的道具之一。被它的光照到的东西，都会变小。",
 
     "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.title": "Air Cannon",
-    "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.description": "At the start of combat, add a 1-cost [gold]Bonk[/gold] card to your hand.",
+    "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.description": "At the start of combat, add a [blue]1[/blue]-cost [gold]Bonk[/gold] card to your hand.",
     "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.flavor": "哆啦A梦的道具之一。套在手上，喊一声就能发射压缩空气。",
 
     "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.title": "Momotaro Dumplings",
-    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.description": "You have 3 dumplings. Right-click and choose an enemy to tame: only enemies with 10 or less current HP and 80 or less Max HP can be tamed, and bosses cannot. A tamed enemy is healed to full, its Max HP is lowered by 20%, it fights for you with its own moves and intents, cannot be healed, and disappears forever when it dies.",
+    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.description": "You have [blue]3[/blue] dumplings. Right-click and choose an enemy to tame: only enemies with [green]10[/green] or less current HP and [green]80[/green] or less Max HP can be tamed, and bosses cannot. A tamed enemy is healed to full, its Max HP is lowered by [blue]20%[/blue], it fights for you with its own moves and intents but deals [blue]50%[/blue] less damage, cannot be healed, and disappears forever when it dies.",
     "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.flavor": "哆啦A梦的道具之一。喂给凶暴的怪兽吃下去，它就会变得像小狗一样温顺。",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.title": "Doraemon's 4D Pocket",
-    "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.description": "When obtained, immediately grants a Doraemon gadget. The next 3 relics you would obtain from Elite combats are replaced by Doraemon gadgets.",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.description": "When obtained, immediately grants a Doraemon gadget. The next [blue]3[/blue] relics you would obtain from Elite combats are replaced by Doraemon gadgets.",
     "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.flavor": "帮帮我吧！哆啦A梦~~~",
 
     "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.title": "Anywhere Door",
-    "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.description": "Right-click to turn on free travel, letting you head straight to any unvisited node. Has 3 uses; right-click again to turn it off.",
+    "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.description": "Right-click to turn on free travel, letting you head straight to any unvisited node. Has [blue]3[/blue] uses; right-click again to turn it off.",
     "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.combatDescription": "Right-click to turn on free travel, letting you head straight to any unvisited node.",
     "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.flavor": "哆啦A梦的道具之一。打开门，就能去往任何地方。",
     "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.tip.title": "Traversal",
-    "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.tip.description": "While free travel is on, every unvisited node on the map lights up as reachable; while it is off, nothing changes. Moving along map paths does not consume a use — only flying straight to a non-adjacent node costs 1. On the last remaining use, you cannot pick a route whose destination is a node you have already visited.",
+    "OTHERWORLD_TREASURES_RELIC_ANYWHERE_DOOR.tip.description": "While free travel is on, every unvisited node on the map lights up as reachable; while it is off, nothing changes. Moving along map paths does not consume a use — only flying straight to a non-adjacent node costs [blue]1[/blue]. On the last remaining use, you cannot pick a route whose destination is a node you have already visited.",
 
     "OTHERWORLD_TREASURES_RELIC_BAMBOO_COPTER.title": "Bamboo Copter",
-    "OTHERWORLD_TREASURES_RELIC_BAMBOO_COPTER.description": "At the start of combat, take off: you take 50% less damage from attacks. Expires after you are hit 5 times.",
+    "OTHERWORLD_TREASURES_RELIC_BAMBOO_COPTER.description": "At the start of combat, take off: you take [blue]50%[/blue] less damage from attacks. Expires after you are hit [blue]5[/blue] times.",
     "OTHERWORLD_TREASURES_RELIC_BAMBOO_COPTER.flavor": "哆啦A梦的道具之一。戴在头上就能飞起来。",
 
     "OTHERWORLD_TREASURES_RELIC_WHAT_IF_PHONE_BOOTH.title": "What-If Phone Booth",
@@ -83,12 +83,12 @@
     "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.pea_shooter.title": "Peashooter",
     "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.pea_shooter.description": "{Cost} Energy, {Hp} HP. While in play, deals {Damage} damage to the front enemy at the start of each turn.",
     "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.wall_nut.title": "Wall-nut",
-    "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.wall_nut.description": "{Cost} Energy, {Hp} HP. While in play, gains {Block} Block at the start of each turn.",
+    "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.wall_nut.description": "{Cost} Energy, {Hp} HP. While in play, gains {Block} [gold]Block[/gold] at the start of each turn.",
     "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.fertilizer.title": "Fertilize",
     "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.fertilizer.description": "{Cost} Energy. Your plants gain {Hp} Max HP and heal the same amount.",
 
     "OTHERWORLD_TREASURES_RELIC_OMNITRIX.title": "Prototype Omnitrix",
-    "OTHERWORLD_TREASURES_RELIC_OMNITRIX.description": "Right-click to transform into an alien hero for 3 turns. After transforming you gain that hero's abilities (their own deck and innate passive). Currently only 【Heatblast】's abilities are implemented; choosing another hero only swaps your appearance and grants no abilities.",
+    "OTHERWORLD_TREASURES_RELIC_OMNITRIX.description": "Right-click to transform into an alien hero for [blue]3[/blue] turns. After transforming you gain that hero's abilities (their own deck and innate passive). Currently only 【Heatblast】's abilities are implemented; choosing another hero only swaps your appearance and grants no abilities.",
     "OTHERWORLD_TREASURES_RELIC_OMNITRIX.flavor": "小小年纪所向无敌，神秘超能力，双手并用变身启动，实在好神奇，捍卫和平维护正义，叫他第一名 Ben 10。",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.title": "Jewel of Four Souls",

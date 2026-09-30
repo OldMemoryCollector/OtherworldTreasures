@@ -32,7 +32,7 @@ public class SporeSac : ModRelicTemplate,
     IRelicExtraIconAmountLabelSpecsProvider, IRelicExtraIconAmountLabelsChangeSource
 {
     private const int InitialPoisonStacks = 1;
-    private const int WinsPerBonus = 2;
+    private const int WinsPerBonus = 3;
 
     // 角标字号：RitsuLib 的角标字号继承自原版数量标签（很大），必须用 RichText 指定字号，
     // 与库拉的骰子保持一致（否则数字巨大）

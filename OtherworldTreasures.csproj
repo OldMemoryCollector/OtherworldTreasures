@@ -26,7 +26,10 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <Optimize>true</Optimize>
     <DebugType>none</DebugType>
-    <PathMap>$(AppOutputBase)=.\</PathMap>
+    <!-- 把编译期源文件路径映射成相对路径，避免发布出去的 dll 里带上本机的绝对路径。
+         原来的 $(AppOutputBase) 是 Csc 内部属性，在 MSBuild 求值时为空，
+         会生成 "=.\" 这种非法 PathMap（CS8101），改用项目目录即可。 -->
+    <PathMap>$(MSBuildProjectDirectory)=.</PathMap>
   </PropertyGroup>
 
   <ItemGroup>

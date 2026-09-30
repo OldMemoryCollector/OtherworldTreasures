@@ -226,6 +226,12 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
         Status = Enabled ? RelicStatus.Active : RelicStatus.Disabled;
         RefreshBadge();
         Entry.Logger.Info($"[FourSouls] 碎片获得：荒{_wasteland} 和{_harmony} 幸{_fortune} 奇{_wonder}，开启={Enabled}");
+        // 本层地图节点在本层生成时就已建好，_Ready 也只在那一刻跑过；中途获得碎片要把当前地图上
+        // 该有光芒的节点补挂一次，否则要退出重进（重建地图）才看得到四魂怪
+        if (Owner != null)
+        {
+            Patch_NNormalMapPoint_FourSoulsGlow.RefreshGlows(Owner.RunState);
+        }
         await base.AfterObtained();
     }
 

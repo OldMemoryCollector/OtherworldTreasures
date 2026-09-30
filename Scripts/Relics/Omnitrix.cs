@@ -1,14 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.RelicPools;
+using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Rooms;
 using OtherworldTreasures.Scripts.Alien;
@@ -59,6 +63,12 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     // 变身中被隐藏的原身体节点、叠加的英雄立绘节点（解除变身后恢复时用）
     private static Node2D? s_hiddenBody;
     private static Node2D? s_overlaySprite;
+
+    // 当前变身成的英雄：决定血条上方显示的角色名；未变身时为 null。
+    // 与其他变身状态一样是 static（战斗中遗物会被克隆），实际生效还要看对应玩家身上有没有变身能力。
+    private static AlienHero? s_currentHero;
+
+    internal static AlienHero? CurrentHero => s_currentHero;
 
     // 变身前状态快照（原牌组 + 自身能力），变身结束时还原
     private static TransformSnapshot? s_transformSnapshot;
@@ -138,6 +148,7 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         s_transformSnapshot = null;
         s_hiddenBody = null;
         s_overlaySprite = null;
+        s_currentHero = null;
         s_alienCleanupTurnsLeft = 0;
     }
 
@@ -189,6 +200,8 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         s_transformSnapshot = player != null ? await TransformSnapshot.Capture(player) : null;
 
         ReplaceAppearance(creature, hero);
+        s_currentHero = hero;
+        RefreshNameplate(creature);
         ModAudio.PlayOneShot(TransformSfxPath);
 
         if (player != null && creature != null)
@@ -539,10 +552,89 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         }
         s_hiddenBody = null;
         s_overlaySprite = null;
+        s_currentHero = null;
 
         if (wasTransformed)
         {
             Entry.Logger.Info("[Omnitrix] 变身解除，恢复原始形象");
+            // 血条名字还原成角色名（刷新所有玩家：static 不区分玩家，且战斗结束时节点可能正在销毁，失败忽略）
+            RefreshAllPlayerNameplates();
+        }
+    }
+
+    // === 血条名字 ===
+
+    // NCreatureStateDisplay.RefreshValues（private）：会重新读 creature.Name 写进血条上方名牌。
+    // 名字只在 SetCreature / 战斗状态变化时刷新，变身中途必须自己调一次。
+    private static readonly MethodInfo? StateDisplayRefreshMethod
+        = AccessTools.Method(typeof(NCreatureStateDisplay), "RefreshValues");
+
+    // 英雄的本地化显示名（血条名字用）
+    internal static string GetHeroDisplayName(AlienHero hero)
+    {
+        string key = hero switch
+        {
+            AlienHero.Heatblast => "OTHERWORLD_TREASURES_UI_HERO_HEATBLAST",
+            AlienHero.FourArms => "OTHERWORLD_TREASURES_UI_HERO_FOUR_ARMS",
+            AlienHero.Wildmutt => "OTHERWORLD_TREASURES_UI_HERO_WILDMUTT",
+            AlienHero.Ghostfreak => "OTHERWORLD_TREASURES_UI_HERO_GHOSTFREAK",
+            _ => string.Empty,
+        };
+        if (key.Length == 0)
+        {
+            return hero.ToString();
+        }
+        return LocString.GetIfExists("gameplay_ui", key)?.GetFormattedText() ?? hero.ToString();
+    }
+
+    // 刷新单个生物的血条名牌（变身当下用）
+    private static void RefreshNameplate(Creature? creature)
+    {
+        try
+        {
+            if (creature == null || StateDisplayRefreshMethod == null)
+            {
+                return;
+            }
+            var display = NCombatRoom.Instance?
+                .GetCreatureNode(creature)?
+                .GetNodeOrNull<NCreatureStateDisplay>("%HealthBar");
+            if (display != null)
+            {
+                StateDisplayRefreshMethod.Invoke(display, null);
+            }
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Warn($"[Omnitrix] 刷新血条名字失败（已忽略）：{e.Message}");
+        }
+    }
+
+    // 刷新所有玩家的血条名牌（解除变身时用）
+    private static void RefreshAllPlayerNameplates()
+    {
+        try
+        {
+            if (StateDisplayRefreshMethod == null)
+            {
+                return;
+            }
+            foreach (var node in NCombatRoom.Instance?.CreatureNodes ?? Enumerable.Empty<NCreature>())
+            {
+                if (!GodotObject.IsInstanceValid(node) || node.Entity is not Creature entity || !entity.IsPlayer)
+                {
+                    continue;
+                }
+                var display = node.GetNodeOrNull<NCreatureStateDisplay>("%HealthBar");
+                if (display != null)
+                {
+                    StateDisplayRefreshMethod.Invoke(display, null);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Warn($"[Omnitrix] 刷新玩家血条名字失败（已忽略）：{e.Message}");
         }
     }
 

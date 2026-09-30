@@ -26,15 +26,17 @@ namespace OtherworldTreasures.Scripts.FourSouls;
 /// </summary>
 internal static class FourSoulsSystem
 {
-    // 一间房到底有没有四魂：四魂怪太多会铺满整张地图，这里给一半的概率
-    private const float RoomSoulChance = 0.5f;
+    // 一间房到底有没有四魂：四魂怪太多会铺满整张地图
+    // 0.375 = 原来的 0.5 × 3/4（四魂怪总量压到原来的四分之三）
+    private const float RoomSoulChance = 0.375f;
 
     // 档位概率：1魂 / 2魂 / 3魂（下标 = tier - 1）
+    // 多魂（2魂/3魂）整体减半：双魂怪太多，1 层压到 5%，后续档位按同比例下调
     private static readonly float[][] SoulCountChances =
     {
-        new[] { 0.90f, 0.10f, 0.00f }, // 1 层（无门槛）：1魂 90% / 2魂 10%
-        new[] { 0.65f, 0.30f, 0.05f }, // 2 层（碎片≥3）：1魂 65% / 2魂 30% / 3魂 5%
-        new[] { 0.40f, 0.50f, 0.10f }, // 3 层（碎片≥9）：1魂 40% / 2魂 50% / 3魂 10%
+        new[] { 0.95f, 0.05f, 0.00f }, // 1 层（无门槛）：1魂 95% / 2魂 5%
+        new[] { 0.83f, 0.15f, 0.02f }, // 2 层（碎片≥3）：1魂 83% / 2魂 15% / 3魂 2%
+        new[] { 0.70f, 0.25f, 0.05f }, // 3 层（碎片≥9）：1魂 70% / 2魂 25% / 3魂 5%
     };
 
     // === 遗物读写 ===

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
@@ -582,7 +583,13 @@ public class MomotaroDumplings : ModRelicTemplate,
         {
             return false;
         }
-        return move.Intents.Any(i => i.IntentType is IntentType.Summon
+        // 已经被我们改写成"格挡"的招式，必须按改写前的原始意图判断。
+        // 否则会漏判：摇招时改写了 Intents，执行时再判就读到 DefendIntent，
+        // 判定变 false → 招式的真实效果（召唤小怪等）照样放出去。
+        var intents = s_overriddenMoves.TryGetValue(move, out var overridden)
+            ? overridden.OriginalIntents
+            : move.Intents;
+        return intents.Any(i => i.IntentType is IntentType.Summon
             or IntentType.StatusCard
             or IntentType.CardDebuff
             or IntentType.Escape);
@@ -594,6 +601,7 @@ public class MomotaroDumplings : ModRelicTemplate,
     // 把当前招式的意图整体换成"格挡"，让随从头上显示的就是它真正会做的事。
     // Intents 是 private set 的自动属性，只能反射改；改完同一个 MoveState 会一直沿用，
     // 正好符合"这类招以后都当格挡用"的需求。
+    // 改写前先把原始意图留底（见 s_overriddenMoves），否则 IsUnusableMove 会读不到真相。
     private static void ConvertToBlockIntent(Creature pet)
     {
         try
@@ -603,12 +611,26 @@ public class MomotaroDumplings : ModRelicTemplate,
             {
                 return;
             }
+            if (!s_overriddenMoves.TryGetValue(move, out var overridden))
+            {
+                overridden = new OverriddenMove { OriginalIntents = move.Intents };
+                s_overriddenMoves.Add(move, overridden);
+            }
             s_moveIntentsField?.SetValue(move, new List<AbstractIntent> { new DefendIntent() });
         }
         catch (Exception e)
         {
             Entry.Logger.Info($"[MomotaroDumplings] 替换格挡意图失败（已忽略）：{e.Message}");
         }
+    }
+
+    // 被我们改写意图的招式 -> 它的原始意图。
+    // 用弱键表：MoveState 每场战斗都会随怪物模型重建，普通字典会一直累积旧引用。
+    private static readonly ConditionalWeakTable<MoveState, OverriddenMove> s_overriddenMoves = new();
+
+    private sealed class OverriddenMove
+    {
+        public IReadOnlyList<AbstractIntent> OriginalIntents = Array.Empty<AbstractIntent>();
     }
 
     private static readonly FieldInfo? s_moveIntentsField =

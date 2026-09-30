@@ -1,15 +1,18 @@
 {
   "RELIC_RARITY.99": "Doraemon",
   "POTION_RARITY.VERY_RARE": "Very Rare",
-  "OTHERWORLD_TREASURES_REWARD_LIFE_CRYSTAL": "Life Crystal: raises your Max HP by 10 when used.",
+  "OTHERWORLD_TREASURES_REWARD_LIFE_CRYSTAL": "Life Crystal: raises your Max HP by [blue]10[/blue] when used.",
 
   "OTHERWORLD_TREASURES_UI_OMNITRIX_CONFIRM": "Transform",
   "OTHERWORLD_TREASURES_UI_OMNITRIX_HINT": "◀ ▶ Switch hero    Enter / click \"Transform\" to confirm    Esc to cancel",
-  "OTHERWORLD_TREASURES_UI_OMNITRIX_SPEC_LABEL": "Choose Specialization",
-  "OTHERWORLD_TREASURES_UI_OMNITRIX_SPEC_BLAST": "Blast",
-  "OTHERWORLD_TREASURES_UI_OMNITRIX_SPEC_SHAPING": "Shaping",
-  "OTHERWORLD_TREASURES_UI_OMNITRIX_SPEC_PROPULSION": "Propulsion",
+  "OTHERWORLD_TREASURES_UI_HERO_HEATBLAST": "Heatblast",
+  "OTHERWORLD_TREASURES_UI_HERO_FOUR_ARMS": "Four Arms",
+  "OTHERWORLD_TREASURES_UI_HERO_WILDMUTT": "Wildmutt",
+  "OTHERWORLD_TREASURES_UI_HERO_GHOSTFREAK": "Ghostfreak",
   "OTHERWORLD_TREASURES_UI_FACE_USED": "(Unavailable)",
+
+  "OTHERWORLD_TREASURES_TOAST_FOUR_SOULS_TITLE": "Four Souls Gem",
+  "OTHERWORLD_TREASURES_TOAST_FOUR_SOULS_BODY": "The Four Souls Gem shatters, its shards scattering far and wide — some enemies have grown stronger because of it.",
 
   "OTHERWORLD_TREASURES_SOUL_WASTELAND": "Wasteland Soul",
   "OTHERWORLD_TREASURES_SOUL_HARMONY": "Harmony Soul",

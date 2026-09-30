@@ -1279,3 +1279,32 @@ public static class Patch_NCombatRoom_TamedPetLayout
         }
     }
 }
+
+// === 小破表：变身期间血条上方的名字显示为外星英雄 ===
+// 单人模式下 Creature.Name 返回角色名（Player.Character.Title，如"铁甲战士"）。
+// 变身后形象已替换，名字也应换成英雄名（火焰人/四手霸王/超能兽/鬼影）。
+// 只在"玩家身上挂着 OmnitrixTransformPower"时改：能力被移除（变身到期/驱散/战斗结束）后，
+// 下一次读名字自然还原成角色名，不需要专门的还原事件。
+// 名牌文本由 Omnitrix 在变身/解除时主动调 NCreatureStateDisplay.RefreshValues 刷新。
+[HarmonyPatch(typeof(Creature), "Name", MethodType.Getter)]
+public static class Patch_Creature_Name_AlienHero
+{
+    static void Postfix(Creature __instance, ref string __result)
+    {
+        try
+        {
+            if (!__instance.IsPlayer || Omnitrix.CurrentHero is not AlienHero hero)
+            {
+                return;
+            }
+            if (__instance.Powers.Any(p => p is OmnitrixTransformPower))
+            {
+                __result = Omnitrix.GetHeroDisplayName(hero);
+            }
+        }
+        catch (Exception)
+        {
+            // Name getter 被大量 UI/文本调用，绝不能抛异常
+        }
+    }
+}
