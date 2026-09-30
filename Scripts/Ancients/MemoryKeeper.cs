@@ -37,8 +37,9 @@ public class MemoryKeeper : ModAncientEventTemplate
         RunHistoryIconOutlinePath: "res://OtherworldTreasures/images/ancients/memory_keeper_head.png"
     );
 
-    // 池子：八件"先古遗物"。
+    // 池子：十件"先古遗物"。
     // 哆啦A梦道具（任意门/缩小灯/竹蜻蜓/如果电话亭/时光布/空气炮/桃太郎丸子）是【四次元口袋】的附属遗物，不进这里。
+    // 四魂之玉只在本选项池出现；点击后实际获得的是随机的【四魂之玉碎片】（碎片本身不进选项池）。
     private IReadOnlyList<EventOption> RelicPool => [
         CreateModRelicOption<DeckOfWonders>(),
         CreateModRelicOption<KurasDice>(),
@@ -47,7 +48,9 @@ public class MemoryKeeper : ModAncientEventTemplate
         CreateModRelicOption<DavesSeeds>(),
         CreateModRelicOption<MythicCharm>(),
         CreateModRelicOption<SporeSac>(),
-        CreateModRelicOption<CrossNecklace>()
+        CreateModRelicOption<CrossNecklace>(),
+        CreateModRelicOption<FourSoulsGem>(),
+        CreateModRelicOption<Omnitrix>()
     ];
 
     // 所有可能的选项（含先古之民专属药水；图鉴等使用）

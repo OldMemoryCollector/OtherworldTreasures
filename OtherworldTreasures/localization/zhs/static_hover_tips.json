@@ -3,6 +3,10 @@
     "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.description": "通过除外效果移出战斗的卡牌，无法通过常规手段取回。",
     "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.empty": "除外池是空的。",
 
+    "OTHERWORLD_TREASURES_CARDPILE_OMNITRIX_STASH.title": "暂存堆",
+    "OTHERWORLD_TREASURES_CARDPILE_OMNITRIX_STASH.description": "小破表变身时暂存你原本牌组的区域，变身结束后会原样还给你。",
+    "OTHERWORLD_TREASURES_CARDPILE_OMNITRIX_STASH.empty": "暂存堆是空的。",
+
     "OTHERWORLD_TREASURES_PLANT_GROWTH.title": "植培{Hp}",
     "OTHERWORLD_TREASURES_PLANT_GROWTH.description": "为场上的植物提升[blue]{Hp}[/blue]点最大生命值，并回复等量生命。"
 }

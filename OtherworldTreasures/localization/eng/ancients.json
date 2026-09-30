@@ -1,0 +1,8 @@
+{
+    "OTHERWORLD_TREASURES_EVENT_MEMORY_KEEPER.title": "Collector of Old Memories",
+    "OTHERWORLD_TREASURES_EVENT_MEMORY_KEEPER.epithet": "Keeper of Memories",
+    "OTHERWORLD_TREASURES_EVENT_MEMORY_KEEPER.talk.firstVisitEver.0-0.ancient": "Do you remember the adventures you had in other worlds?\nTake this — a treasure from your memories.",
+    "OTHERWORLD_TREASURES_EVENT_MEMORY_KEEPER.talk.firstVisitEver.0-0.next": "Choose a relic",
+    "OTHERWORLD_TREASURES_EVENT_MEMORY_KEEPER.talk.ANY.0-0r.ancient": "You've come back?\nTake this — a treasure from your memories. May it see you through what lies ahead.",
+    "OTHERWORLD_TREASURES_EVENT_MEMORY_KEEPER.talk.ANY.0-0r.next": "Choose again"
+}

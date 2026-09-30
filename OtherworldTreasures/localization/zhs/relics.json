@@ -85,5 +85,17 @@
     "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.wall_nut.title": "坚果墙",
     "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.wall_nut.description": "{Cost} 费，血量 {Hp}，在场时每回合开始获得 {Block} 点格挡。",
     "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.fertilizer.title": "施肥",
-    "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.fertilizer.description": "{Cost} 费，使你的植物获得 {Hp} 点最大生命值，并回复等量生命。"
+    "OTHERWORLD_TREASURES_RELIC_DAVES_SEEDS.fertilizer.description": "{Cost} 费，使你的植物获得 {Hp} 点最大生命值，并回复等量生命。",
+
+    "OTHERWORLD_TREASURES_RELIC_OMNITRIX.title": "原型Omnitrix",
+    "OTHERWORLD_TREASURES_RELIC_OMNITRIX.description": "右键点击变身成为外星英雄，持续 3 回合。变身后获得该英雄的能力（专属牌组与固有被动）。目前仅【火焰人】的能力已完成，选择其他英雄只会替换角色形象、不获得能力。",
+    "OTHERWORLD_TREASURES_RELIC_OMNITRIX.flavor": "小小年纪所向无敌，神秘超能力，双手并用变身启动，实在好神奇，捍卫和平维护正义，叫他第一名 Ben 10。",
+
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.title": "四魂之玉",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.description": "远古的宝玉，据说能实现持有者的愿望。取得时会自行破碎，化作【四魂之玉碎片】，并使地图上除 Boss 之外的敌人也带上四魂碎片。",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.flavor": "玉中封着四种魂魄：荒魂、和魂、幸魂、奇魂。得之者，得四魂。",
+
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.title": "四魂之玉碎片",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.description": "右键开启或关闭（战斗中不可切换）。开启时，你按持有碎片获得强化，地图上出现持有四魂的敌人；击败它们即可夺走其四魂。荒魂加力量、和魂加覆甲、幸魂加再生、奇魂加生命上限。四个角标分别是四种魂的数量。",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.flavor": "碎成四片的玉，各自寄宿着一种魂魄。"
 }

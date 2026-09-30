@@ -1,0 +1,43 @@
+{
+  "OTHERWORLD_TREASURES_POWER_AMPLIFY_POWER.title": "Amplify",
+  "OTHERWORLD_TREASURES_POWER_AMPLIFY_POWER.description": "Damage dealt and Block gained are tripled this turn.",
+
+  "OTHERWORLD_TREASURES_POWER_BAMBOO_COPTER_FLIGHT_POWER.title": "Takeoff",
+  "OTHERWORLD_TREASURES_POWER_BAMBOO_COPTER_FLIGHT_POWER.description": "You take 50% less damage from attacks. Expires after you are hit 5 times.",
+
+  "OTHERWORLD_TREASURES_POWER_TAMED_PET.title": "Tamed",
+  "OTHERWORLD_TREASURES_POWER_TAMED_PET.description": "Deals 50% less attack damage.",
+
+  "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.title": "Spore Sac",
+  "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description": "When you take attack damage this turn, apply {Amount} Poison to the attacker.",
+
+  "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.title": "Transformation",
+  "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.description": "{Amount} turn(s) of transformation remaining.",
+
+  "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.title": "Burn",
+  "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.description": "At the end of this enemy's turn, it takes damage equal to 2 × stacks (this damage can be blocked), then all stacks are consumed. Cards such as [gold]Detonate[/gold] can consume the stacks early.",
+
+  "OTHERWORLD_TREASURES_POWER_ALIEN_TERROR.title": "Fear",
+  "OTHERWORLD_TREASURES_POWER_ALIEN_TERROR.description": "This enemy deals 10% × stacks less damage, up to a maximum of 50%.",
+
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.title": "Magma Body",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.description": "At the start of each turn, add 1 [gold]Burn[/gold] Status card to your hand (not added if your hand is full). Gain +1 Energy max each turn. At the end of your turn, [gold]Incinerate[/gold] all Status cards in your hand, healing 2 HP for each card [gold]Incinerated[/gold]. Immune to the end-of-turn damage from [gold]Burn[/gold] Status cards in your own hand.",
+
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.title": "Solar Flare",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.description": "The first time you apply [gold]Burn[/gold] each turn, apply 2 additional [gold]Burn[/gold]. At the start of each turn, add 1 [gold]Burn[/gold] Status card to your hand (not added if your hand is full).",
+
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_FEEDBACK.title": "Scorching Feedback",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_FEEDBACK.description": "Whenever you [gold]Incinerate[/gold] a Status card, deal 2 damage to ALL enemies. Triggers up to 4 times per turn.",
+
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_DOMAIN.title": "Scorching Domain",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_DOMAIN.description": "At end of turn, if you have [gold]Incinerated[/gold] at least 3 Status cards this turn, gain 7 Block. If any enemy still has [gold]Burn[/gold] at that point, gain 3 additional Block.",
+
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.title": "Scorching Core",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.description": "Each turn, when you [gold]Incinerate[/gold] your 3rd Status card, deal 6 damage to ALL enemies and gain 6 Block. Triggers once per turn.",
+
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.title": "Supercombustion",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.description": "Whenever you gain extra Energy from cards or powers this turn, your next Attack deals +3 damage. Triggers up to 3 times per turn.",
+
+  "OTHERWORLD_TREASURES_POWER_FOUR_SOULS.title": "Four Souls",
+  "OTHERWORLD_TREASURES_POWER_FOUR_SOULS.description": "Holds: {Souls}."
+}

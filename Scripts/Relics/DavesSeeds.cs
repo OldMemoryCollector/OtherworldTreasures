@@ -13,7 +13,6 @@ using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.RelicPools;
 using MegaCrit.Sts2.Core.Rooms;
-using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib;
 using STS2RitsuLib.Interactions.RightClick;
 using STS2RitsuLib.Interop.AutoRegistration;
@@ -36,18 +35,17 @@ namespace OtherworldTreasures.Scripts.Relics;
 public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
 {
     // 本场战斗是否已经召唤过。
-    // static：战斗中遗物会被克隆，用 static 跨实例共享（与时光布/库拉的骰子一致）
-    // SavedProperty：随存档保存，避免"战斗中存档 → 退出重进"后又能召唤一次
+    // static：战斗中遗物会被克隆，用 static 跨实例共享（与时光布/库拉的骰子一致）。
+    // 刻意不做 [SavedProperty] 持久化：允许玩家战斗中存档→重进（SL）后重新召唤。
     private static bool s_summonedThisCombat;
 
-    // 本场战斗是否已经领过【施肥】卡（同样两份保险）
+    // 本场战斗是否已经领过【施肥】卡（同样不持久化，允许 SL）
     private static bool s_gotGrowthCardThisCombat;
 
     private bool _summonedThisCombat;
 
     private bool _gotGrowthCardThisCombat;
 
-    [SavedProperty]
     public bool SummonedThisCombat
     {
         get => _summonedThisCombat;
@@ -58,7 +56,6 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
         }
     }
 
-    [SavedProperty]
     public bool GotGrowthCardThisCombat
     {
         get => _gotGrowthCardThisCombat;
@@ -77,6 +74,13 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
 
     // 本场是否已经领过【施肥】卡
     private bool AlreadyGotGrowthCard => s_gotGrowthCardThisCombat || (LiveRelic?.GotGrowthCardThisCombat ?? false);
+
+    // 读档/新开跑时复位（见 RunLifecycle）：允许玩家 SL 后重新召唤/领卡
+    internal static void ResetCombatScopedState()
+    {
+        s_summonedThisCombat = false;
+        s_gotGrowthCardThisCombat = false;
+    }
 
     // 由先古之民给予，使用 Ancient 稀有度
     public override RelicRarity Rarity => RelicRarity.Ancient;

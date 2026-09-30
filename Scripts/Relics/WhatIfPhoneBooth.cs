@@ -83,6 +83,13 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
         await base.AfterCombatEnd(room);
     }
 
+    // 读档/新开跑时复位（见 RunLifecycle）：允许玩家 SL 后重新使用
+    internal static void ResetCombatScopedState()
+    {
+        s_usesThisCombat = 0;
+        s_combatStartHp = -1;
+    }
+
     public bool CanHandleRightClickLocal(ModRightClickContext context)
     {
         RitsuLibFramework.EnsureModelIdentity(this);

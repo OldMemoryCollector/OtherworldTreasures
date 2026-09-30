@@ -36,6 +36,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Models.Monsters;
 using OtherworldTreasures.Scripts.Monsters;
 using OtherworldTreasures.Scripts.Potions;
+using OtherworldTreasures.Scripts.Powers;
 using OtherworldTreasures.Scripts.Relics;
 using OtherworldTreasures.Scripts.TimeCloth;
 using STS2RitsuLib.Scaffolding.Content;
@@ -75,6 +76,35 @@ public static class Patch_CardModel_ShouldGlowGold
     {
         if (GamePatches.ForceGlowGoldCards.Contains(__instance))
             __result = true;
+    }
+}
+
+// === Patch: SoarPower/FlutterPower.ModifyDamageMultiplicative（飞行互不减免） ===
+// 原版翱翔、振翅与模组起飞一样，被攻击时减伤50%。
+// 如果攻击者也处于飞行状态（翱翔/振翅/起飞），则取消减伤——飞行打飞行没有高度优势。
+[HarmonyPatch(typeof(SoarPower), nameof(SoarPower.ModifyDamageMultiplicative))]
+public static class Patch_SoarPower_FlightNegation
+{
+    static void Postfix(Creature? dealer, ref decimal __result)
+    {
+        if (__result >= 1m) return;
+        if (BambooCopterFlightPower.IsFlying(dealer))
+        {
+            __result = 1m;
+        }
+    }
+}
+
+[HarmonyPatch(typeof(FlutterPower), nameof(FlutterPower.ModifyDamageMultiplicative))]
+public static class Patch_FlutterPower_FlightNegation
+{
+    static void Postfix(Creature? dealer, ref decimal __result)
+    {
+        if (__result >= 1m) return;
+        if (BambooCopterFlightPower.IsFlying(dealer))
+        {
+            __result = 1m;
+        }
     }
 }
 
@@ -131,7 +161,9 @@ internal static class KurasDiceL10n
             int face = KurasDice.LastRolledValue;
             bool used = KurasDice.GlobalUsedFaces.Contains(face);
             var ls = FaceDesc(face);
-            ls.Add("Status", used ? "(已失效)" : "");
+            ls.Add("Status", used
+                ? new LocString("gameplay_ui", "OTHERWORLD_TREASURES_UI_FACE_USED").GetFormattedText()
+                : "");
             return ls;
         }
         return BaseDesc;

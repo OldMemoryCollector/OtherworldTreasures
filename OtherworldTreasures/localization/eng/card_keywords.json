@@ -1,0 +1,25 @@
+{
+    "OTHERWORLD_TREASURES_KEYWORD_EXCLUDE.title": "Exclude",
+    "OTHERWORLD_TREASURES_KEYWORD_EXCLUDE.description": "Moves the card into the Exclude Pile. It cannot be recovered by normal means.",
+
+    "OTHERWORLD_TREASURES_KEYWORD_CHOICE.title": "Choice",
+    "OTHERWORLD_TREASURES_KEYWORD_CHOICE.description": "When played, choose one of several effects.",
+
+    "OTHERWORLD_TREASURES_KEYWORD_ANNIHILATE.title": "Annihilate",
+    "OTHERWORLD_TREASURES_KEYWORD_ANNIHILATE.description": "At the end of your turn, if this card is still in your [gold]Hand[/gold], [gold]Exclude[/gold] it.",
+
+    "OTHERWORLD_TREASURES_KEYWORD_REWIND.title": "Rewind",
+    "OTHERWORLD_TREASURES_KEYWORD_REWIND.description": "Return to the state at the start of the previous turn: restore HP, Block, and power stacks, and enemies' intents along with them. On relics that track a counter, steps the counter back by one turn.",
+
+    "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.title": "Accelerate",
+    "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.description": "Fast-forward to the state of the next turn: on yourself, resolve the duration-based powers you have; on an enemy, advance its intent. On relics that track a counter, advances the counter by one turn.",
+
+    "OTHERWORLD_TREASURES_KEYWORD_INCINERATE.title": "Incinerate",
+    "OTHERWORLD_TREASURES_KEYWORD_INCINERATE.description": "Exhaust the Status cards in your hand. [gold]Magma Body[/gold] heals 2 HP for each card Incinerated.",
+
+    "OTHERWORLD_TREASURES_KEYWORD_DETONATE.title": "Detonate",
+    "OTHERWORLD_TREASURES_KEYWORD_DETONATE.description": "Remove all [gold]Burn[/gold] from the target and deal extra damage based on the stacks Detonated, then the stacks are consumed.",
+
+    "OTHERWORLD_TREASURES_KEYWORD_CLEANSE.title": "Cleanse",
+    "OTHERWORLD_TREASURES_KEYWORD_CLEANSE.description": "Remove [gold]Burn[/gold] from the target without dealing Detonate damage; the stacks are consumed."
+}

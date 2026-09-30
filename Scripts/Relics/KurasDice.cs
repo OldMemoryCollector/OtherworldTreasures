@@ -83,7 +83,9 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
             {
                 bool unavailable = inRun && (GlobalIsBroken || GlobalUsedFaces.Contains(face));
                 var desc = new LocString("relics", $"OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_{face}.desc");
-                desc.Add("Status", unavailable ? "(已失效)" : "");
+                desc.Add("Status", unavailable
+                    ? new LocString("gameplay_ui", "OTHERWORLD_TREASURES_UI_FACE_USED").GetFormattedText()
+                    : "");
                 yield return new HoverTip(
                     new LocString("relics", $"OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_{face}.title"),
                     desc);

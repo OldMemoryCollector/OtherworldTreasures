@@ -88,6 +88,13 @@ public class TimeCloth : ModRelicTemplate, IDoraemonItem, IModRightClickableReli
         await base.AfterCombatEnd(room);
     }
 
+    // 读档/新开跑时复位（见 RunLifecycle）：允许玩家 SL 后再次获得时光布
+    internal static void ResetCombatScopedState()
+    {
+        s_grantedThisCombat = false;
+        TimeClothState.Clear();
+    }
+
     // 右键预检：确保身份令牌已注册
     public bool CanHandleRightClickLocal(ModRightClickContext context)
     {

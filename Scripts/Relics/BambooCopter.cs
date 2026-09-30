@@ -92,6 +92,12 @@ public class BambooCopter : ModRelicTemplate, IDoraemonItem
         await base.AfterCombatEnd(room);
     }
 
+    // 读档/新开跑时复位（见 RunLifecycle）
+    internal static void ResetCombatScopedState()
+    {
+        s_landedTurns = 0;
+    }
+
     private async Task TakeOff(PlayerChoiceContext choiceContext, Player? player)
     {
         var creature = player?.Creature;

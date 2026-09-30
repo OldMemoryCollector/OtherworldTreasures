@@ -131,6 +131,13 @@ public class SporeSac : ModRelicTemplate,
         await base.AfterObtained();
     }
 
+    // 读档/新开跑时复位（见 RunLifecycle）：只清战斗内回合计数；
+    // 基础层数与胜利进度是跨战斗持久数据（有 SavedProperty），由 SyncFromSave 从存档恢复，不能在这里清
+    internal static void ResetCombatScopedState()
+    {
+        s_combatTurn = 0;
+    }
+
     // 读档后 static 会重置为初始值，用存档值校正（存档权威）
     private void SyncFromSave()
     {
@@ -197,82 +204,101 @@ public class SporeSac : ModRelicTemplate,
             $"[SporeSac] 对攻击者 {dealer.GetType().Name} 施加 {stacks} 层中毒" +
             $"（基础 {s_poisonStacks} + 战斗内 {Math.Max(0, s_combatTurn - 1)}，第 {s_combatTurn} 回合）");
 
-        // 在攻击者身上播放绿色版"施加负面"意图特效（纯本地视觉，不影响游戏状态）
-        SpawnGreenDebuffVfx(dealer);
+        // 自己身上爆出绿色孢子（纯本地视觉，不影响游戏状态）——孢子囊被击中时喷出孢子
+        SpawnSporeBurstVfx();
     }
 
-    // 绿色版 debuff 意图贴图缓存（红绿通道对调一次，之后复用）
-    private static Texture2D? s_greenDebuffTexture;
+    // 孢子爆发用的贴图与粒子材质：只在首次播放时构建一次，之后每次爆发复用。
+    // （每次受击都要播放，绝不能每次去加载场景 / 逐像素处理贴图，否则战斗会掉帧）
+    private static Texture2D? s_sporeTexture;
+    private static ParticleProcessMaterial? s_sporeMaterial;
+    private static bool s_sporeTextureMissingLogged;
 
-    // 在攻击者身上播放"施加负面"意图的粒子特效（克隆原版 intent.tscn 里的粒子，
-    // 继承原版全部参数），贴图换成 debuff 图标并转成中毒绿。
-    // 只在本地播放、不影响任何游戏状态，联机各客户端表现一致（触发时机确定）。
-    private void SpawnGreenDebuffVfx(Creature dealer)
+    // 「石化刺胞 / sludge spinner」喷油用的那张小液滴贴图（49x48），拿来做孢子
+    private const string SporeParticleTexturePath =
+        "res://images/vfx/monsters/sludge_spinner/sludge_spinner_particle_1.png";
+
+    // 孢子绿（与遗物角标同色 #84d64b）
+    private static readonly Color SporeGreen = new(0.518f, 0.839f, 0.294f);
+
+    // 借用原版「sludge spinner 喷油」那套粒子（同贴图、同液滴尺度），改成孢子绿、
+    // 从自己身上朝四面八方炸开，表示孢子囊被击中时喷出孢子。
+    // 只复用贴图和参数，不实例化原版任何场景，播放成本极低。
+    private void SpawnSporeBurstVfx()
     {
         try
         {
-            var node = NCombatRoom.Instance?.GetCreatureNode(dealer);
-            if (node == null)
+            var selfNode = NCombatRoom.Instance?.GetCreatureNode(Owner?.Creature);
+            var container = NCombatRoom.Instance?.CombatVfxContainer;
+            if (selfNode == null || container == null)
             {
                 return;
             }
 
-            // 实例化原版意图场景但绝不把场景本体加进树（它的 _EnterTree 会挂接原版战斗信号，
-            // _intent 为空时触发状态变化会空引用），只克隆出其中的粒子节点来用
-            var intentScene = ResourceLoader.Load<PackedScene>("res://scenes/combat/intent.tscn");
-            if (intentScene?.Instantiate() is not { } intentRoot)
+            s_sporeTexture ??= GD.Load<Texture2D>(SporeParticleTexturePath);
+            if (s_sporeTexture == null)
             {
-                return;
-            }
-            var particles = intentRoot.GetNodeOrNull<CpuParticles2D>("%IntentParticle")?.Duplicate() as CpuParticles2D;
-            intentRoot.Free();
-            if (particles == null)
-            {
-                return;
-            }
-
-            // 贴图：debuff 意图图标，像素级红绿通道对调成中毒绿（红色无法用染色变绿，乘法只会变黑）
-            if (s_greenDebuffTexture == null
-                && ResourceLoader.Exists("res://images/atlases/intent_atlas.sprites/intent_debuff.tres"))
-            {
-                var img = GD.Load<Texture2D>("res://images/atlases/intent_atlas.sprites/intent_debuff.tres")?.GetImage();
-                if (img != null)
+                if (!s_sporeTextureMissingLogged)
                 {
-                    img.Convert(Image.Format.Rgba8);
-                    for (int y = 0; y < img.GetHeight(); y++)
-                    {
-                        for (int x = 0; x < img.GetWidth(); x++)
-                        {
-                            var p = img.GetPixel(x, y);
-                            img.SetPixel(x, y, new Color(p.G, p.R, p.B, p.A));
-                        }
-                    }
-                    s_greenDebuffTexture = ImageTexture.CreateFromImage(img);
+                    s_sporeTextureMissingLogged = true;
+                    Entry.Logger.Warn($"[SporeSac] 找不到孢子贴图 {SporeParticleTexturePath}，孢子爆发特效已跳过");
                 }
+                return;
             }
-            if (s_greenDebuffTexture != null)
+            s_sporeMaterial ??= new ParticleProcessMaterial
             {
-                particles.Texture = s_greenDebuffTexture;
-            }
-
-            // 挂到攻击者身上：先入树定位，再单发爆发
-            node.AddChild(particles);
-            particles.GlobalPosition = node.VfxSpawnPosition;
-            particles.ZIndex = 20;
-            particles.OneShot = true;
-            particles.Emitting = true;
-            node.GetTree().CreateTimer(3.0).Timeout += () =>
-            {
-                if (GodotObject.IsInstanceValid(particles))
-                {
-                    particles.QueueFree();
-                }
+                ParticleFlagDisableZ = true,
+                // 默认 Point 发射形状：从自己身上一个点向四周爆开
+                Direction = new Vector3(0f, -1f, 0f),
+                Spread = 180f, // 全方向
+                InitialVelocityMin = 280f,
+                InitialVelocityMax = 620f,
+                AngularVelocityMin = -180f,
+                AngularVelocityMax = 180f,
+                Gravity = new Vector3(0f, -120f, 0f),
+                DampingMin = 60f,
+                DampingMax = 140f,
+                ScaleMin = 0.15f,
+                ScaleMax = 0.35f,
+                Color = Colors.White,
             };
+
+            var burst = new GpuParticles2D
+            {
+                Texture = s_sporeTexture,
+                ProcessMaterial = s_sporeMaterial,
+                Amount = 140,
+                Lifetime = 0.7,
+                OneShot = true,
+                Explosiveness = 1f,
+                LocalCoords = false, // 喷出后不跟随角色移动
+                SelfModulate = SporeGreen,
+            };
+            // 与游戏自己的上负面特效同一容器（原版 NPowerAppliedDebuffVfx 也加在这里），坐标即世界坐标
+            burst.GlobalPosition = selfNode.VfxSpawnPosition;
+
+            // 与原版一样延迟挂载，避免在节点树遍历中改结构
+            Callable.From(() =>
+            {
+                if (!GodotObject.IsInstanceValid(container) || !GodotObject.IsInstanceValid(burst))
+                {
+                    return;
+                }
+                container.AddChild(burst);
+                burst.Restart();
+                container.GetTree().CreateTimer(2.0).Timeout += () =>
+                {
+                    if (GodotObject.IsInstanceValid(burst))
+                    {
+                        burst.QueueFree();
+                    }
+                };
+            }).CallDeferred();
         }
         catch (Exception ex)
         {
             // 特效失败绝不能打断战斗钩子流程，记日志即可
-            Entry.Logger.Warn($"[SporeSac] 绿色负面特效播放失败：{ex.Message}");
+            Entry.Logger.Warn($"[SporeSac] 孢子爆发特效播放失败：{ex.Message}");
         }
     }
 

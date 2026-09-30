@@ -261,24 +261,78 @@ public class MomotaroDumplings : ModRelicTemplate,
     {
         if (player == Owner)
         {
-            foreach (var pet in TamedPets.ActiveCreatures.ToList())
+            // 按"最先抓到的先动"顺序行动（Records 顺序）；活动表是 Dictionary，
+            // 有随从死亡被移除后字典会复用空位，顺序不再可靠
+            var pets = TamedPets.ActiveInTameOrder(player);
+            if (pets.Count > 0)
             {
-                if (!CombatManager.Instance.IsInProgress || !pet.IsAlive)
+                // 随从一只一只行动，这期间玩家出不了牌，所以先把原版"手牌不可用"的表现打出来
+                // （手牌下沉 + 变暗，和敌方回合是同一套动画），否则玩家会以为是卡了
+                SetHandVisuallyDisabled(true);
+                try
                 {
-                    continue;
+                    foreach (var pet in pets)
+                    {
+                        if (!CombatManager.Instance.IsInProgress || !pet.IsAlive)
+                        {
+                            continue;
+                        }
+                        var combatState = pet.CombatState;
+                        if (combatState == null)
+                        {
+                            continue;
+                        }
+                        await SafeRollAndShow(pet);
+                        // 稍等片刻，让玩家看清头顶的意图图标
+                        await Cmd.CustomScaledWait(0.4f, 0.6f);
+                        await SafePerform(pet, combatState);
+                    }
                 }
-                var combatState = pet.CombatState;
-                if (combatState == null)
+                finally
                 {
-                    continue;
+                    SetHandVisuallyDisabled(false);
                 }
-                await SafeRollAndShow(pet);
-                // 稍等片刻，让玩家看清头顶的意图图标
-                await Cmd.CustomScaledWait(0.4f, 0.6f);
-                await SafePerform(pet, combatState);
             }
         }
         await base.AfterPlayerTurnStart(choiceContext, player);
+    }
+
+    // === 随从行动期间的手牌表现 ===
+
+    // 直接复用原版 NPlayerHand 内部那套"手牌不可用"动画（手牌下沉 + 变暗），
+    // 和敌方回合给玩家的信号完全一致，不另造一套自制的 UI。
+    // 这三个成员在 NPlayerHand 里都是 private，只能反射取；取不到就只少个表现提示，不影响玩法。
+    private static readonly MethodInfo? s_handAnimDisable = typeof(NPlayerHand)
+        .GetMethod("AnimDisable", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    private static readonly MethodInfo? s_handAnimEnable = typeof(NPlayerHand)
+        .GetMethod("AnimEnable", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    private static readonly FieldInfo? s_handIsDisabledField = typeof(NPlayerHand)
+        .GetField("_isDisabled", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    // 切换手牌的"不可出牌"表现。已经处于目标状态就不动 —— 免得把别的流程（比如多人里的
+    // 非当前玩家）设成禁用的手牌给解禁了。全程兜异常：这只是表现层，绝不能影响回合流程。
+    private static void SetHandVisuallyDisabled(bool disabled)
+    {
+        try
+        {
+            var hand = NCombatRoom.Instance?.Ui?.Hand;
+            var method = disabled ? s_handAnimDisable : s_handAnimEnable;
+            if (hand == null || method == null)
+            {
+                return;
+            }
+            if (s_handIsDisabledField?.GetValue(hand) as bool? == disabled)
+            {
+                return;
+            }
+            method.Invoke(hand, null);
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Info($"[MomotaroDumplings] 手牌表现切换失败（已忽略）：{e.Message}");
+        }
     }
 
     // === 承伤链：让驯服的随从替玩家挨打 ===

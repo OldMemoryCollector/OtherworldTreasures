@@ -1,0 +1,12 @@
+{
+    "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.title": "Exclude Pile",
+    "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.description": "Cards removed from combat by [gold]Exclude[/gold] effects. They cannot be recovered by normal means.",
+    "OTHERWORLD_TREASURES_CARDPILE_EXCLUSION_PILE.empty": "The Exclude Pile is empty.",
+
+    "OTHERWORLD_TREASURES_CARDPILE_OMNITRIX_STASH.title": "Stash Pile",
+    "OTHERWORLD_TREASURES_CARDPILE_OMNITRIX_STASH.description": "Where your original deck is kept while the Omnitrix has you transformed. It is returned to you when the transformation ends.",
+    "OTHERWORLD_TREASURES_CARDPILE_OMNITRIX_STASH.empty": "The Stash Pile is empty.",
+
+    "OTHERWORLD_TREASURES_PLANT_GROWTH.title": "Plant Growth {Hp}",
+    "OTHERWORLD_TREASURES_PLANT_GROWTH.description": "Give your plants on the field [blue]{Hp}[/blue] Max HP and heal them for the same amount."
+}

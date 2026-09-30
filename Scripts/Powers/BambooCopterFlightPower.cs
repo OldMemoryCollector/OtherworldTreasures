@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.ValueProps;
 
@@ -41,6 +42,7 @@ public class BambooCopterFlightPower : PowerModel
     public override LocString Description => new LocString("powers", "OTHERWORLD_TREASURES_POWER_BAMBOO_COPTER_FLIGHT_POWER.description");
 
     // 被敌人攻击时受到的伤害减少 50%（与"被攻击 3 次后失效"对齐，非攻击伤害不减免）
+    // 如果攻击者同样处于飞行状态（翱翔/起飞），则不触发减伤——飞行打飞行没有高度优势
     public override decimal ModifyDamageMultiplicative(
         Creature? target, decimal amount, ValueProp props,
         Creature? dealer, CardModel? cardSource, CardPlay? cardPlay)
@@ -53,7 +55,28 @@ public class BambooCopterFlightPower : PowerModel
         {
             return 1m;
         }
+        if (IsFlying(dealer))
+        {
+            return 1m;
+        }
         return 0.5m;
+    }
+
+    // 检查一个生物是否处于飞行状态（拥有翱翔、振翅、起飞等飞行类能力）
+    internal static bool IsFlying(Creature? creature)
+    {
+        if (creature == null)
+        {
+            return false;
+        }
+        foreach (var power in creature.Powers)
+        {
+            if (power is SoarPower or FlutterPower or BambooCopterFlightPower)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     // 被攻击：消耗一次起飞次数（Amount 即剩余次数）

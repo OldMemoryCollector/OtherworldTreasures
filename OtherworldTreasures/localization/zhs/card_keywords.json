@@ -12,5 +12,14 @@
     "OTHERWORLD_TREASURES_KEYWORD_REWIND.description": "回到上一回合开始时的状态：恢复生命、格挡与状态层数，敌人的意图也会一并还原。对带回合计数的遗物使用时，把计数退回上一回合。",
 
     "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.title": "加速",
-    "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.description": "快进到下一回合的状态：对自己使用时结算身上的持续状态，对敌人使用时推进其意图。对带回合计数的遗物使用时，把计数推进一回合。"
+    "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.description": "快进到下一回合的状态：对自己使用时结算身上的持续状态，对敌人使用时推进其意图。对带回合计数的遗物使用时，把计数推进一回合。",
+
+    "OTHERWORLD_TREASURES_KEYWORD_INCINERATE.title": "燃尽",
+    "OTHERWORLD_TREASURES_KEYWORD_INCINERATE.description": "把手牌中的状态牌消耗掉。每燃尽 1 张，【熔岩之躯】回复 2 点生命。",
+
+    "OTHERWORLD_TREASURES_KEYWORD_DETONATE.title": "引爆",
+    "OTHERWORLD_TREASURES_KEYWORD_DETONATE.description": "清除目标身上全部【灼伤】，并按引爆的层数造成额外伤害，然后层数归零。",
+
+    "OTHERWORLD_TREASURES_KEYWORD_CLEANSE.title": "清除",
+    "OTHERWORLD_TREASURES_KEYWORD_CLEANSE.description": "移除目标身上的【灼伤】，层数归零，但不产生引爆伤害。"
 }

@@ -6,10 +6,12 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Rewards;
+using OtherworldTreasures.Scripts.Cards.Alien;
 using OtherworldTreasures.Scripts.Rewards;
 using STS2RitsuLib;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Combat.Rewards;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Interop;
 using HarmonyLib;
 using Logger = MegaCrit.Sts2.Core.Logging.Logger;
@@ -24,6 +26,9 @@ public class Entry
 
     // 自定义牌堆：除外池（类似消耗堆，但卡牌无法通过常规手段取回）
     public static PileType ExclusionPile;
+
+    // 自定义牌堆：小破表变身的暂存堆（Headless 永不显示，只用来放变身前暂存的原始牌堆）
+    public static PileType OmnitrixStashPile;
 
     // 自定义奖励：生命水晶（战后奖励小概率出现，领取后生命上限 +10）
     public static RewardType LifeCrystalRewardType;
@@ -44,6 +49,10 @@ public class Entry
         // Harmony patches
         var harmony = new Harmony("sts2.otherworldtreasures.patches");
         harmony.PatchAll();
+
+        // 跑局生命周期：读档/新开跑时复位各遗物的"本场战斗"级静态状态，
+        // 否则战斗中存档再读档会让「小破表」这类一次性遗物永远不可用（允许玩家 SL）
+        RunLifecycle.Initialize();
 
         // 第三方模组异常防护：给「皮皮倒带: Rewind」的 RewindButton.OnTurnStarted 挂 Finalizer 吞异常。
         // 它在战斗 UI 被重建后会持有已释放节点并抛 ObjectDisposedException，而该异常抛在回合循环内部，
@@ -85,6 +94,25 @@ public class Entry
             // 只有有牌进入除外堆时才显示按钮（与消耗堆一致，空堆隐藏）
             VisibleWhen = ctx => ctx.Pile != null && ctx.Pile.Cards.Count > 0,
         }).PileType;
+
+        // 小破表变身用的"暂存堆"：变身前把玩家原始牌堆整体挪进来，变身结束再挪回抽牌堆。
+        // Headless = 永不显示（没有按钮、不占屏幕），VisibleWhen 再兜一层。
+        OmnitrixStashPile = registry.RegisterOwned("omnitrix_stash", new ModCardPileSpec
+        {
+            Scope = ModCardPileScope.CombatOnly,
+            Style = ModCardPileUiStyle.Headless,
+            Anchor = ModCardPileAnchor.Default,
+            IconPath = "res://OtherworldTreasures/images/piles/exclusion_pile.svg",
+            OnOpen = ctx => ctx.ShowDefaultPileScreen(),
+            VisibleWhen = ctx => false,
+        }).PileType;
+
+        // 火焰人卡池的图鉴筛选器：让火焰人的专属牌在卡牌图鉴里单列一类。
+        // 图标直接用战士的角色图标（没专门做卡池图标，复用原版资源）。
+        ModContentRegistry.For(ModId)
+            .RegisterCardLibraryCompendiumSharedPoolFilter<HeatblastCardPool>(
+                "heatblast_pool",
+                "res://images/ui/top_panel/character_icon_ironclad.png");
 
         // 附魔金苹果作为先古之民的选项之一，在 MemoryKeeper.GenerateInitialOptions 里与遗物一起抽取
 
