@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
@@ -18,25 +19,34 @@ public static class LifeCrystalRewardInjection
     // 每次战后奖励生成时出现生命水晶的概率
     public const float AppearChance = 0.02f;
 
-    static void Prefix(Player player, AbstractRoom room)
+    static bool Prefix(Player player, AbstractRoom room)
     {
-        if (room is not CombatRoom combatRoom)
+        try
         {
-            return;
-        }
+            if (room is not CombatRoom combatRoom)
+            {
+                return true;
+            }
 
-        // 读档后该奖励已由 ModRewardRegistry 工厂重建进 ExtraRewards；同一玩家只注入一次
-        if (combatRoom.ExtraRewards.TryGetValue(player, out var existing)
-            && existing.Any(r => r is LifeCrystalReward))
-        {
-            return;
-        }
+            // 读档后该奖励已由 ModRewardRegistry 工厂重建进 ExtraRewards；同一玩家只注入一次
+            if (combatRoom.ExtraRewards.TryGetValue(player, out var existing)
+                && existing.Any(r => r is LifeCrystalReward))
+            {
+                return true;
+            }
 
-        // 必须走所有客户端共享的奖励 RNG：原版奖励滚点也用它，保证联机各端结果一致
-        if (player.PlayerRng.Rewards.NextFloat() < AppearChance)
-        {
-            combatRoom.AddExtraReward(player, new LifeCrystalReward(player));
-            Entry.Logger.Info("[LifeCrystal] 生命水晶加入战后奖励");
+            // 必须走所有客户端共享的奖励 RNG：原版奖励滚点也用它，保证联机各端结果一致
+            if (player.PlayerRng.Rewards.NextFloat() < AppearChance)
+            {
+                combatRoom.AddExtraReward(player, new LifeCrystalReward(player));
+                Entry.Logger.Info("[LifeCrystal] 生命水晶加入战后奖励");
+            }
         }
+        catch (Exception e)
+        {
+            // 注入失败绝不能阻断原版奖励生成：返回 true 放行
+            Entry.Logger.Warn($"[LifeCrystal] 战后奖励注入失败（已忽略，原版奖励照常生成）：{e}");
+        }
+        return true;
     }
 }

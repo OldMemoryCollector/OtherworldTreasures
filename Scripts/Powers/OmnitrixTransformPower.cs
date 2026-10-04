@@ -34,20 +34,11 @@ public class OmnitrixTransformPower : ModPowerTemplate
     // 数量直接显示在图标上（剩余回合），需要手动递减
     public override PowerStackType StackType => PowerStackType.Counter;
 
-    // 变身标志：用当前英雄的立绘（同时也就是"变身后获得的能力"的标志），
-    // 图标上的数字即剩余变身回合数；英雄还没有专属内容时退回变身器（小破表）的图。
-    // 注意：图鉴/预载阶段读的是 canonical 模型，此时碰 Owner 会抛 CanonicalModelException，
-    // 所以必须先判 IsMutable 短路掉（canonical 走兜底图标）。
-    public override PowerAssetProfile AssetProfile
-    {
-        get
-        {
-            string path = IsMutable && Owner?.GetPower<HeatblastPassivePower>() != null
-                ? Omnitrix.GetHeroTexturePath(AlienHero.Heatblast)
-                : "res://OtherworldTreasures/images/relics/Omnitrix.png";
-            return new PowerAssetProfile(IconPath: path, BigIconPath: path);
-        }
-    }
+    // 变身标志：固定用【变身标志】图标（图标上的数字即剩余变身回合数）。
+    // 不要用英雄立绘——那是"变身后获得的能力"的标志，两者不是一回事。
+    public override PowerAssetProfile AssetProfile => new(
+        IconPath: "res://OtherworldTreasures/images/powers/Omnitrix_Transform.png",
+        BigIconPath: "res://OtherworldTreasures/images/powers/Omnitrix_Transform_Big.png");
 
     // 悬浮时把"变身后获得的能力"一并显示出来（目前的英雄被动）。同样要避开 canonical 模型。
     protected override IEnumerable<IHoverTip> AdditionalHoverTips
@@ -110,7 +101,8 @@ public class OmnitrixTransformPower : ModPowerTemplate
     // 兜底：能力被其它方式移除（战斗结束清空、被驱散等）时也要变回原形，但不播音、不动冷却
     public override Task AfterRemoved(Creature oldOwner)
     {
-        Omnitrix.RestoreAppearanceSilently();
+        // 按玩家恢复：状态是按玩家隔离的，必须明确指定是谁变回来
+        Omnitrix.RestoreAppearanceSilently(oldOwner.Player);
         return Task.CompletedTask;
     }
 }

@@ -24,8 +24,13 @@ public class BambooCopter : ModRelicTemplate, IDoraemonItem
     // 落地后需要等待的回合数才会再次起飞（描述中不提及）
     private const int RelandTurns = 10;
 
-    // 战斗中遗物会被克隆，用 static 跨实例共享；每局新 run 在 AfterObtained 重置
-    private static int s_landedTurns;
+    // 按玩家隔离的状态（遗物实例每次战斗重建，static 又会被两名玩家共享）
+    private sealed class PlayerState
+    {
+        public int LandedTurns;
+    }
+
+    private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
 
     // 哆啦A梦道具：自定义稀有度
     public override RelicRarity Rarity => ModRelicRarity.Doraemon;
@@ -47,10 +52,10 @@ public class BambooCopter : ModRelicTemplate, IDoraemonItem
     protected override IEnumerable<IHoverTip> AdditionalHoverTips => base.AdditionalHoverTips
         .Append(HoverTipFactory.FromPower<BambooCopterFlightPower>((int)FlightCharges));
 
-    // 每局新 run 重置 static 状态
+    // 每局新 run 重置状态
     public override async Task AfterObtained()
     {
-        s_landedTurns = 0;
+        S.LandedTurns = 0;
         await base.AfterObtained();
     }
 
@@ -59,7 +64,7 @@ public class BambooCopter : ModRelicTemplate, IDoraemonItem
     {
         if (room is CombatRoom)
         {
-            s_landedTurns = 0;
+            S.LandedTurns = 0;
             await TakeOff(new ThrowingPlayerChoiceContext(), Owner);
         }
         await base.AfterRoomEntered(room);
@@ -73,11 +78,11 @@ public class BambooCopter : ModRelicTemplate, IDoraemonItem
             bool flying = player.Creature.Powers.Any(p => p is BambooCopterFlightPower);
             if (!flying)
             {
-                s_landedTurns++;
-                Entry.Logger.Info($"[BambooCopter] Landed, turn {s_landedTurns}/{RelandTurns}");
-                if (s_landedTurns >= RelandTurns)
+                S.LandedTurns++;
+                Entry.Logger.Info($"[BambooCopter] Landed, turn {S.LandedTurns}/{RelandTurns}");
+                if (S.LandedTurns >= RelandTurns)
                 {
-                    s_landedTurns = 0;
+                    S.LandedTurns = 0;
                     await TakeOff(choiceContext, player);
                 }
             }
@@ -88,14 +93,14 @@ public class BambooCopter : ModRelicTemplate, IDoraemonItem
     // 战斗结束：清空循环状态
     public override async Task AfterCombatEnd(CombatRoom room)
     {
-        s_landedTurns = 0;
+        S.LandedTurns = 0;
         await base.AfterCombatEnd(room);
     }
 
     // 读档/新开跑时复位（见 RunLifecycle）
     internal static void ResetCombatScopedState()
     {
-        s_landedTurns = 0;
+        PerPlayerState<PlayerState>.ClearAll();
     }
 
     private async Task TakeOff(PlayerChoiceContext choiceContext, Player? player)

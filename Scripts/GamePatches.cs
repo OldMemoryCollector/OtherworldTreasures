@@ -25,6 +25,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.PotionLab;
 using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Saves.Runs;
 using MegaCrit.Sts2.Core.Unlocks;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Nodes;
@@ -149,17 +150,19 @@ internal static class KurasDiceL10n
     public static LocString Broken => new LocString("relics", Key + ".desc.broken");
     public static LocString FaceDesc(int face) => new LocString("relics", $"{Key}.face_{face}.desc");
 
-    /// <summary>当前状态应该显示的描述文本（不含 DynamicVars）</summary>
-    public static LocString CurrentText()
+    /// <summary>当前状态应该显示的描述文本（不含 DynamicVars）。
+    /// 状态按玩家分开（两名玩家可能各有一件骰子），所以要看这件遗物主人的状态。</summary>
+    public static LocString CurrentText(RelicModel relic)
     {
         // 局外（图鉴/收藏）只显示基础描述，不显示运行中的点数与"已失效"状态，
         // 否则上一局的骰子状态会被带进图鉴。
         if (!(RunManager.Instance?.IsInProgress ?? false)) return BaseDesc;
-        if (KurasDice.GlobalIsBroken) return Broken;
-        if (KurasDice.LastRolledValue > 0)
+        var owner = relic.Owner;
+        if (KurasDice.IsBrokenFor(owner)) return Broken;
+        int face = KurasDice.RolledFaceFor(owner);
+        if (face > 0)
         {
-            int face = KurasDice.LastRolledValue;
-            bool used = KurasDice.GlobalUsedFaces.Contains(face);
+            bool used = KurasDice.IsFaceUsedFor(owner, face);
             var ls = FaceDesc(face);
             ls.Add("Status", used
                 ? new LocString("gameplay_ui", "OTHERWORLD_TREASURES_UI_FACE_USED").GetFormattedText()
@@ -201,7 +204,7 @@ public static class Patch_RelicModel_Description
     static void Postfix(RelicModel __instance, ref LocString __result)
     {
         if (__instance is not KurasDice) return;
-        __result = KurasDiceL10n.CurrentText();
+        __result = KurasDiceL10n.CurrentText(__instance);
     }
 }
 
@@ -225,7 +228,8 @@ public static class Patch_RelicModel_CombatCompactDescription
     static void Postfix(RelicModel __instance, ref LocString __result)
     {
         if (__instance is not ICombatCompactRelic compact) return;
-        if (!CombatManager.Instance.IsInProgress) return;
+        // null 安全：联机开局等时机 CombatManager 可能尚未就绪，不可直接解引用
+        if (CombatManager.Instance?.IsInProgress != true) return;
         // 只隐藏额外提示、主描述保持完整的遗物（如惊奇套牌）在此直接返回
         if (!compact.UseCompactDescriptionInCombat) return;
         var combatDesc = LocString.GetIfExists("relics", __instance.Id.Entry + ".combatDescription");
@@ -246,7 +250,8 @@ public static class Patch_ModRelic_CombatCompactExtraTips
     static void Postfix(RelicModel __instance, ref IEnumerable<IHoverTip> __result)
     {
         if (__instance is not ICombatCompactRelic) return;
-        if (CombatManager.Instance.IsInProgress)
+        // null 安全：联机开局等时机 CombatManager 可能尚未就绪，不可直接解引用
+        if (CombatManager.Instance?.IsInProgress == true)
         {
             __result = Array.Empty<IHoverTip>();
         }
@@ -872,10 +877,24 @@ public static class Patch_NMapScreen_FreeTravelPoints
 [HarmonyPatch(typeof(NRelicInventoryHolder), "_Ready")]
 public static class Patch_NRelicInventoryHolder_TargetingHover
 {
+    // 每个遗物槽都会建一次，异常日志只记一次，避免刷屏
+    private static bool s_warned;
+
     static void Postfix(NRelicInventoryHolder __instance)
     {
-        __instance.MouseEntered += () => NTargetManager.Instance?.OnNodeHovered(__instance);
-        __instance.MouseExited += () => NTargetManager.Instance?.OnNodeUnhovered(__instance);
+        try
+        {
+            __instance.MouseEntered += () => NTargetManager.Instance?.OnNodeHovered(__instance);
+            __instance.MouseExited += () => NTargetManager.Instance?.OnNodeUnhovered(__instance);
+        }
+        catch (Exception e)
+        {
+            if (!s_warned)
+            {
+                s_warned = true;
+                Entry.Logger.Warn($"[TargetingHover] 遗物图标悬停转发补丁异常（已忽略，仅记一次）：{e}");
+            }
+        }
     }
 }
 
@@ -1175,6 +1194,11 @@ public static class Patch_NCombatRoom_PlantLayout
 
             plantNode.Position = playerNode.Position + plant.LayoutOffset;
 
+            // 原版 AddCreature 会把所有"非骨手随从"统一挪到一个固定位置，会把先前召唤的植物
+            // 以及驯服随从（桃太郎）一并带跑；所以每次有新植物加入，两类随从都要整体重摆一遍。
+            PlantSummonBase.ApplyPlantLayouts(room);
+            TamedPets.ApplyLayout();
+
             Entry.Logger.Info(
                 $"[Plant] 站位: {plant.GetType().Name} 偏移={plant.LayoutOffset} 玩家={playerNode.Position} 植物={plantNode.Position} 骨手={ostyNode?.Position.ToString() ?? "无"}");
         }
@@ -1191,14 +1215,36 @@ public static class Patch_NCombatRoom_PlantLayout
 [HarmonyPatch(typeof(VfxCmd), nameof(VfxCmd.PlayOnCreature))]
 public static class Patch_VfxCmd_PlayOnCreature_HitRedirect
 {
-    static void Prefix(ref Creature target, string path) => PlantSummonBase.RedirectHitVfx(ref target, path);
+    static bool Prefix(ref Creature target, string path)
+    {
+        try
+        {
+            PlantSummonBase.RedirectHitVfx(ref target, path);
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Warn($"[Plant] 受击特效落点重定向失败（已忽略，不拦截）：{e.Message}");
+        }
+        return true;
+    }
 }
 
 // PlayOnCreatures / PlayOnCreatureCenters 内部是循环调用下面这个单目标方法，所以只需挂这一处
 [HarmonyPatch(typeof(VfxCmd), nameof(VfxCmd.PlayOnCreatureCenter))]
 public static class Patch_VfxCmd_PlayOnCreatureCenter_HitRedirect
 {
-    static void Prefix(ref Creature target, string path) => PlantSummonBase.RedirectHitVfx(ref target, path);
+    static bool Prefix(ref Creature target, string path)
+    {
+        try
+        {
+            PlantSummonBase.RedirectHitVfx(ref target, path);
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Warn($"[Plant] 受击特效落点重定向失败（已忽略，不拦截）：{e.Message}");
+        }
+        return true;
+    }
 }
 
 // === 桃太郎丸子：驯服随从无法被治疗 ===
@@ -1226,36 +1272,51 @@ public static class Patch_CreatureCmd_TamedPetNoHeal
 [HarmonyPatch(typeof(AttackCommand), "GetPossibleTargets")]
 public static class Patch_AttackCommand_TamedPetTargets
 {
+    // 目标查询每帧可能多次触发，异常日志只记一次
+    private static bool s_warned;
+
     static void Postfix(AttackCommand __instance, ref IReadOnlyList<Creature> __result)
     {
-        var attacker = __instance.Attacker;
-        if (attacker == null || !TamedPets.IsTamed(attacker))
+        try
         {
-            return;
-        }
-        if (__result.Count == 0)
-        {
-            return;
-        }
-        // 只在"整组目标都是玩家侧"时才翻转（即原版 FromMonster 的默认目标），不影响显式指定其它目标的攻击
-        foreach (var target in __result)
-        {
-            if (target.Side != CombatSide.Player)
+            var attacker = __instance.Attacker;
+            if (attacker == null || !TamedPets.IsTamed(attacker))
             {
                 return;
             }
+            if (__result.Count == 0)
+            {
+                return;
+            }
+            // 只在"整组目标都是玩家侧"时才翻转（即原版 FromMonster 的默认目标），不影响显式指定其它目标的攻击
+            foreach (var target in __result)
+            {
+                if (target.Side != CombatSide.Player)
+                {
+                    return;
+                }
+            }
+            var combatState = attacker.CombatState;
+            if (combatState == null)
+            {
+                return;
+            }
+            var enemies = combatState.Enemies.Where(e => e.IsAlive).ToList();
+            if (enemies.Count == 0)
+            {
+                return;
+            }
+            __result = new List<Creature> { combatState.RunState.Rng.CombatTargets.NextItem(enemies) };
         }
-        var combatState = attacker.CombatState;
-        if (combatState == null)
+        catch (Exception e)
         {
-            return;
+            // 异常时不动 __result，保持原版返回值
+            if (!s_warned)
+            {
+                s_warned = true;
+                Entry.Logger.Warn($"[TamedPet] 攻击目标翻转失败（已忽略，保持原版目标）：{e}");
+            }
         }
-        var enemies = combatState.Enemies.Where(e => e.IsAlive).ToList();
-        if (enemies.Count == 0)
-        {
-            return;
-        }
-        __result = new List<Creature> { combatState.RunState.Rng.CombatTargets.NextItem(enemies) };
     }
 }
 
@@ -1271,6 +1332,11 @@ public static class Patch_NCombatRoom_TamedPetLayout
             if (TamedPets.IsTamed(creature))
             {
                 TamedPets.ApplyLayout();
+                // 同理：新随从加入会把植物也带跑，顺手重摆一次植物
+                if (NCombatRoom.Instance is { } room)
+                {
+                    PlantSummonBase.ApplyPlantLayouts(room);
+                }
             }
         }
         catch (Exception e)
@@ -1293,7 +1359,7 @@ public static class Patch_Creature_Name_AlienHero
     {
         try
         {
-            if (!__instance.IsPlayer || Omnitrix.CurrentHero is not AlienHero hero)
+            if (!__instance.IsPlayer || Omnitrix.CurrentHeroFor(__instance.Player) is not AlienHero hero)
             {
                 return;
             }
@@ -1305,6 +1371,51 @@ public static class Patch_Creature_Name_AlienHero
         catch (Exception)
         {
             // Name getter 被大量 UI/文本调用，绝不能抛异常
+        }
+    }
+}
+
+// === 修复：自定义遗物稀有度会写坏原版掉落袋的联机同步包（联机开局黑屏根因）===
+// 原版 RelicGrabBag 按 RelicRarity 分档存遗物；SerializableRelicGrabBag.Serialize 先写入
+// RelicIdLists.Count 作为条目数，随后却只遍历 Enum.GetValues<RelicRarity>()（原版 8 个已定义档位）
+// 来写条目。我们自定义的 (RelicRarity)99（哆啦A梦档）会被计入 Count、却永远不会被写出，
+// 于是客户端按 Count 多读一条 → 位流越界 → IndexOutOfRangeException → 联机开局黑屏。
+//（单机不受影响：存档走 JSON 路径，只有联机 RNG 同步走位打包。）
+// 这里在生成可序列化对象时剔除所有非原版稀有度的分档，保证 Count 与实际写入条目一致。
+// 自定义稀有度的遗物本来就不会被掉落袋抽取（PullFromFront 只按原版档位取），剔除对玩法无影响。
+[HarmonyPatch(typeof(RelicGrabBag), nameof(RelicGrabBag.ToSerializable))]
+public static class Patch_RelicGrabBag_StripCustomRarities
+{
+    static void Postfix(SerializableRelicGrabBag __result)
+    {
+        try
+        {
+            var lists = __result?.RelicIdLists;
+            if (lists == null || lists.Count == 0)
+            {
+                return;
+            }
+            List<RelicRarity>? exotic = null;
+            foreach (var rarity in lists.Keys)
+            {
+                if (!Enum.IsDefined(typeof(RelicRarity), rarity))
+                {
+                    (exotic ??= new List<RelicRarity>()).Add(rarity);
+                }
+            }
+            if (exotic == null)
+            {
+                return;
+            }
+            foreach (var rarity in exotic)
+            {
+                lists.Remove(rarity);
+            }
+            Entry.Logger.Info($"[RelicBag] 掉落袋序列化已剔除 {exotic.Count} 个自定义稀有度分档（联机兼容）");
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Info($"[RelicBag] 剔除自定义稀有度分档失败：{e}");
         }
     }
 }

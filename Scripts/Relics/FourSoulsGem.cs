@@ -1,5 +1,7 @@
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
@@ -34,6 +36,10 @@ public class FourSoulsGem : ModRelicTemplate
             var fragment = (FourSoulsFragment)ModelDb.Relic<FourSoulsFragment>().ToMutable();
             fragment.InitializeAsNew(Owner.RunState.Rng.Shuffle);
             await RelicCmd.Replace(this, fragment);
+
+            // 联机：其他玩家也各发一份碎片，保证每位玩家的四魂进度一致
+            await GrantFragmentsToOtherPlayers(Owner);
+
             // 本层地图节点早已建好，这里主动补挂一次光芒，避免"获得后要退出重进才看得到四魂怪"
             Patch_NNormalMapPoint_FourSoulsGlow.RefreshGlows(Owner.RunState);
             // 非侵入式提示：说明"破碎 → 碎片四散 → 敌人被强化"这一效果
@@ -43,6 +49,27 @@ public class FourSoulsGem : ModRelicTemplate
             Entry.Logger.Info("[FourSouls] 四魂之玉破碎，已换成四魂之玉碎片");
         }
         await base.AfterObtained();
+    }
+
+    // 给其他还没有碎片的玩家各发一个（已有碎片的不重复发）
+    private static async Task GrantFragmentsToOtherPlayers(Player owner)
+    {
+        var players = owner.RunState?.Players;
+        if (players == null)
+        {
+            return;
+        }
+        foreach (var player in players)
+        {
+            if (ReferenceEquals(player, owner) || player.Relics.OfType<FourSoulsFragment>().Any())
+            {
+                continue;
+            }
+            var fragment = (FourSoulsFragment)ModelDb.Relic<FourSoulsFragment>().ToMutable();
+            fragment.InitializeAsNew(owner.RunState.Rng.Shuffle);
+            await RelicCmd.Obtain(fragment, player);
+            Entry.Logger.Info($"[FourSouls] 已为玩家 {player.NetId} 补发四魂之玉碎片");
+        }
     }
 
     private static string Loc(string key) => new LocString("gameplay_ui", key).GetFormattedText();

@@ -17,7 +17,7 @@
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_4.title": "Four – Barrier",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_4.desc": "Gain [green]8[/green] [gold]Buffer[/gold], [green]8[/green] [gold]Intangible[/gold], and [green]8[/green] [gold]Artifact[/gold] for the rest of combat. {Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.title": "Five – Explode",
-    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.desc": "Deal [blue]300[/blue] damage per player, split evenly among all enemies. {Status}",
+    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.desc": "Deal [blue]300[/blue] damage to each enemy once per player{Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_6.title": "Six – Wish",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_6.desc": "Gain [blue]999[/blue] Gold, heal to full, upgrade every card, gain [blue]6[/blue] relics, and permanently disable this relic. {Status}",
 
@@ -47,7 +47,7 @@
     "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.flavor": "哆啦A梦的道具之一。套在手上，就能像大炮一样打出压缩空气，把人轰飞却不会受伤。",
 
     "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.title": "Momotaro Dumplings",
-    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.description": "You have [blue]3[/blue] dumplings. Right-click and choose an enemy to tame: only enemies with [green]10[/green] or less current HP and [green]80[/green] or less Max HP can be tamed, and bosses cannot. A tamed enemy is healed to full, its Max HP is lowered by [blue]20%[/blue], it fights for you with its own moves and intents but deals [blue]50%[/blue] less damage, cannot be healed, and disappears forever when it dies.",
+    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.description": "You have [blue]3[/blue] dumplings. Right-click and choose an enemy to tame: normal monsters with less than [green]10[/green] current HP and elites with less than [green]15[/green] current HP can be tamed, and bosses cannot. The tamed enemy dies immediately in the current combat; starting from the next combat it joins you as a pet with its Max HP set to [blue]80%[/blue] of the original for normal monsters and [blue]60%[/blue] for elites, restored to full. It fights for you with its own moves and intents but deals [blue]50%[/blue] less damage, cannot be healed, and disappears forever when it dies.",
     "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.flavor": "哆啦A梦的道具之一。桃太郎用来收服同伴的丸子，给动物吃下，它就会对你言听计从。",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.title": "Doraemon's 4D Pocket",
@@ -92,7 +92,7 @@
     "OTHERWORLD_TREASURES_RELIC_OMNITRIX.flavor": "小小年纪所向无敌，神秘超能力，双手并用变身启动，实在好神奇，捍卫和平维护正义，叫他第一名。Ben 10。",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.title": "Jewel of Four Souls",
-    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.description": "An ancient jewel said to grant its holder's wish and to greatly empower whoever possesses it. Upon being obtained it shatters into the [gold]Jewel of Four Souls Fragment[/gold], and every non-Boss enemy on the map gains a shard as well.",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.description": "An ancient jewel said to grant its holder's wish and to greatly empower whoever possesses it. Upon being obtained it shatters for unknown reasons into the [gold]Jewel of Four Souls Fragment[/gold], and every non-Boss enemy on the map gains a shard as well.",
     "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.flavor": "The priestess Midoriko tore the demon's soul away and cast it out together with her own — all that remained was this crystal of souls. Their battle still rages inside it, without end.",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.title": "Jewel of Four Souls Fragment",

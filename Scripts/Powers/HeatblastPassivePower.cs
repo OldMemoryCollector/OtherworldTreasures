@@ -65,10 +65,9 @@ public class HeatblastPassivePower : ModPowerTemplate
     // 数量固定 1、不显示数字
     public override PowerStackType StackType => PowerStackType.Single;
 
-    // 占位图：先用英雄立绘，专属能力图做好后改这里
     public override PowerAssetProfile AssetProfile => new(
-        IconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png",
-        BigIconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png");
+        IconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power.png",
+        BigIconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power_Big.png");
 
     public override LocString Title => new LocString("powers", "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.title");
 

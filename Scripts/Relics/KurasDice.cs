@@ -37,22 +37,50 @@ namespace OtherworldTreasures.Scripts.Relics;
 // 库拉的骰子：每次战斗开始随机骰1-6点，右键遗物发动对应能力（每点仅限一次）
 [RegisterRelic(typeof(SharedRelicPool))]
 public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
-    IRelicExtraIconAmountLabelSpecsProvider, IRelicExtraIconAmountLabelsChangeSource
+    IRelicExtraIconAmountLabelSpecsProvider, IRelicExtraIconAmountLabelsChangeSource,
+    RelicRightClickSync.ICrossEndRightClickEffect
 {
-    // === 跨实例共享状态（遗物每次战斗有新实例，普通字段不持久化） ===
-    public static int LastRolledValue { get; private set; }
-    public static bool GlobalIsBroken { get; private set; }
-    // 每个点数是否已用（跨战斗持久化）
-    public static readonly HashSet<int> GlobalUsedFaces = new();
-    // 二点重放：本场战斗改过 BaseReplayCount 的卡 → 原始值映射
-    public static readonly Dictionary<CardModel, int> ReplayModifiedCards = new();
-    
+    // === 每位玩家各自的骰子状态 ===
+    // 遗物实例每次战斗都会重建，所以状态按"玩家 NetId"保存。
+    // 不能用 static 全局字段：两名玩家同时持有骰子时会是同一份状态，
+    // 一方用掉点数（比如六点实现愿望）另一方也用不了。
+    private sealed class DiceState
+    {
+        public int LastRolled;
+        public bool Broken;
+        // 每个点数是否已用（跨战斗持久化）
+        public readonly HashSet<int> UsedFaces = new();
+        // 二点重放：本场战斗改过 BaseReplayCount 的卡 → 原始值映射
+        public readonly Dictionary<CardModel, int> ReplayModifiedCards = new();
+    }
+
+    private static readonly Dictionary<ulong, DiceState> s_states = new();
+
+    // 当前所在玩家的状态
+    private DiceState State => GetState(Owner);
+
+    private static DiceState GetState(Player? owner)
+    {
+        var netId = owner?.NetId ?? 0UL;
+        if (!s_states.TryGetValue(netId, out var state))
+        {
+            state = new DiceState();
+            s_states[netId] = state;
+        }
+        return state;
+    }
+
+    // 供外部（描述文案补丁）按玩家查询
+    public static bool IsBrokenFor(Player? owner) => GetState(owner).Broken;
+    public static int RolledFaceFor(Player? owner) => GetState(owner).LastRolled;
+    public static bool IsFaceUsedFor(Player? owner, int face) => GetState(owner).UsedFaces.Contains(face);
+
     public int CurrentRoll { get; private set; }
-    public bool IsBroken => GlobalIsBroken;
-    // 右键判定必须用 static 的 LastRolledValue（跨战斗实例可靠），不能用实例字段 CurrentRoll
+    public bool IsBroken => State.Broken;
+    // 右键判定必须用"跨实例可靠"的 State.LastRolled，不能用实例字段 CurrentRoll
     // ——战斗中遗物会被克隆，右键命中的实例可能 CurrentRoll==0，导致 switch 无匹配静默失败
     public bool CanUseCurrentFace =>
-        !GlobalIsBroken && LastRolledValue >= 1 && LastRolledValue <= 6 && !GlobalUsedFaces.Contains(LastRolledValue);
+        !State.Broken && State.LastRolled >= 1 && State.LastRolled <= 6 && !State.UsedFaces.Contains(State.LastRolled);
 
     public override RelicRarity Rarity => RelicRarity.Ancient;
 
@@ -81,7 +109,7 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
             bool inRun = RunManager.Instance?.IsInProgress ?? false;
             for (int face = 1; face <= 6; face++)
             {
-                bool unavailable = inRun && (GlobalIsBroken || GlobalUsedFaces.Contains(face));
+                bool unavailable = inRun && (State.Broken || State.UsedFaces.Contains(face));
                 var desc = new LocString("relics", $"OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_{face}.desc");
                 desc.Add("Status", unavailable
                     ? new LocString("gameplay_ui", "OTHERWORLD_TREASURES_UI_FACE_USED").GetFormattedText()
@@ -124,7 +152,7 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         {
             return new List<ExtraIconAmountLabelSpec>();
         }
-        if (GlobalIsBroken || LastRolledValue < 1 || LastRolledValue > 6)
+        if (State.Broken || State.LastRolled < 1 || State.LastRolled > 6)
         {
             return new List<ExtraIconAmountLabelSpec>();
         }
@@ -132,7 +160,7 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         {
             ExtraIconAmountLabelSpec.RichText(
                 ExtraIconAmountLabelCorner.BottomRight,
-                $"[font_size={BadgeFontSize}]{LastRolledValue}[/font_size]")
+                $"[font_size={BadgeFontSize}]{State.LastRolled}[/font_size]")
         };
     }
 
@@ -140,11 +168,9 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
     // 否则上一局用掉的点数 / 六点失效状态会残留到新局，导致右键"无法生效"，必须重启游戏进程
     public override async Task AfterObtained()
     {
-        GlobalUsedFaces.Clear();
-        GlobalIsBroken = false;
-        ReplayModifiedCards.Clear();
+        // 新的一局：清掉所有玩家的骰子状态（遗物重新获得）
+        s_states.Clear();
         CurrentRoll = 0;
-        LastRolledValue = 0;
         _currentRollVar.BaseValue = 0m;
         Status = RelicStatus.Normal;
         Entry.Logger.Info("[KurasDice] AfterObtained: All static state reset for new run");
@@ -155,13 +181,14 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
     // === 进入房间：战斗房间就骰骰子 ===
     public override async Task AfterRoomEntered(AbstractRoom room)
     {
-        if (room is CombatRoom combatRoom && !GlobalIsBroken)
+        if (room is CombatRoom combatRoom && !State.Broken)
         {
-            CurrentRoll = System.Random.Shared.Next(1, 7);
-            LastRolledValue = CurrentRoll;
+            // 改走联机一致的 RNG（RunState.Rng.Niche，与 PlantSummonBase 同源），避免两端各滚各的分叉
+            CurrentRoll = Owner.RunState.Rng.Niche.NextInt(1, 7);
+            State.LastRolled = CurrentRoll;
             _currentRollVar.BaseValue = CurrentRoll;
             
-            Entry.Logger.Info($"[KurasDice] Enter combat! Rolled {CurrentRoll}, FaceUsed={GlobalUsedFaces.Contains(CurrentRoll)}");
+            Entry.Logger.Info($"[KurasDice] Enter combat! Rolled {CurrentRoll}, FaceUsed={State.UsedFaces.Contains(CurrentRoll)}");
             RefreshBadge();
         }
         await base.AfterRoomEntered(room);
@@ -183,16 +210,16 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
     }
 
     // 兜底补骰：点数只在 AfterRoomEntered(战斗开始) 时投掷，而"战斗中途存档 → 退出重进"不会再触发该钩子，
-    // static 的 LastRolledValue 会一直停在 0（进程重启后静态字段回到初始值），
+    // static 的 State.LastRolled 会一直停在 0（进程重启后静态字段回到初始值），
     // 导致右键 switch(0) 无匹配而静默失效（表现为"骰子点数用不了"）。
     // 因此在任何需要点数的时机（回合开始 / 右键预检 / 右键执行）都补一次。
     private void EnsureRolledInCombat()
     {
-        if (GlobalIsBroken)
+        if (State.Broken)
         {
             return;
         }
-        if (LastRolledValue >= 1 && LastRolledValue <= 6)
+        if (State.LastRolled >= 1 && State.LastRolled <= 6)
         {
             return;
         }
@@ -200,11 +227,12 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         {
             return; // 非战斗状态不投掷（非战斗显示 0 点是正常的）
         }
-        CurrentRoll = System.Random.Shared.Next(1, 7);
-        LastRolledValue = CurrentRoll;
+        // 改走联机一致的 RNG（RunState.Rng.Niche），避免两端各滚各的分叉
+        CurrentRoll = Owner.RunState.Rng.Niche.NextInt(1, 7);
+        State.LastRolled = CurrentRoll;
         _currentRollVar.BaseValue = CurrentRoll;
         Entry.Logger.Info(
-            $"[KurasDice] 兜底补骰（读档/重进后）：{CurrentRoll}, FaceUsed={GlobalUsedFaces.Contains(CurrentRoll)}");
+            $"[KurasDice] 兜底补骰（读档/重进后）：{CurrentRoll}, FaceUsed={State.UsedFaces.Contains(CurrentRoll)}");
         RefreshBadge();
     }
 
@@ -212,17 +240,17 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
     public override async Task AfterCombatEnd(CombatRoom room)
     {
         // 恢复我们改过的卡的原始 BaseReplayCount
-        foreach (var kv in ReplayModifiedCards.ToList())
+        foreach (var kv in State.ReplayModifiedCards.ToList())
         {
             if (kv.Key.BaseReplayCount != kv.Value)
             {
                 kv.Key.BaseReplayCount = kv.Value;
             }
         }
-        ReplayModifiedCards.Clear();
+        State.ReplayModifiedCards.Clear();
         
         CurrentRoll = 0;
-        LastRolledValue = 0;
+        State.LastRolled = 0;
         _currentRollVar.BaseValue = 0m;
         RefreshBadge();
         await base.AfterCombatEnd(room);
@@ -240,26 +268,37 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
     }
     public bool CanExecuteRightClick(ModRightClickExecutionContext context)
     {
-        // 读档/重进后点数可能还是 0，先补骰再判定
-        EnsureRolledInCombat();
+        // 注意：这里绝对不能补骰。右键预检只在"发起者一端"跑，
+        // 在这里消费共享随机流（RunState.Rng.Niche）会让两端的 RNG 状态分叉（实测过）。
+        // 补骰只在"所有端都会走"的时机做：战斗开始 / 回合开始 / 联机动作执行。
         bool can = CanUseCurrentFace;
-        Entry.Logger.Info($"[KurasDice-RC] CanExecute => {can} (LastRolled={LastRolledValue}, Broken={GlobalIsBroken}, Used=[{string.Join(",", GlobalUsedFaces)}])");
+        Entry.Logger.Info($"[KurasDice-RC] CanExecute => {can} (LastRolled={State.LastRolled}, Broken={State.Broken}, Used=[{string.Join(",", State.UsedFaces)}])");
         return can;
     }
 
+    // 只有发起者本机负责入队；真正的发动由联机动作在所有端统一执行
     public async Task OnRightClick(ModRightClickExecutionContext context)
+    {
+        if (Owner == null || !Entry.IsLocalPlayer(Owner))
+        {
+            return;
+        }
+        RelicRightClickSync.Request(Owner, this);
+    }
+
+    async Task RelicRightClickSync.ICrossEndRightClickEffect.ApplyRightClickAsync(PlayerChoiceContext choiceContext)
     {
         // 双保险：真正执行前再保证有点数
         EnsureRolledInCombat();
-        // 用 static 的 LastRolledValue（跨实例可靠），不用实例字段 CurrentRoll
-        int face = LastRolledValue;
-        Entry.Logger.Info($"[KurasDice-RC] OnRightClick fired! face={face}");
-        if (GlobalIsBroken || face < 1 || face > 6 || GlobalUsedFaces.Contains(face))
+        // 用 static 的 State.LastRolled（跨实例可靠），不用实例字段 CurrentRoll
+        int face = State.LastRolled;
+        Entry.Logger.Info($"[KurasDice-RC] ApplyRightClick face={face}");
+        if (State.Broken || face < 1 || face > 6 || State.UsedFaces.Contains(face))
         {
-            Entry.Logger.Info($"[KurasDice-RC] ABORT: Broken={GlobalIsBroken}, face={face}, used={GlobalUsedFaces.Contains(face)}");
+            Entry.Logger.Info($"[KurasDice-RC] ABORT: Broken={State.Broken}, face={face}, used={State.UsedFaces.Contains(face)}");
             return;
         }
-        GlobalUsedFaces.Add(face);
+        State.UsedFaces.Add(face);
 
         Entry.Logger.Info($"[KurasDice] Using face {face}!");
 
@@ -268,19 +307,19 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
 
         switch (face)
         {
-            case 1: await AbilityRestore(context); break;
-            case 2: await AbilityCopy(context); break;
-            case 3: await AbilityAmplify(context); break;
-            case 4: await AbilityBarrier(context); break;
-            case 5: await AbilityExplode(context); break;
-            case 6: await AbilityWish(context); break;
+            case 1: await AbilityRestore(choiceContext); break;
+            case 2: await AbilityCopy(choiceContext); break;
+            case 3: await AbilityAmplify(choiceContext); break;
+            case 4: await AbilityBarrier(choiceContext); break;
+            case 5: await AbilityExplode(choiceContext); break;
+            case 6: await AbilityWish(choiceContext); break;
         }
     }
 
     // === 能力实现 ===
 
     // 一点恢复：触发篝火休息 + 10 再生
-    private async Task AbilityRestore(ModRightClickExecutionContext ctx)
+    private async Task AbilityRestore(PlayerChoiceContext choiceContext)
     {
         Entry.Logger.Info("[KurasDice] AbilityRestore: HealRestSite + 10 Regen");
         var healAmount = HealRestSiteOption.GetHealAmount(Owner);
@@ -290,11 +329,11 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         {
             PlayerFullscreenHealVfx.Play(Owner, healAmount, NCombatRoom.Instance?.CombatVfxContainer);
         }
-        await PowerCmd.Apply<RegenPower>(ctx.PlayerChoiceContext!, Owner.Creature, 10m, Owner.Creature, null!, false);
+        await PowerCmd.Apply<RegenPower>(choiceContext, Owner.Creature, 10m, Owner.Creature, null!, false);
     }
 
     // 二点复制：给所有卡牌 BaseReplayCount +1（原版重放机制）
-    private async Task AbilityCopy(ModRightClickExecutionContext ctx)
+    private async Task AbilityCopy(PlayerChoiceContext choiceContext)
     {
         int count = 0;
         foreach (var pileType in new[] { PileType.Draw, PileType.Hand, PileType.Discard, PileType.Exhaust })
@@ -303,9 +342,9 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
             foreach (var card in pile.Cards.Cast<CardModel>())
             {
                 // 只在第一次记录原始值
-                if (!ReplayModifiedCards.ContainsKey(card))
+                if (!State.ReplayModifiedCards.ContainsKey(card))
                 {
-                    ReplayModifiedCards[card] = card.BaseReplayCount;
+                    State.ReplayModifiedCards[card] = card.BaseReplayCount;
                 }
                 card.BaseReplayCount += 1;
                 count++;
@@ -319,40 +358,38 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
     }
 
     // 三点强化：本回合伤害/格挡 ×3 + 3 能量
-    private async Task AbilityAmplify(ModRightClickExecutionContext ctx)
+    private async Task AbilityAmplify(PlayerChoiceContext choiceContext)
     {
         Entry.Logger.Info("[KurasDice] AbilityAmplify: Applying AmplifyPower + 3 Energy");
         NPowerUpVfx.CreateNormal(Owner.Creature);
         SfxCmd.Play(FmodSfx.buff);
-        var applied = await PowerCmd.Apply<AmplifyPower>(ctx.PlayerChoiceContext!, Owner.Creature, 1m, Owner.Creature, null!, false);
+        var applied = await PowerCmd.Apply<AmplifyPower>(choiceContext, Owner.Creature, 1m, Owner.Creature, null!, false);
         Entry.Logger.Info($"[KurasDice] AmplifyPower applied: {applied != null}");
         PlayerCmd.GainEnergy(3, Owner);
         Entry.Logger.Info("[KurasDice] +3 Energy gained");
     }
 
     // 四点结界：8 层缓冲 + 8 层无实体 + 8 层人工制品
-    private async Task AbilityBarrier(ModRightClickExecutionContext ctx)
+    private async Task AbilityBarrier(PlayerChoiceContext choiceContext)
     {
         Entry.Logger.Info("[KurasDice] AbilityBarrier: 8 Buffer + 8 Intangible + 8 Artifact");
         NPowerUpVfx.CreateGhostly(Owner.Creature);
         SfxCmd.Play(FmodSfx.buff);
-        await PowerCmd.Apply<BufferPower>(ctx.PlayerChoiceContext!, Owner.Creature, 8m, Owner.Creature, null!, false);
-        await PowerCmd.Apply<IntangiblePower>(ctx.PlayerChoiceContext!, Owner.Creature, 8m, Owner.Creature, null!, false);
-        await PowerCmd.Apply<ArtifactPower>(ctx.PlayerChoiceContext!, Owner.Creature, 8m, Owner.Creature, null!, false);
+        await PowerCmd.Apply<BufferPower>(choiceContext, Owner.Creature, 8m, Owner.Creature, null!, false);
+        await PowerCmd.Apply<IntangiblePower>(choiceContext, Owner.Creature, 8m, Owner.Creature, null!, false);
+        await PowerCmd.Apply<ArtifactPower>(choiceContext, Owner.Creature, 8m, Owner.Creature, null!, false);
     }
 
-    // 五点爆炸：平均伤害所有敌人
-    private async Task AbilityExplode(ModRightClickExecutionContext ctx)
+    // 五点爆炸：对每个敌人造成联机人数次 300 点伤害（逐次独立结算）
+    private async Task AbilityExplode(PlayerChoiceContext choiceContext)
     {
-        var choiceCtx = ctx.PlayerChoiceContext!;
+        var choiceCtx = choiceContext;
         var combatState = CombatManager.Instance.DebugOnlyGetState();
         var playerCount = combatState.Players.Count;
-        var totalDamage = 300 * playerCount;
         var enemies = combatState.HittableEnemies.ToList();
         if (enemies.Count == 0) return;
 
-        var perEnemy = decimal.Round((decimal)totalDamage / enemies.Count);
-        Entry.Logger.Info($"[KurasDice] AbilityExplode: {totalDamage} total / {enemies.Count} enemies = {perEnemy} each");
+        Entry.Logger.Info($"[KurasDice] AbilityExplode: {playerCount} players × 300 to each of {enemies.Count} enemies, {playerCount} independent hits each");
 
         // 火焰音效 + 每个敌人脚下火爆特效（与原版 InfernoPower 一致）
         SfxCmd.Play(FmodSfx.fire);
@@ -365,14 +402,18 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
             }
         }
 
+        // 对每个敌人重复 playerCount 次，每次 300 点，逐次独立结算
         foreach (var enemy in enemies)
         {
-            await CreatureCmd.Damage(choiceCtx, enemy, perEnemy, ValueProp.Unblockable, null);
+            for (int i = 0; i < playerCount; i++)
+            {
+                await CreatureCmd.Damage(choiceCtx, enemy, 300m, ValueProp.Unblockable, null);
+            }
         }
     }
 
     // 六点愿望：999金 + 满血 + 升级所有卡 + 战斗结束6件遗物 + 永久失效
-    private async Task AbilityWish(ModRightClickExecutionContext ctx)
+    private async Task AbilityWish(PlayerChoiceContext choiceContext)
     {
         Entry.Logger.Info("[KurasDice] AbilityWish: WISH GRANTED!");
 
@@ -410,7 +451,7 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         }
 
         // 永久失效：设置 RelicStatus.Disabled → UI 自动变灰
-        GlobalIsBroken = true;
+        State.Broken = true;
         Status = RelicStatus.Disabled;
         RefreshBadge();
         Entry.Logger.Info("[KurasDice] DICE BROKEN (Status=Disabled, UI=Gray)");

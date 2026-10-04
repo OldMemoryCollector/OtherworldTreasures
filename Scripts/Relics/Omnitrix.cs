@@ -7,6 +7,7 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -15,12 +16,14 @@ using MegaCrit.Sts2.Core.Models.RelicPools;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Rooms;
+using MegaCrit.Sts2.Core.Runs;
 using OtherworldTreasures.Scripts.Alien;
 using OtherworldTreasures.Scripts.Powers;
 using OtherworldTreasures.Scripts.UI;
 using STS2RitsuLib;
 using STS2RitsuLib.Interactions.RightClick;
 using STS2RitsuLib.Interop.AutoRegistration;
+using STS2RitsuLib.Networking.ManagedActions;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace OtherworldTreasures.Scripts.Relics;
@@ -57,27 +60,37 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     // 变回原形后的冷却回合数（内部规则，不向玩家展示，遗物描述里也不提次数/冷却）
     private const int CooldownTurns = 6;
 
-    // 冷却结束的回合号：玩家回合号 >= 这个值才能再次变身（static：战斗中遗物会被克隆，需跨实例共享）
-    private static int s_cooldownUntilTurn;
+    // 按玩家隔离的状态（遗物实例每次战斗会被克隆，static 又会被两名玩家共享）
+    private sealed class PlayerState
+    {
+        // 冷却结束的回合号：玩家回合号 >= 这个值才能再次变身
+        public int CooldownUntilTurn;
 
-    // 变身中被隐藏的原身体节点、叠加的英雄立绘节点（解除变身后恢复时用）
-    private static Node2D? s_hiddenBody;
-    private static Node2D? s_overlaySprite;
+        // 变身中被隐藏的原身体节点、叠加的英雄立绘节点（解除变身后恢复时用）
+        public Node2D? HiddenBody;
+        public Node2D? OverlaySprite;
 
-    // 当前变身成的英雄：决定血条上方显示的角色名；未变身时为 null。
-    // 与其他变身状态一样是 static（战斗中遗物会被克隆），实际生效还要看对应玩家身上有没有变身能力。
-    private static AlienHero? s_currentHero;
+        // 当前变身成的英雄：决定血条上方显示的角色名；未变身时为 null
+        public AlienHero? CurrentHero;
 
-    internal static AlienHero? CurrentHero => s_currentHero;
+        // 变身前状态快照（原牌组 + 自身能力），变身结束时还原
+        public TransformSnapshot? TransformSnapshot;
 
-    // 变身前状态快照（原牌组 + 自身能力），变身结束时还原
-    private static TransformSnapshot? s_transformSnapshot;
+        // 变身结束后还要补扫几个回合的英雄牌残留。
+        // 带【保留】的英雄牌（炎狱天降）在还原那一刻既不在任何牌堆里（它要等下一回合开始才回到手牌），
+        // 所以还原那一次必然扫不干净；而且补扫时机可能早于"保留牌回手牌"，一次扫空不能就收手，
+        // 因此这里用"剩余补扫回合数"，固定往后扫几回合。
+        public int AlienCleanupTurnsLeft;
 
-    // 变身结束后还要补扫几个回合的英雄牌残留。
-    // 带【保留】的英雄牌（炎狱天降）在还原那一刻既不在任何牌堆里（它要等下一回合开始才回到手牌），
-    // 所以还原那一次必然扫不干净；而且补扫时机可能早于"保留牌回手牌"，一次扫空不能就收手，
-    // 因此这里用"剩余补扫回合数"，固定往后扫几回合。
-    private static int s_alienCleanupTurnsLeft;
+        // 结束演出是否已经开始（提前放音后，后面只等收尾，不重复触发）
+        public bool EndSequenceStarted;
+    }
+
+    private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
+
+    // 血条名字用：查询指定玩家当前变身的英雄（未变身时为 null）
+    internal static AlienHero? CurrentHeroFor(Player? player)
+        => PerPlayerState<PlayerState>.Of(player).CurrentHero;
 
     // 先古遗物（由旧忆收藏家给出）
     public override RelicRarity Rarity => RelicRarity.Ancient;
@@ -100,7 +113,7 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     {
         var player = Owner;
         var combatState = player?.PlayerCombatState;
-        if (player == null || combatState == null || combatState.TurnNumber < s_cooldownUntilTurn)
+        if (player == null || combatState == null || combatState.TurnNumber < S.CooldownUntilTurn)
         {
             return false;
         }
@@ -114,7 +127,7 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     // 每场战斗开始：冷却清零（打一场新仗时总是可以变身）
     public override Task BeforeCombatStart()
     {
-        s_cooldownUntilTurn = 0;
+        S.CooldownUntilTurn = 0;
         return base.BeforeCombatStart();
     }
 
@@ -122,15 +135,15 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     // 连续一轮扫不到就解除标记，不会一直扫下去。
     public override async Task AfterPlayerTurnStart(PlayerChoiceContext choiceContext, Player player)
     {
-        if (s_alienCleanupTurnsLeft > 0 && player == Owner)
+        if (S.AlienCleanupTurnsLeft > 0 && player == Owner)
         {
             // 回合管线里的钩子抛异常会打断整条管线（表现为卡死），必须兜住
             try
             {
-                s_alienCleanupTurnsLeft--;
+                S.AlienCleanupTurnsLeft--;
                 int removed = await TransformSnapshot.RemoveAlienCards(player);
                 Entry.Logger.Info(
-                    $"[Omnitrix] 补扫残留英雄牌：本次移除 {removed} 张（还可补扫 {s_alienCleanupTurnsLeft} 回合）");
+                    $"[Omnitrix] 补扫残留英雄牌：本次移除 {removed} 张（还可补扫 {S.AlienCleanupTurnsLeft} 回合）");
             }
             catch (Exception e)
             {
@@ -143,34 +156,86 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     // 读档/新开跑时复位（见 RunLifecycle）：允许玩家 SL 后再次变身
     internal static void ResetCombatScopedState()
     {
-        s_cooldownUntilTurn = 0;
-        s_endSequenceStarted = false;
-        s_transformSnapshot = null;
-        s_hiddenBody = null;
-        s_overlaySprite = null;
-        s_currentHero = null;
-        s_alienCleanupTurnsLeft = 0;
+        // 按玩家隔离：整体清空（下次取用时重建为默认值）
+        PerPlayerState<PlayerState>.ClearAll();
     }
 
-    // 右键：打开变身选择界面
+    // 右键：打开变身选择界面。
+    // 选择只在"发起者本机"进行，选中的结果再用联机动作下发给所有端统一执行变身；
+    // 否则远端要么弹不出界面、要么选到不同的英雄，导致形象/牌组/能力分叉。
     public async Task OnRightClick(ModRightClickExecutionContext context)
     {
-        if (Owner == null) return;
+        if (Owner == null || !Entry.IsLocalPlayer(Owner) || s_transformDescriptor == null)
+        {
+            return;
+        }
 
         // 表盘启动音（界面弹出前）
         ModAudio.PlayOneShot(StartSfxPath);
 
-        // 极低概率：变身被鬼影替换（跳过选择，直接展示鬼影）
-        // 用玩家共享的 Transformations 随机序列，联机各客户端结果一致
-        bool ghostfreak = Owner.PlayerRng.Transformations.NextDouble() < GhostFreakChance;
-
-        var screen = ghostfreak
-            ? new OmnitrixSelectScreen(AlienHero.Ghostfreak)
-            : new OmnitrixSelectScreen();
+        // 这里刻意不做"鬼影替换"的随机判定：那是共享的 Transformations 随机流，
+        // 必须所有端都消费一次，所以挪到联机动作里（见 Transform）。
+        var screen = new OmnitrixSelectScreen();
         var selection = await screen.ShowAsync();
-        if (selection.HasValue)
+        if (!selection.HasValue)
         {
-            await Transform(selection.Value);
+            return;
+        }
+
+        var queued = RitsuLibManagedNetActions.Request(
+            RunManager.Instance, s_transformDescriptor, new TransformPayload(selection.Value.Hero, selection.Value.Specialization));
+        Entry.Logger.Info($"[Omnitrix] 变身动作已入队={queued}：{selection.Value.Hero}");
+    }
+
+    // === 联机：变身动作（所有端按动作队列执行同一份变身逻辑）===
+
+    private readonly record struct TransformPayload(AlienHero Hero, AlienSpecialization Spec);
+
+    private static RitsuLibManagedNetActionDescriptor<TransformPayload>? s_transformDescriptor;
+
+    internal static void RegisterTransformAction()
+    {
+        if (s_transformDescriptor != null)
+        {
+            return;
+        }
+        try
+        {
+            s_transformDescriptor = new RitsuLibManagedNetActionDescriptor<TransformPayload>(
+                Entry.ModId,
+                "omnitrix_transform",
+                static p => new[] { (byte)p.Hero, (byte)p.Spec },
+                static b => new TransformPayload((AlienHero)b[0], (AlienSpecialization)b[1]),
+                ExecuteTransformAsync,
+                GameActionType.CombatPlayPhaseOnly);
+            RitsuLibManagedNetActions.Register(s_transformDescriptor);
+            Entry.Logger.Info("[Omnitrix] 变身动作已注册到联机动作队列");
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Info($"[Omnitrix] 变身动作注册失败（已忽略）：{e}");
+        }
+    }
+
+    private static async Task ExecuteTransformAsync(RitsuLibManagedNetActionContext<TransformPayload> context)
+    {
+        try
+        {
+            var player = context.Player;
+            if (player == null)
+            {
+                return;
+            }
+            var relic = player.Relics?.OfType<Omnitrix>().FirstOrDefault();
+            if (relic == null)
+            {
+                return;
+            }
+            await relic.Transform(new HeroSelection(context.Message.Hero, context.Message.Spec));
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Info($"[Omnitrix] 变身动作执行异常（已忽略）：{e}");
         }
     }
 
@@ -178,6 +243,17 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     private async Task Transform(HeroSelection selection)
     {
         var hero = selection.Hero;
+
+        // 极低概率：变身被鬼影替换。
+        // 这个 roll 用的是玩家共享的 Transformations 随机序列，**必须在所有端都消费一次**，
+        // 所以放在这里（联机动作里，所有端都会执行），不能放在右键预检/OnRightClick——
+        // 那两处远端是否执行不可靠，只在一端消费就会让两端 RNG 流分叉（联机分叉诊断实锤过）。
+        if (Owner != null && Owner.PlayerRng.Transformations.NextDouble() < GhostFreakChance)
+        {
+            hero = AlienHero.Ghostfreak;
+            selection = new HeroSelection(AlienHero.Ghostfreak, AlienSpecialization.Blast);
+            Entry.Logger.Info("[Omnitrix] 变身被鬼影替换");
+        }
 
         // 流派不由玩家选：火焰人变身时随机抽一套（用玩家共享的 Transformations 随机序列，联机各端一致）
         if (hero == AlienHero.Heatblast && Owner != null)
@@ -187,7 +263,7 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
             Entry.Logger.Info($"[Omnitrix] 本次变身随机流派：{spec}");
         }
 
-        s_endSequenceStarted = false;
+        S.EndSequenceStarted = false;
 
         // 先把屏幕闪绿，再在最亮的时候换形象（变身音也在这一刻，声画同步）
         PlayGreenFlash(TransformFlashIn, TransformFlashHold, TransformFlashOut);
@@ -197,10 +273,10 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         var creature = player?.Creature;
 
         // 变身前快照（原牌组 + 自身能力）：变回时按它还原
-        s_transformSnapshot = player != null ? await TransformSnapshot.Capture(player) : null;
+        S.TransformSnapshot = player != null ? await TransformSnapshot.Capture(player) : null;
 
-        ReplaceAppearance(creature, hero);
-        s_currentHero = hero;
+        ReplaceAppearance(creature, hero, S);
+        S.CurrentHero = hero;
         RefreshNameplate(creature);
         ModAudio.PlayOneShot(TransformSfxPath);
 
@@ -222,7 +298,7 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     // 有逐帧序列的英雄（目前只有火焰人）用 AnimatedSprite2D 循环播放待机动画，其余用静态立绘 Sprite2D。
     // 注意：Spine 的 Visuals 自带很小的工作缩放（如铁甲战士 0.28），绝不能拿来乘立绘尺寸，
     // 立绘要按角色实际显示高度（Visuals.Bounds.Height）独立计算缩放。
-    private static void ReplaceAppearance(Creature? creature, AlienHero hero)
+    private static void ReplaceAppearance(Creature? creature, AlienHero hero, PlayerState state)
     {
         var creatureNode = NCombatRoom.Instance?.GetCreatureNode(creature);
         var body = creatureNode?.Visuals?.GetCurrentBody();
@@ -281,11 +357,11 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         {
             animatedSprite.Play();
         }
-        s_overlaySprite = overlay;
+        state.OverlaySprite = overlay;
 
         // 隐藏原 Spine 身体
         body.Visible = false;
-        s_hiddenBody = body;
+        state.HiddenBody = body;
 
         Entry.Logger.Info($"[Omnitrix] 变身为 {hero}，立绘高度目标 {targetHeight:0}px，缩放 {scale:0.###}");
     }
@@ -366,7 +442,7 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     // 战斗结束时恢复原形（变身已到期时是空操作）
     public override async Task AfterCombatEnd(CombatRoom room)
     {
-        RestoreAppearanceSilently();
+        RestoreAppearanceSilently(Owner);
         await base.AfterCombatEnd(room);
     }
 
@@ -392,9 +468,6 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     // 结束音长度（omnitrix_end.wav ≈ 3.02s）。换音效时同步改这里。
     private const float EndSfxLength = 3.02f;
 
-    // 结束演出是否已经开始（提前放音后，后面只等收尾，不重复触发）
-    private static bool s_endSequenceStarted;
-
     // 变身结束的声画对齐：
     // 结束音（3.02s）比闪光（0.81s）长得多，硬要"同起同落"是做不到的，
     // 所以换个方向——声音尽量早放（最后一回合的敌方回合结束就放），
@@ -402,22 +475,23 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     // 这样闪光收完的瞬间，结束音也刚好放完。
     internal static async Task StartTransformationEnd(Player player)
     {
-        if (s_endSequenceStarted)
+        var state = PerPlayerState<PlayerState>.Of(player);
+        if (state.EndSequenceStarted)
         {
             return;
         }
-        s_endSequenceStarted = true;
+        state.EndSequenceStarted = true;
 
         // 牌组与自身状态在这一刻就还原：此刻玩家回合已经结束、手牌是空的，
         // 所以只动不渲染的牌堆，手牌不会留下卡牌节点"尸体"
-        if (s_transformSnapshot != null)
+        if (state.TransformSnapshot != null)
         {
-            var snapshot = s_transformSnapshot;
-            s_transformSnapshot = null;
+            var snapshot = state.TransformSnapshot;
+            state.TransformSnapshot = null;
             await snapshot.Restore(player);
         }
         // 还原那一次必然漏掉带【保留】的英雄牌，往后两回合再补扫
-        s_alienCleanupTurnsLeft = 2;
+        state.AlienCleanupTurnsLeft = 2;
 
         ModAudio.PlayOneShot(EndSfxPath);
 
@@ -425,39 +499,39 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         var tree = NCombatRoom.Instance?.GetTree();
         if (tree == null)
         {
-            PlayEndFlashAndRevert();
+            PlayEndFlashAndRevert(state);
             return;
         }
         // 用计时器而不是 await：绝不能把回合管线卡住 2 秒
         tree.CreateTimer(delay).Timeout += () =>
         {
             // 演出期间若已开新战斗/新变身（标记被清掉），这次延时就不该再动形象
-            if (GodotObject.IsInstanceValid(tree) && s_endSequenceStarted)
+            if (GodotObject.IsInstanceValid(tree) && state.EndSequenceStarted)
             {
-                PlayEndFlashAndRevert();
+                PlayEndFlashAndRevert(state);
             }
         };
     }
 
     // 闪光 + 闪到最亮时变回原形
-    private static void PlayEndFlashAndRevert()
+    private static void PlayEndFlashAndRevert(PlayerState state)
     {
         PlayGreenFlash(EndFlashIn, EndFlashHold, EndFlashOut);
 
         var tree = NCombatRoom.Instance?.GetTree();
         if (tree == null)
         {
-            FinishEndSequence();
+            FinishEndSequence(state);
             return;
         }
-        tree.CreateTimer(EndFlashIn).Timeout += FinishEndSequence;
+        tree.CreateTimer(EndFlashIn).Timeout += () => FinishEndSequence(state);
     }
 
     // 结束演出的最后一拍：变回原形，并解除"演出中"标记
-    private static void FinishEndSequence()
+    private static void FinishEndSequence(PlayerState state)
     {
-        RestoreOriginalAppearance();
-        s_endSequenceStarted = false;
+        RestoreOriginalAppearance(state);
+        state.EndSequenceStarted = false;
     }
 
     // 变身 3 回合到期（玩家回合开始那一刻）：只收状态（移除能力由调用方负责）。
@@ -467,20 +541,22 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         // 兜底：没走到提前收尾（比如读档正好卡在这个回合）就地补一次（牌组 / 能力 / 形象一起收）
         await StartTransformationEnd(player);
 
+        var state = PerPlayerState<PlayerState>.Of(player);
         int turn = player.PlayerCombatState?.TurnNumber ?? 0;
-        s_cooldownUntilTurn = turn + CooldownTurns;
-        Entry.Logger.Info($"[Omnitrix] 第 {turn} 回合开始：变身到期，冷却至第 {s_cooldownUntilTurn} 回合");
+        state.CooldownUntilTurn = turn + CooldownTurns;
+        Entry.Logger.Info($"[Omnitrix] 第 {turn} 回合开始：变身到期，冷却至第 {state.CooldownUntilTurn} 回合");
     }
 
     // 兜底：变身能力被其它方式移除（战斗结束清空、被驱散等）时恢复形象。
     // 但结束演出正在跑的时候不动 —— 那时候形象要留给演出收尾（声音尾 + 闪光一起收）。
-    internal static void RestoreAppearanceSilently()
+    internal static void RestoreAppearanceSilently(Player? player)
     {
-        if (s_endSequenceStarted)
+        var state = PerPlayerState<PlayerState>.Of(player);
+        if (state.EndSequenceStarted)
         {
             return;
         }
-        RestoreOriginalAppearance();
+        RestoreOriginalAppearance(state);
     }
 
     // 全屏绿色闪光过渡。做法与原版 NAdditiveOverlayVfx 一致：全屏 ColorRect + 加法混合材质，
@@ -537,27 +613,27 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         }
     }
 
-    // 恢复玩家原始形象；本来就没在变身状态时是空操作
-    private static void RestoreOriginalAppearance()
+    // 恢复指定玩家原始形象；本来就没在变身状态时是空操作
+    private static void RestoreOriginalAppearance(PlayerState state)
     {
-        bool wasTransformed = s_hiddenBody != null || s_overlaySprite != null;
+        bool wasTransformed = state.HiddenBody != null || state.OverlaySprite != null;
 
-        if (s_hiddenBody != null && GodotObject.IsInstanceValid(s_hiddenBody))
+        if (state.HiddenBody != null && GodotObject.IsInstanceValid(state.HiddenBody))
         {
-            s_hiddenBody.Visible = true;
+            state.HiddenBody.Visible = true;
         }
-        if (s_overlaySprite != null && GodotObject.IsInstanceValid(s_overlaySprite))
+        if (state.OverlaySprite != null && GodotObject.IsInstanceValid(state.OverlaySprite))
         {
-            s_overlaySprite.QueueFree();
+            state.OverlaySprite.QueueFree();
         }
-        s_hiddenBody = null;
-        s_overlaySprite = null;
-        s_currentHero = null;
+        state.HiddenBody = null;
+        state.OverlaySprite = null;
+        state.CurrentHero = null;
 
         if (wasTransformed)
         {
             Entry.Logger.Info("[Omnitrix] 变身解除，恢复原始形象");
-            // 血条名字还原成角色名（刷新所有玩家：static 不区分玩家，且战斗结束时节点可能正在销毁，失败忽略）
+            // 血条名字还原成角色名（刷新所有玩家名牌；战斗结束时节点可能正在销毁，失败忽略）
             RefreshAllPlayerNameplates();
         }
     }

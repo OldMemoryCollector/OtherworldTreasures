@@ -33,7 +33,8 @@ namespace OtherworldTreasures.Scripts.Relics;
 /// </summary>
 [RegisterRelic(typeof(SharedRelicPool))]
 public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
-    IRelicExtraIconAmountLabelSpecsProvider, IRelicExtraIconAmountLabelsChangeSource
+    IRelicExtraIconAmountLabelSpecsProvider, IRelicExtraIconAmountLabelsChangeSource,
+    RelicRightClickSync.ICrossEndRightClickEffect
 {
     // 角标字号：RitsuLib 角标字号继承自原版数量标签（很大），必须用 RichText 指定
     private const int BadgeFontSize = 14;
@@ -266,7 +267,17 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
         return can;
     }
 
+    // 只有发起者本机负责入队；真正的开关由联机动作在所有端统一执行
     public async Task OnRightClick(ModRightClickExecutionContext context)
+    {
+        if (Owner == null || !Entry.IsLocalPlayer(Owner))
+        {
+            return;
+        }
+        RelicRightClickSync.Request(Owner, this);
+    }
+
+    async Task RelicRightClickSync.ICrossEndRightClickEffect.ApplyRightClickAsync(PlayerChoiceContext choiceContext)
     {
         // 右键派发到的可能是克隆实例，必须写回玩家手上那件真遗物（与任意门/原素瓶同做法），
         // 否则 Enabled 改在克隆上、真遗物没变，表现为"右键没反应、图标也不变"。
@@ -297,6 +308,8 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
         var owner = Owner;
         var creature = owner?.Creature;
         var combatState = creature?.CombatState;
+        // 复位"本场战斗已结算四魂"标记（多名玩家都持有碎片时，胜利结算只会走一次）
+        FourSoulsSystem.ResetCombatAward();
         if (owner != null && creature != null && combatState != null && Enabled)
         {
             // 玩家与带四魂的敌人都会在这里被挂上【四魂】显示用能力（见 ApplyCombatStartBuffs）

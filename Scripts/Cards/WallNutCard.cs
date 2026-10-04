@@ -8,7 +8,7 @@ using OtherworldTreasures.Scripts.Monsters;
 namespace OtherworldTreasures.Scripts.Cards;
 
 // 坚果墙召唤卡：【戴夫的种子】右键弹出的三选一选项之一。
-// 选中后由遗物扣掉 3 点能量并召唤【坚果墙】。
+// 选中后由遗物扣掉 2 点能量并召唤【坚果墙】（费用见 CardEnergyCost）。
 // 这张卡不会进入牌库/手牌，只用于选择界面，所以不实现 OnPlay。
 [RegisterCard(typeof(TokenCardPool))]
 public class WallNutCard : ModCardTemplate, IDerivedCard

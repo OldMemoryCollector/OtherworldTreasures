@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -19,7 +20,8 @@ namespace OtherworldTreasures.Scripts.Relics;
 // 缩小灯：右键点击获得一张【缩小灯】卡牌（1 费、消耗），可无限获得。
 // 与库拉的骰子/原素瓶一致，右键仅战斗内可用。
 [RegisterRelic(typeof(SharedRelicPool))]
-public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonItem
+public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonItem,
+    RelicRightClickSync.ICrossEndRightClickEffect
 {
     // 哆啦A梦道具：自定义稀有度
     public override RelicRarity Rarity => ModRelicRarity.Doraemon;
@@ -63,7 +65,17 @@ public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonIte
         return Owner != null && CombatManager.Instance.DebugOnlyGetState() != null;
     }
 
+    // 只有发起者本机负责入队；实际发卡由联机动作在所有端统一执行
     public async Task OnRightClick(ModRightClickExecutionContext context)
+    {
+        if (Owner == null || !Entry.IsLocalPlayer(Owner))
+        {
+            return;
+        }
+        RelicRightClickSync.Request(Owner, this);
+    }
+
+    async Task RelicRightClickSync.ICrossEndRightClickEffect.ApplyRightClickAsync(PlayerChoiceContext choiceContext)
     {
         await GrantShrinkRayCard();
     }

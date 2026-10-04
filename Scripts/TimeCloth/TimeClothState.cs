@@ -197,49 +197,59 @@ public static class TimeClothState
         }
     }
 
-    // 根据点中的节点结算
+    // 根据点中的节点结算（本地 UI 路径）
     public static async Task ApplyToNode(Node node, bool isRewind)
     {
         switch (node)
         {
             case NCreature creatureNode when creatureNode.Entity != null:
-                var creature = creatureNode.Entity;
-                if (creature.IsPlayer)
-                {
-                    if (isRewind)
-                    {
-                        await Rewind(creature);
-                    }
-                    else
-                    {
-                        await AdvanceStatus(creature);
-                    }
-                }
-                else if (isRewind)
-                {
-                    await Rewind(creature);
-                }
-                else
-                {
-                    AdvanceIntent(creature);
-                }
+                await ApplyToCreature(creatureNode.Entity, isRewind);
                 break;
 
             case NRelicInventoryHolder holder:
                 var relic = holder.Relic?.Model;
-                if (relic == null)
+                if (relic != null)
                 {
-                    break;
-                }
-                if (isRewind)
-                {
-                    RewindRelicCounter(relic);
-                }
-                else
-                {
-                    AdvanceRelicTurnCounter(relic);
+                    ApplyToRelic(relic, isRewind);
                 }
                 break;
+        }
+    }
+
+    // 结算到某个生物（联机动作里按 CombatId 找到目标后调用）
+    public static async Task ApplyToCreature(Creature creature, bool isRewind)
+    {
+        if (creature.IsPlayer)
+        {
+            if (isRewind)
+            {
+                await Rewind(creature);
+            }
+            else
+            {
+                await AdvanceStatus(creature);
+            }
+        }
+        else if (isRewind)
+        {
+            await Rewind(creature);
+        }
+        else
+        {
+            AdvanceIntent(creature);
+        }
+    }
+
+    // 结算到某件遗物（联机动作里按"主人 + 序号"找到目标后调用）
+    public static void ApplyToRelic(RelicModel relic, bool isRewind)
+    {
+        if (isRewind)
+        {
+            RewindRelicCounter(relic);
+        }
+        else
+        {
+            AdvanceRelicTurnCounter(relic);
         }
     }
 

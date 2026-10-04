@@ -22,8 +22,14 @@ public class FourDimensionalPocket : ModRelicTemplate
 {
     private const int initialCharges = 3;
 
-    // 跨战斗实例持久化：遗物在战斗中会被克隆，普通实例字段会丢失
-    private static int s_remaining = initialCharges;
+    // 跨战斗实例持久化：遗物在战斗中会被克隆，普通实例字段会丢失。
+    // 状态按玩家隔离（遗物实例每次战斗重建，static 又会被两名玩家共享）
+    private sealed class PlayerState
+    {
+        public int Remaining = initialCharges;
+    }
+
+    private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
 
     public override RelicRarity Rarity => RelicRarity.Ancient;
 
@@ -38,9 +44,9 @@ public class FourDimensionalPocket : ModRelicTemplate
     );
 
     // 剩余次数角标
-    public override bool ShowCounter => s_remaining > 0;
+    public override bool ShowCounter => S.Remaining > 0;
 
-    public override int DisplayAmount => s_remaining;
+    public override int DisplayAmount => S.Remaining;
 
     // 悬浮提示：预览道具池中的哆啦A梦道具（只取各自的遗物说明，不嵌套子提示）
     protected override IEnumerable<IHoverTip> AdditionalHoverTips => base.AdditionalHoverTips.Concat(new IHoverTip[]
@@ -54,14 +60,14 @@ public class FourDimensionalPocket : ModRelicTemplate
         ModelDb.Relic<MomotaroDumplings>().HoverTip
     });
 
-    // 每局新 run 重新获得遗物时重置 static 状态（避免继承旧档的剩余次数）
+    // 每局新 run 重新获得遗物时重置该玩家的状态（避免继承旧档的剩余次数）
     // 并立即随机获得一件哆啦A梦道具（原版 LargeCapsule 同款做法）
     public override async Task AfterObtained()
     {
-        s_remaining = initialCharges;
+        S.Remaining = initialCharges;
         Status = RelicStatus.Normal;
         InvokeDisplayAmountChanged();
-        Entry.Logger.Info($"[FourDimensionalPocket] AfterObtained: charges reset to {s_remaining}");
+        Entry.Logger.Info($"[FourDimensionalPocket] AfterObtained: charges reset to {S.Remaining}");
 
         var item = PickRandomItem(Owner);
         if (item != null)
@@ -88,7 +94,7 @@ public class FourDimensionalPocket : ModRelicTemplate
         {
             return false;
         }
-        if (s_remaining <= 0)
+        if (S.Remaining <= 0)
         {
             return false;
         }
@@ -111,13 +117,13 @@ public class FourDimensionalPocket : ModRelicTemplate
             rewards.Add(replacement);
         }
 
-        s_remaining--;
+        S.Remaining--;
         InvokeDisplayAmountChanged();
-        if (s_remaining <= 0)
+        if (S.Remaining <= 0)
         {
             Status = RelicStatus.Disabled;
         }
-        Entry.Logger.Info($"[FourDimensionalPocket] Elite relic replaced by {item.GetType().Name}, remaining={s_remaining}");
+        Entry.Logger.Info($"[FourDimensionalPocket] Elite relic replaced by {item.GetType().Name}, remaining={S.Remaining}");
         return true;
     }
 
@@ -137,6 +143,7 @@ public class FourDimensionalPocket : ModRelicTemplate
             pool = all;
         }
 
-        return pool[System.Random.Shared.Next(pool.Count)].ToMutable();
+        // 改走联机一致的 RNG（该玩家共享的 Rewards 子流），避免两端各滚各的分叉
+        return pool[player.PlayerRng.Rewards.NextInt(pool.Count)].ToMutable();
     }
 }

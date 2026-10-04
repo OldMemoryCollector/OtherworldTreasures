@@ -34,24 +34,32 @@ namespace OtherworldTreasures.Scripts.Relics;
 // - 击败精英/Boss：50% 几率 +1 次
 [RegisterRelic(typeof(SharedRelicPool))]
 public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatCompactRelic,
-    IRelicExtraIconAmountLabelSpecsProvider, IRelicExtraIconAmountLabelsChangeSource, ITimeClothCounter
+    IRelicExtraIconAmountLabelSpecsProvider, IRelicExtraIconAmountLabelsChangeSource, ITimeClothCounter,
+    RelicRightClickSync.ICrossEndRightClickEffect
 {
     // === 跨战斗实例持久化（遗物每次战斗有新 runtime 实例） ===
-    private static int s_currentUses = 2;
-    private static int s_maxUses = 2;
+    // 按玩家隔离的状态（遗物实例每次战斗重建，static 又会被两名玩家共享）
+    private sealed class PlayerState
+    {
+        public int CurrentUses = 2;
+        public int MaxUses = 2;
+        public bool PendingSlotLoss;
+    }
+
+    private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
 
     // 角标字号：RitsuLib 的角标字号继承自原版数量标签（很大），必须用 RichText 指定字号，
     // 与库拉的骰子保持一致
     private const int BadgeFontSize = 16;
 
-    public int CurrentUses => s_currentUses;
-    public int MaxUses => s_maxUses;
+    public int CurrentUses => S.CurrentUses;
+    public int MaxUses => S.MaxUses;
 
     // 时光布：可回溯/推进的计数 = 当前使用次数
     public int TimeClothCounter
     {
-        get => s_currentUses;
-        set => s_currentUses = value;
+        get => S.CurrentUses;
+        set => S.CurrentUses = value;
     }
 
     public void RefreshTimeClothCounterUi()
@@ -66,8 +74,7 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
 
     // 药水栏扣减的"延后"标记：药水栏满时原版减槽会越界（见 TryLosePotionSlot 注释），
     // 所以先记账，等玩家用掉/丢掉一个药水腾出空位后再扣。
-    // static 供战斗中的克隆实例共享，SavedProperty 让它跨存档/重启保留（同孢子囊的做法）。
-    private static bool s_pendingSlotLoss;
+    // 状态放在 PlayerState（按玩家隔离），SavedProperty 让它跨存档/重启保留（同孢子囊的做法）。
     private bool _pendingSlotLoss;
 
     [SavedProperty]
@@ -83,18 +90,18 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
 
     private AshenFlask? LiveRelic => Owner?.Relics?.OfType<AshenFlask>().FirstOrDefault();
 
-    // 存档权威：读档后用存档值校正 static（进程重启后 static 会回到默认值）
+    // 存档权威：读档后用存档值校正本玩家的状态（进程重启后状态会回到默认值）
     private void SyncFromSave()
     {
         var live = LiveRelic ?? this;
-        if (live._pendingSlotLoss != s_pendingSlotLoss)
+        if (live._pendingSlotLoss != S.PendingSlotLoss)
         {
-            s_pendingSlotLoss = live._pendingSlotLoss;
-            Entry.Logger.Info($"[AshenFlask] 从存档同步待扣药水栏：{s_pendingSlotLoss}");
+            S.PendingSlotLoss = live._pendingSlotLoss;
+            Entry.Logger.Info($"[AshenFlask] 从存档同步待扣药水栏：{S.PendingSlotLoss}");
         }
     }
 
-    // 把 static 写回玩家手里那件（可变）遗物，随存档保存
+    // 把本玩家的状态写回玩家手里那件（可变）遗物，随存档保存
     private void Persist()
     {
         var live = LiveRelic;
@@ -102,12 +109,12 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
         {
             if (live.IsMutable)
             {
-                live.PendingSlotLoss = s_pendingSlotLoss;
+                live.PendingSlotLoss = S.PendingSlotLoss;
             }
         }
         else if (IsMutable)
         {
-            PendingSlotLoss = s_pendingSlotLoss;
+            PendingSlotLoss = S.PendingSlotLoss;
         }
     }
 
@@ -139,14 +146,14 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
     {
         Entry.Logger.Info($"[AshenFlask] AfterObtained called. Owner={(Owner == null ? "NULL" : "ok")}, potionSlots before={Owner?.MaxPotionCount}");
 
-        // 重置跨 run 残留的 static 状态（s_currentUses/s_maxUses 在进程内全局存活，
-        // 新档获得时若不重置会继承旧档的注火次数/上限，导致"新开档就是满强化瓶"）
-        s_currentUses = 2;
-        s_maxUses = 2;
-        s_pendingSlotLoss = false;
+        // 重置该玩家的状态（同一玩家新档获得时若不重置会继承旧档的注火次数/上限，
+        // 导致"新开档就是满强化瓶"）
+        S.CurrentUses = 2;
+        S.MaxUses = 2;
+        S.PendingSlotLoss = false;
         PendingSlotLoss = false;
         RefreshBadge();
-        Entry.Logger.Info($"[AshenFlask] Reset static state for new run: uses={s_currentUses}/{s_maxUses}");
+        Entry.Logger.Info($"[AshenFlask] Reset state for new run: uses={S.CurrentUses}/{S.MaxUses}");
 
         // 在确定性入口注册模型身份令牌，否则右键同步派发会因拿不到 token 而被静默拒绝
         var identity = RitsuLibFramework.EnsureModelIdentity(this);
@@ -170,14 +177,14 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
         }
         if (player.Potions.Count() >= player.MaxPotionCount)
         {
-            s_pendingSlotLoss = true;
+            S.PendingSlotLoss = true;
             Persist();
             Entry.Logger.Info("[AshenFlask] 药水栏已满，延后扣除药水栏（等玩家用掉一个药水）");
             return;
         }
         await PlayerCmd.LoseMaxPotionCount(1, player);
         _potionSlotAdjusted = true;
-        s_pendingSlotLoss = false;
+        S.PendingSlotLoss = false;
         Persist();
         Entry.Logger.Info($"[AshenFlask] -1 potion slot. potionSlots after={player.MaxPotionCount}");
     }
@@ -186,7 +193,7 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
     private async Task FlushPendingSlotLoss()
     {
         SyncFromSave();
-        if (!s_pendingSlotLoss || _potionSlotAdjusted)
+        if (!S.PendingSlotLoss || _potionSlotAdjusted)
         {
             return;
         }
@@ -217,7 +224,7 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
     public override async Task AfterRemoved()
     {
         // 还欠着的扣减也一并取消
-        s_pendingSlotLoss = false;
+        S.PendingSlotLoss = false;
         Persist();
         if (Owner != null && _potionSlotAdjusted)
         {
@@ -240,20 +247,31 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
     // 右击遗物使用 → 回血 15% 最大生命
     public bool CanExecuteRightClick(ModRightClickExecutionContext context)
     {
-        bool can = s_currentUses > 0;
-        Entry.Logger.Info($"[AshenFlask] CanExecuteRightClick => {can} (uses={s_currentUses}/{s_maxUses}, Owner={(Owner == null ? "NULL" : "ok")}, Creature={(Owner?.Creature == null ? "NULL" : "ok")})");
+        bool can = S.CurrentUses > 0;
+        Entry.Logger.Info($"[AshenFlask] CanExecuteRightClick => {can} (uses={S.CurrentUses}/{S.MaxUses}, Owner={(Owner == null ? "NULL" : "ok")}, Creature={(Owner?.Creature == null ? "NULL" : "ok")})");
         return can;
     }
 
+    // 只有发起者本机负责入队；实际回血由联机动作在所有端统一执行
+    // （RitsuLib 右键的跨端执行在我们模组上不可靠：远端跑不到这里 → 只有一端生效）
     public async Task OnRightClick(ModRightClickExecutionContext context)
     {
-        Entry.Logger.Info($"[AshenFlask] OnRightClick fired! uses={s_currentUses}/{s_maxUses}");
+        if (Owner == null || !Entry.IsLocalPlayer(Owner))
+        {
+            return;
+        }
+        RelicRightClickSync.Request(Owner, this);
+    }
+
+    async Task RelicRightClickSync.ICrossEndRightClickEffect.ApplyRightClickAsync(PlayerChoiceContext choiceContext)
+    {
+        Entry.Logger.Info($"[AshenFlask] 跨端使用，uses={S.CurrentUses}/{S.MaxUses}");
         await UseFlask();
     }
 
     private async Task UseFlask()
     {
-        if (s_currentUses <= 0)
+        if (S.CurrentUses <= 0)
         {
             Entry.Logger.Info("[AshenFlask] UseFlask aborted: no uses left");
             return;
@@ -271,9 +289,9 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
         Flash();
         // 原版治疗：自带治疗音效 + 十字治疗VFX
         await CreatureCmd.Heal(Owner.Creature, healAmount);
-        s_currentUses--;
+        S.CurrentUses--;
         RefreshBadge();
-        Entry.Logger.Info($"[AshenFlask] Healed {healAmount} HP. Remaining: {s_currentUses}/{s_maxUses}");
+        Entry.Logger.Info($"[AshenFlask] Healed {healAmount} HP. Remaining: {S.CurrentUses}/{S.MaxUses}");
     }
 
     // 篝火注火：注入自定义 RestSite 选项
@@ -291,24 +309,24 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
     // 注火：次数满 + 上限 +1
     public void Kindle()
     {
-        s_maxUses++;
-        s_currentUses = s_maxUses;
+        S.MaxUses++;
+        S.CurrentUses = S.MaxUses;
         Flash();
         RefreshBadge();
-        Entry.Logger.Info($"[AshenFlask] Kindled! New max={s_maxUses}, current={s_currentUses}");
+        Entry.Logger.Info($"[AshenFlask] Kindled! New max={S.MaxUses}, current={S.CurrentUses}");
     }
 
     // 击败精英/Boss：50% 几率 +1 次
     public override async Task AfterCombatEnd(CombatRoom room)
     {
         bool isEliteOrBoss = room.RoomType == RoomType.Elite || room.RoomType == RoomType.Boss;
-        if (isEliteOrBoss && s_currentUses < s_maxUses && Owner != null)
+        if (isEliteOrBoss && S.CurrentUses < S.MaxUses && Owner != null)
         {
             if (Owner.RunState.Rng.Shuffle.NextInt(2) == 0)
             {
-                s_currentUses++;
+                S.CurrentUses++;
                 RefreshBadge();
-                Entry.Logger.Info($"[AshenFlask] Elite/Boss bonus! Uses={s_currentUses}/{s_maxUses}");
+                Entry.Logger.Info($"[AshenFlask] Elite/Boss bonus! Uses={S.CurrentUses}/{S.MaxUses}");
             }
         }
         await Task.CompletedTask;
@@ -326,7 +344,7 @@ public class AshenFlask : ModRelicTemplate, IModRightClickableRelic, ICombatComp
         {
             ExtraIconAmountLabelSpec.RichText(
                 ExtraIconAmountLabelCorner.BottomRight,
-                $"[font_size={BadgeFontSize}]{s_currentUses}/{s_maxUses}[/font_size]")
+                $"[font_size={BadgeFontSize}]{S.CurrentUses}/{S.MaxUses}[/font_size]")
         };
     }
 }

@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Map;
@@ -20,15 +21,39 @@ namespace OtherworldTreasures.Scripts.Relics;
 // 与哆啦A梦道具池成员。
 // 实现方式：右键开关（本文件）+ MapTravel.GetTravelablePointsFrom 的 Harmony Postfix（见 GamePatches.cs）。
 [RegisterRelic(typeof(SharedRelicPool))]
-public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableRelic, ICombatCompactRelic
+public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableRelic, ICombatCompactRelic,
+    RelicRightClickSync.ICrossEndRightClickEffect
 {
     private const int initialUses = 3;
 
-    private static int s_remaining = initialUses;
+    // 按玩家隔离的状态（遗物实例每次战斗重建，static 又会被两名玩家共享）
+    private sealed class PlayerState
+    {
+        public int Remaining = initialUses;
+        public bool Armed;
+        public readonly HashSet<MapCoord> ChargedCoords = new();
+    }
 
-    // 自由传送是否已开启（右键开关）。
-    // static：战斗中遗物会被克隆，用 static 跨实例共享；SavedProperty：随存档保存
-    private static bool s_armed;
+    private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
+
+    // 无 runState 参数时的静态查询取当前跑局
+    private static IRunState? CurrentRun => RunManager.Instance?.DebugOnlyGetState();
+
+    // 遍历跑局，取每位持有任意门玩家各自的状态
+    private static IEnumerable<PlayerState> StatesIn(IRunState? runState)
+    {
+        if (runState == null)
+        {
+            yield break;
+        }
+        foreach (var player in runState.Players)
+        {
+            foreach (var door in player.Relics.OfType<AnywhereDoor>())
+            {
+                yield return PerPlayerState<PlayerState>.Of(door.Owner);
+            }
+        }
+    }
 
     private bool _armed;
 
@@ -46,10 +71,11 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
     // 玩家身上真正的那件遗物（右键派发的可能是克隆实例，直接读写 this 不可靠）
     private AnywhereDoor? LiveRelic => Owner?.Relics.OfType<AnywhereDoor>().FirstOrDefault();
 
-    // 当前是否已开启（static 与存档字段任一为真）
+    // 当前是否已开启（任一玩家按玩家状态开启了自由传送，或存档字段为真）
     private static bool IsArmedIn(IRunState runState)
     {
-        return s_armed || runState.Players.Any(p => p.Relics.OfType<AnywhereDoor>().Any(d => d.Armed));
+        return StatesIn(runState).Any(s => s.Armed)
+            || runState.Players.Any(p => p.Relics.OfType<AnywhereDoor>().Any(d => d.Armed));
     }
 
     private bool IsArmed => Owner != null && IsArmedIn(Owner.RunState);
@@ -71,9 +97,9 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
     );
 
     // 剩余次数角标
-    public override bool ShowCounter => s_remaining > 0;
+    public override bool ShowCounter => S.Remaining > 0;
 
-    public override int DisplayAmount => s_remaining;
+    public override int DisplayAmount => S.Remaining;
 
     // 悬浮提示：补充"自由飞行"的消耗规则
     protected override IEnumerable<IHoverTip> AdditionalHoverTips => base.AdditionalHoverTips.Append(
@@ -83,21 +109,35 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
 
     public override async Task AfterObtained()
     {
-        s_remaining = initialUses;
-        s_armed = false;
+        S.Remaining = initialUses;
+        S.Armed = false;
         Armed = false;
-        s_chargedCoords.Clear();
+        S.ChargedCoords.Clear();
         Status = RelicStatus.Normal;
         InvokeDisplayAmountChanged();
-        Entry.Logger.Info($"[AnywhereDoor] AfterObtained: uses reset to {s_remaining}");
+        Entry.Logger.Info($"[AnywhereDoor] AfterObtained: uses reset to {S.Remaining}");
         await base.AfterObtained();
     }
 
-    // 供 MapTravel patch 查询：剩余飞行次数（日志用）
-    public static int RemainingUses => s_remaining;
+    // 供 MapTravel patch 查询：剩余飞行次数（日志用）。按玩家存放，取持有者中最多的剩余次数
+    public static int RemainingUses
+    {
+        get
+        {
+            var states = StatesIn(CurrentRun).ToList();
+            return states.Count == 0 ? initialUses : states.Max(s => s.Remaining);
+        }
+    }
 
-    // 是否还有剩余次数
-    public static bool HasUsesLeft => s_remaining > 0;
+    // 是否还有剩余次数（任一玩家；无持有者时与原先的默认值一致，为 true）
+    public static bool HasUsesLeft
+    {
+        get
+        {
+            var states = StatesIn(CurrentRun).ToList();
+            return states.Count == 0 || states.Any(s => s.Remaining > 0);
+        }
+    }
 
     // 右键预检：注册模型身份令牌（右键同步派发依赖它）
     public bool CanHandleRightClickLocal(ModRightClickContext context)
@@ -109,16 +149,26 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
     // 还有次数时才能开关自由传送
     public bool CanExecuteRightClick(ModRightClickExecutionContext context)
     {
-        return Owner != null && HasUsesLeft;
+        return Owner != null && S.Remaining > 0;
     }
 
-    // 右键：开关「自由传送」（开启后地图才会点亮可直达的节点）
+    // 右键：开关「自由传送」（开启后地图才会点亮可直达的节点）。
+    // 只有发起者本机负责入队，真正的开关由联机动作在所有端统一执行。
     public async Task OnRightClick(ModRightClickExecutionContext context)
     {
+        if (Owner == null || !Entry.IsLocalPlayer(Owner))
+        {
+            return;
+        }
+        RelicRightClickSync.Request(Owner, this);
+    }
+
+    async Task RelicRightClickSync.ICrossEndRightClickEffect.ApplyRightClickAsync(PlayerChoiceContext choiceContext)
+    {
         bool next = !IsArmed;
-        s_armed = next;
+        S.Armed = next;
         var relic = LiveRelic;
-        if (relic != null)
+        if (relic != null && relic.IsMutable)
         {
             relic.Armed = next;
         }
@@ -126,16 +176,11 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
         Status = next ? RelicStatus.Active : RelicStatus.Normal;
         // 正开着地图就地重算（走原版 NTransition 转场），不用玩家关掉地图再打开
         await Patch_NMapScreen_FreeTravelPoints.RefreshIfOpenAsync();
-        Entry.Logger.Info($"[AnywhereDoor] 自由传送 {(next ? "开启" : "关闭")}，剩余次数={s_remaining}");
+        Entry.Logger.Info($"[AnywhereDoor] 自由传送 {(next ? "开启" : "关闭")}，剩余次数={S.Remaining}");
     }
 
-    // 已经扣过次数的目的地坐标：同一个地图点重复进房间（如【如果电话亭】重开本场战斗、
-    // 打完战斗后再次进入该点的房间）不再重复扣次。
-    // 只按"最后两个已访问坐标是否相邻"判断会把重复进入同一地图点误判成新的飞越。
-    private static readonly HashSet<MapCoord> s_chargedCoords = new();
-
-    // 最后一次机会：此时死路检测生效，避免被困
-    public static bool IsOnLastChance => s_remaining == 1;
+    // 最后一次机会：任一玩家只剩 1 次时，此时死路检测生效，避免被困
+    public static bool IsOnLastChance => StatesIn(CurrentRun).Any(s => s.Remaining == 1);
 
     // 供 MapTravel patch 查询：当前 run 是否持有任意门（不看到剩余次数）
     public static bool HasRelic(IRunState runState)
@@ -143,16 +188,16 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
         return runState.Players.Any(p => p.Relics.OfType<AnywhereDoor>().Any());
     }
 
-    // 供 MapTravel patch 查询：当前 run 是否有可用的任意门（已开启 + 还有次数）
+    // 供 MapTravel patch 查询：当前 run 是否有可用的任意门（任一玩家已开启 + 还有次数）
     public static bool HasUsableFreeFlight(IRunState runState)
     {
-        return s_remaining > 0 && HasRelic(runState) && IsArmedIn(runState);
+        return HasRelic(runState) && IsArmedIn(runState) && StatesIn(runState).Any(s => s.Remaining > 0);
     }
 
     // 与 WingedBoots 一致：只有走了「非相邻」路线才扣次数
     public override Task AfterRoomEntered(AbstractRoom room)
     {
-        if (s_remaining <= 0)
+        if (S.Remaining <= 0)
         {
             return Task.CompletedTask;
         }
@@ -184,18 +229,18 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
         }
 
         // 同一目的地只扣一次：重复进入这个地图点的房间不算新的飞越
-        if (!s_chargedCoords.Add(currentPoint.coord))
+        if (!S.ChargedCoords.Add(currentPoint.coord))
         {
             Entry.Logger.Info($"[AnywhereDoor] {currentPoint.coord} 已扣过次数（重复进入同一地图点），本次不扣");
             return Task.CompletedTask;
         }
 
-        s_remaining--;
+        S.Remaining--;
         InvokeDisplayAmountChanged();
-        if (s_remaining <= 0)
+        if (S.Remaining <= 0)
         {
             // 次数用尽：自动关闭自由传送，图标失效
-            s_armed = false;
+            S.Armed = false;
             var relic = LiveRelic;
             if (relic != null)
             {
@@ -203,7 +248,7 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
             }
             Status = RelicStatus.Disabled;
         }
-        Entry.Logger.Info($"[AnywhereDoor] Free travel used, remaining={s_remaining}");
+        Entry.Logger.Info($"[AnywhereDoor] Free travel used, remaining={S.Remaining}");
         return Task.CompletedTask;
     }
 }

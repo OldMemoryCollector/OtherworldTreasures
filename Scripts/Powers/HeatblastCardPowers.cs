@@ -152,8 +152,8 @@ public class HeatblastSolarFlarePower : ModPowerTemplate
     public override PowerStackType StackType => PowerStackType.Single;
 
     public override PowerAssetProfile AssetProfile => new(
-        IconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png",
-        BigIconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png");
+        IconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power.png",
+        BigIconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power_Big.png");
 
     public override LocString Title => new LocString("powers", "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.title");
 
@@ -206,8 +206,8 @@ public class HeatblastScorchingFeedbackPower : ModPowerTemplate
     public override PowerStackType StackType => PowerStackType.Single;
 
     public override PowerAssetProfile AssetProfile => new(
-        IconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png",
-        BigIconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png");
+        IconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power.png",
+        BigIconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power_Big.png");
 
     public override LocString Title => new LocString("powers", "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_FEEDBACK.title");
     public override LocString Description => new LocString("powers", "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_FEEDBACK.description");
@@ -262,8 +262,8 @@ public class HeatblastScorchingDomainPower : ModPowerTemplate
     public override PowerStackType StackType => PowerStackType.Single;
 
     public override PowerAssetProfile AssetProfile => new(
-        IconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png",
-        BigIconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png");
+        IconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power.png",
+        BigIconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power_Big.png");
 
     public override LocString Title => new LocString("powers", "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_DOMAIN.title");
     public override LocString Description => new LocString("powers", "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_DOMAIN.description");
@@ -318,8 +318,8 @@ public class HeatblastScorchingCorePower : ModPowerTemplate
     public override PowerStackType StackType => PowerStackType.Single;
 
     public override PowerAssetProfile AssetProfile => new(
-        IconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png",
-        BigIconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png");
+        IconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power.png",
+        BigIconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power_Big.png");
 
     public override LocString Title => new LocString("powers", "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.title");
     public override LocString Description => new LocString("powers", "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.description");
@@ -388,8 +388,8 @@ public class HeatblastSupercombustionPower : ModPowerTemplate
     public override PowerStackType StackType => PowerStackType.Single;
 
     public override PowerAssetProfile AssetProfile => new(
-        IconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png",
-        BigIconPath: "res://OtherworldTreasures/images/heroes/Heatblast.png");
+        IconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power.png",
+        BigIconPath: "res://OtherworldTreasures/images/powers/Heatblast_Power_Big.png");
 
     public override LocString Title => new LocString("powers", "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.title");
     public override LocString Description => new LocString("powers", "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.description");

@@ -134,7 +134,8 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
         s_usesThisCombat++;
 
         // 1) 换一个新的时间线：重播种影响洗牌/选牌的随机数
-        ulong seed = (ulong)System.Random.Shared.NextInt64();
+        // 改走联机一致的 RNG，避免两端分叉：种子从共享的 Shuffle 子流取，不再用进程本地随机数
+        ulong seed = runState.Rng.Shuffle.NextUnsignedLong();
         runState.Rng.Shuffle.LoadFromSerializable(new Rng(seed).ToSerializable());
         runState.Rng.CombatCardSelection.LoadFromSerializable(new Rng(seed + 1).ToSerializable());
 

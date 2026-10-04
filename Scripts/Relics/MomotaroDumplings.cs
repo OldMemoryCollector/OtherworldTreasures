@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -17,6 +18,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.RelicPools;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Rooms;
@@ -29,13 +31,17 @@ using STS2RitsuLib;
 using STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels;
 using STS2RitsuLib.Interactions.RightClick;
 using STS2RitsuLib.Interop.AutoRegistration;
+using STS2RitsuLib.Networking.ManagedActions;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace OtherworldTreasures.Scripts.Relics;
 
 // 桃太郎丸子（哆啦A梦的道具之一）：
-// 拥有 3 颗丸子。战斗中右键点击遗物，选择一名当前生命不超过 10、最大生命不超过 80 的非首领敌人直接收服。
-// 收服后：回满血、生命上限变为原来的 80%、成为跨战斗的永久随从、使用原本的招式与意图、无法被治疗；随从死亡后永久消失。
+// 拥有 3 颗丸子。战斗中右键点击遗物，选择一名敌方怪物直接收服：
+// 普通怪需当前生命低于 10、精英怪需当前生命低于 15，首领不可收服。
+// 收服时该敌人在本场战斗立即死亡、本次不登场；从下一场战斗开始，
+// 随从以"生命上限为原怪的 80%（普通怪）/ 60%（精英怪）且回满"的状态登场，
+// 使用原本的招式与意图、无法被治疗；随从死亡后永久消失。
 [RegisterRelic(typeof(SharedRelicPool))]
 public class MomotaroDumplings : ModRelicTemplate,
     IModRightClickableRelic, IDoraemonItem,
@@ -43,11 +49,18 @@ public class MomotaroDumplings : ModRelicTemplate,
 {
     private const int InitialDumplings = 3;
 
-    // 收服后随从的血上限倍率（比原怪低 20%）
-    private const decimal TameHpRatio = 0.8m;
+    // 收服后随从的血上限折扣：普通怪 -20%，精英怪 -40%
+    private const decimal NormalTameHpRatio = 0.8m;
+    private const decimal EliteTameHpRatio = 0.6m;
 
-    // 剩余丸子数（跨战斗 static + 存档双保险，同孢子囊）
-    private static int s_remaining = InitialDumplings;
+    // 剩余丸子数（按玩家隔离 + 存档双保险，同孢子囊）
+    // 遗物实例每次战斗重建，static 又会被两名玩家共享，故按玩家 NetId 存放
+    private sealed class PlayerState
+    {
+        public int Remaining = InitialDumplings;
+    }
+
+    private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
     private int _savedRemaining = InitialDumplings;
     private string _savedPetsData = string.Empty;
 
@@ -118,7 +131,7 @@ public class MomotaroDumplings : ModRelicTemplate,
         {
             ExtraIconAmountLabelSpec.RichText(
                 ExtraIconAmountLabelCorner.BottomRight,
-                $"[font_size={BadgeFontSize}]{s_remaining}[/font_size]")
+                $"[font_size={BadgeFontSize}]{S.Remaining}[/font_size]")
         };
     }
 
@@ -126,7 +139,7 @@ public class MomotaroDumplings : ModRelicTemplate,
 
     public override async Task AfterObtained()
     {
-        s_remaining = InitialDumplings;
+        S.Remaining = InitialDumplings;
         SavedRemaining = InitialDumplings;
         TamedPets.ResetRun();
         SavedPetsData = string.Empty;
@@ -136,20 +149,20 @@ public class MomotaroDumplings : ModRelicTemplate,
         await base.AfterObtained();
     }
 
-    // 存档权威：读档后用保存值覆盖 static（同孢子囊）
+    // 存档权威：读档后用保存值覆盖本玩家的状态（同孢子囊）
     private void SyncFromSave()
     {
         var live = LiveRelic ?? this;
-        if (live._savedRemaining != s_remaining)
+        if (live._savedRemaining != S.Remaining)
         {
-            s_remaining = live._savedRemaining;
+            S.Remaining = live._savedRemaining;
             RefreshBadge();
         }
         TamedPets.LoadRecords(live._savedPetsData);
-        Entry.Logger.Info($"[MomotaroDumplings] 读档同步：丸子 {s_remaining}，随从 {TamedPets.Records.Count}");
+        Entry.Logger.Info($"[MomotaroDumplings] 读档同步：丸子 {S.Remaining}，随从 {TamedPets.Records.Count}");
     }
 
-    // 把 static 状态写回持有的那件（可变）遗物
+    // 把本玩家的状态写回持有的那件（可变）遗物
     private void Persist()
     {
         var live = LiveRelic;
@@ -157,13 +170,13 @@ public class MomotaroDumplings : ModRelicTemplate,
         {
             if (live.IsMutable)
             {
-                live.SavedRemaining = s_remaining;
+                live.SavedRemaining = S.Remaining;
                 live.SavedPetsData = TamedPets.EncodeRecords();
             }
         }
         else if (IsMutable)
         {
-            SavedRemaining = s_remaining;
+            SavedRemaining = S.Remaining;
             SavedPetsData = TamedPets.EncodeRecords();
         }
     }
@@ -179,17 +192,30 @@ public class MomotaroDumplings : ModRelicTemplate,
     public bool CanExecuteRightClick(ModRightClickExecutionContext context)
     {
         return Owner != null
-            && s_remaining > 0
+            && S.Remaining > 0
             && CombatManager.Instance.DebugOnlyGetState() != null;
     }
 
-    // 右键直接用遗物收服：借用原版的目标选择界面（与药水/休息处选项同一套），
-    // 只允许选中"可以驯服"的敌人，选完立即收服。
+    // 右键收服：只有"发起右键的本地玩家"这一端负责选目标，然后把"捕获动作"入队。
+    // 真正的效果由动作队列在所有端统一执行（见 ExecuteCaptureAsync），
+    // 避免各端各自选目标、各自结算导致的状态分叉。
     public async Task OnRightClick(ModRightClickExecutionContext context)
     {
         var player = Owner;
-        if (player == null || s_remaining <= 0 || CombatManager.Instance.DebugOnlyGetState() == null)
+        if (player == null || S.Remaining <= 0 || CombatManager.Instance.DebugOnlyGetState() == null)
         {
+            return;
+        }
+
+        // 该右键会被 RitsuLib 同步到所有端；非发起者的端不选目标、不入队，等动作队列下发
+        if (!Entry.IsLocalPlayer(player))
+        {
+            return;
+        }
+
+        if (s_captureDescriptor == null)
+        {
+            Entry.Logger.Info("[MomotaroDumplings] 捕获动作未注册，中止");
             return;
         }
 
@@ -216,17 +242,77 @@ public class MomotaroDumplings : ModRelicTemplate,
             return;
         }
 
-        var enemyName = targetNode.Entity.Monster.Id.Entry;
-        if (!await TameCreature(new ThrowingPlayerChoiceContext(), targetNode.Entity))
+        if (targetNode.Entity.CombatId is not uint combatId)
         {
-            Entry.Logger.Info($"[MomotaroDumplings] 收服 {enemyName} 失败，不消耗丸子");
+            Entry.Logger.Info("[MomotaroDumplings] 目标没有 CombatId，中止");
             return;
         }
 
-        s_remaining--;
-        Persist();
-        RefreshBadge();
-        Entry.Logger.Info($"[MomotaroDumplings] 收服完成，剩余 {s_remaining} 颗丸子");
+        var enemyName = targetNode.Entity.Monster.Id.Entry;
+        var queued = RitsuLibManagedNetActions.Request(
+            RunManager.Instance, s_captureDescriptor, new CapturePayload(combatId));
+        Entry.Logger.Info($"[MomotaroDumplings] 捕获 {enemyName} 已入队={queued}");
+    }
+
+    // === 联机：捕获动作（走原版动作队列，所有端按同一顺序执行同一份逻辑）===
+
+    // 网络载荷：目标生物在本场战斗里的 CombatId（两端一致）
+    private readonly record struct CapturePayload(uint CombatId);
+
+    private static RitsuLibManagedNetActionDescriptor<CapturePayload>? s_captureDescriptor;
+
+    // 由 Entry.Init 调用一次
+    internal static void RegisterCaptureAction()
+    {
+        if (s_captureDescriptor != null)
+        {
+            return;
+        }
+        try
+        {
+            s_captureDescriptor = new RitsuLibManagedNetActionDescriptor<CapturePayload>(
+                Entry.ModId,
+                "momotaro_capture",
+                static payload => BitConverter.GetBytes(payload.CombatId),
+                static bytes => new CapturePayload(BitConverter.ToUInt32(bytes)),
+                ExecuteCaptureAsync,
+                GameActionType.CombatPlayPhaseOnly);
+            RitsuLibManagedNetActions.Register(s_captureDescriptor);
+            Entry.Logger.Info("[MomotaroDumplings] 捕获动作已注册到联机动作队列");
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Info($"[MomotaroDumplings] 捕获动作注册失败（已忽略）：{e}");
+        }
+    }
+
+    // 动作在所有端执行：按 CombatId 找到目标，跑同一份捕获逻辑
+    private static async Task ExecuteCaptureAsync(RitsuLibManagedNetActionContext<CapturePayload> context)
+    {
+        try
+        {
+            var player = context.Player;
+            if (player == null)
+            {
+                return;
+            }
+            var relic = player.Relics?.OfType<MomotaroDumplings>().FirstOrDefault();
+            if (relic == null)
+            {
+                return;
+            }
+            var enemy = player.Creature?.CombatState?.GetCreature(context.Message.CombatId);
+            if (enemy == null)
+            {
+                Entry.Logger.Info("[MomotaroDumplings] 捕获动作：目标已不存在，跳过");
+                return;
+            }
+            await relic.ApplyCapture(context.PlayerChoiceContext, enemy);
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Info($"[MomotaroDumplings] 捕获动作执行异常（已忽略）：{e}");
+        }
     }
 
     // === 战斗开始：重召全部持久随从 ===
@@ -374,10 +460,9 @@ public class MomotaroDumplings : ModRelicTemplate,
         await base.AfterCombatVictory(room);
     }
 
-    // === 驯服（由遗物右键直接调用）===
-    // 返回是否真的收服成功（失败时调用方不该扣丸子）
-
-    public async Task<bool> TameCreature(PlayerChoiceContext choiceContext, Creature enemy)
+    // === 捕获的实际结算（由联机动作在所有端各执行一次）===
+    // 这里会改动本玩家的状态与遗物 SavedProperty，所以必须两端都执行且结果一致。
+    public async Task<bool> ApplyCapture(PlayerChoiceContext choiceContext, Creature enemy)
     {
         var player = Owner;
         if (player == null || !TamedPets.CanTame(enemy, player.Creature))
@@ -386,33 +471,32 @@ public class MomotaroDumplings : ModRelicTemplate,
         }
 
         var id = enemy.Monster.Id;
-        // 收服代价：随从的血上限比原怪低 20%（跨战斗重召也用的是这个值，存在记录里）
-        var hp = Math.Max(1m, Math.Floor(enemy.MaxHp * TameHpRatio));
-        var canonical = ModelDb.GetByIdOrNull<MonsterModel>(id);
-        if (canonical == null)
+        // 收服代价：随从的血上限按"所在房间类型"打折（普通怪 -20%、精英怪 -40%）。
+        // 这个值会存进记录，跨战斗重召沿用。
+        var isElite = player.RunState?.CurrentRoom?.RoomType == RoomType.Elite;
+        var hp = Math.Max(1m, Math.Floor(enemy.MaxHp * (isElite ? EliteTameHpRatio : NormalTameHpRatio)));
+        if (ModelDb.GetByIdOrNull<MonsterModel>(id) == null)
         {
             Entry.Logger.Info($"[MomotaroDumplings] 无法驯服：ModelDb 找不到怪物 {id}");
             return false;
         }
 
-        // 1. 在玩家侧创建同类怪物为随从，并把最大/当前生命设为原怪的最大生命（驯服即回满血）
+        // 1. 只登记持久记录，本场战斗【不】创建随从。
+        //    战斗中动态加生物不会经过原版指令流程，两端会各建各的实例；
+        //    随从统一在下一场战斗开始时由 BeforeCombatStartLate 召唤。
         var record = new TamedPetRecord(id, hp, hp);
-        var pet = await SummonPet(record);
-        if (pet == null)
-        {
-            return false;
-        }
-
-        // 2. 登记为持久随从（活动实例与首招已由 SummonPet 处理）
         TamedPets.Records.Add(record);
 
-        // 3. 原敌人以"逃跑"方式离场（非死亡、无死亡掉落，走原版离场流程；最后一只离场即胜利）
-        await CreatureCmd.Escape(enemy);
+        // 2. 原敌人以"受伤致死"的方式正常死亡：走原版伤害与死亡流程，两端结果一致。
+        await CreatureCmd.Damage(choiceContext, enemy, enemy.CurrentHp, ValueProp.Unblockable, null);
+
+        // 3. 扣丸子（static + 存档，两端同步）
+        S.Remaining = Math.Max(0, S.Remaining - 1);
 
         Flash();
         Persist();
         RefreshBadge();
-        Entry.Logger.Info($"[MomotaroDumplings] 驯服 {id.Entry}（{hp} 血）");
+        Entry.Logger.Info($"[MomotaroDumplings] 捕获 {id.Entry}（{hp} 血），剩余 {S.Remaining} 颗；随从下一场战斗加入");
         return true;
     }
 

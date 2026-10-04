@@ -13,6 +13,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Monsters;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.ValueProps;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Godot;
@@ -46,6 +47,27 @@ public abstract class PlantSummonBase : ModMonsterTemplate
     // 原版把非骨手随从统一摆在 玩家位置 + (植物半宽 - 20, +10)，会和玩家/骨手挤在一起，
     // 所以这里自己摆：豌豆射手/向日葵稍微后移一点 + 下移半个身位（半身位≈110px），让骨手露出来。
     public virtual Vector2 LayoutOffset => new Vector2(100f, 120f);
+
+    // 把场上所有植物按各自 LayoutOffset 重摆一次。
+    // 原版 NCombatRoom.AddCreature 会把"非骨手随从"统一挪到一个固定位置，会把先前召唤的植物、
+    // 以及驯服随从一并带跑；所以每次有新的随从加入时，两类随从都要整体重摆（见 GamePatches 的两个排版补丁）。
+    internal static void ApplyPlantLayouts(NCombatRoom room)
+    {
+        foreach (var node in room.CreatureNodes)
+        {
+            if (node.Entity?.Monster is not PlantSummonBase plant)
+            {
+                continue;
+            }
+            var owner = node.Entity.PetOwner;
+            var playerNode = owner == null ? null : room.GetCreatureNode(owner.Creature);
+            if (playerNode == null)
+            {
+                continue;
+            }
+            node.Position = playerNode.Position + plant.LayoutOffset;
+        }
+    }
 
     // 受击特效落点重定向：原版攻击的 HitVfx 打在"攻击目标"（玩家）身上，
     // 但这一击实际由我们的植物承受 → 把受击特效改到植物身上，玩家不再有受击表现。

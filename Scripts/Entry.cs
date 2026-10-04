@@ -2,12 +2,19 @@ using System.Reflection;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Rewards;
+using MegaCrit.Sts2.Core.Runs;
+using OtherworldTreasures.Scripts.Cards;
 using OtherworldTreasures.Scripts.Cards.Alien;
+using OtherworldTreasures.Scripts.Relics;
 using OtherworldTreasures.Scripts.Rewards;
+// TimeCloth 既是遗物类名又是同级 TimeClothState 所在命名空间名，直接用简单名会解析成命名空间
+using TimeClothRelic = OtherworldTreasures.Scripts.Relics.TimeCloth;
 using STS2RitsuLib;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Combat.Rewards;
@@ -53,6 +60,20 @@ public class Entry
         // 跑局生命周期：读档/新开跑时复位各遗物的"本场战斗"级静态状态，
         // 否则战斗中存档再读档会让「小破表」这类一次性遗物永远不可用（允许玩家 SL）
         RunLifecycle.Initialize();
+
+        // 桃太郎丸子的"捕获"要跨端一致：注册成联机动作，右键时由发起者把目标入队，
+        // 所有端按动作队列执行同一份捕获逻辑（见 MomotaroDumplings）
+        MomotaroDumplings.RegisterCaptureAction();
+
+        // 右键遗物的跨端效果：小破表变身 / 时光布发放 / 时光布抉择牌 / 戴夫的种子
+        // —— 都是"发起者本机入队，动作队列在所有端统一执行"
+        Omnitrix.RegisterTransformAction();
+        TimeClothRelic.RegisterGrantAction();
+        TimeClothCard.RegisterTargetAction();
+        DavesSeeds.RegisterSeedsAction();
+
+        // 其余右键遗物（原素瓶 / 缩小灯 / 库拉的骰子 / 任意门 / 四魂碎片）统一走这条通道
+        RelicRightClickSync.Register();
 
         // 第三方模组异常防护：给「皮皮倒带: Rewind」的 RewindButton.OnTurnStarted 挂 Finalizer 吞异常。
         // 它在战斗 UI 被重建后会持有已释放节点并抛 ObjectDisposedException，而该异常抛在回合循环内部，
@@ -122,5 +143,24 @@ public class Entry
             Callable.From(EndTurnButtonFixer.EnsureVisible).CallDeferred();
 
         Logger.Info("OtherworldTreasures mod initialized! ExclusionPile registered, Harmony patches applied.");
+    }
+
+    // 判断某个玩家是不是"本机玩家"。单机 / 回放一律视为本机。
+    // 用于那些"会被同步到所有端执行、但只在发起者这边需要本地交互"的钩子（右键 / 出牌）。
+    public static bool IsLocalPlayer(Player player)
+    {
+        try
+        {
+            var net = RunManager.Instance?.NetService;
+            if (net == null || net.Type is NetGameType.None or NetGameType.Singleplayer or NetGameType.Replay)
+            {
+                return true;
+            }
+            return net.NetId == player.NetId;
+        }
+        catch
+        {
+            return true;
+        }
     }
 }

@@ -298,12 +298,20 @@ internal static class FourSoulsSystem
 
     // === 玩家碎片收集 ===
 
-    /// <summary>战斗胜利：把该房间的四魂全部收进玩家碎片。</summary>
+    /// <summary>战斗胜利：把该房间的四魂收进【每位玩家】的碎片（联机时大家同时各拿一份）。</summary>
     internal static async Task AwardRoomSouls(Player player)
     {
+        // 每位玩家都持有碎片、各自的 AfterCombatVictory 都会走到这里，
+        // 用一次性标记保证一场战斗只结算一次（否则会重复加）
+        if (s_awardedThisCombat)
+        {
+            return;
+        }
+        s_awardedThisCombat = true;
+
         var runState = player.RunState;
-        var relic = FindRelic(runState);
-        if (relic == null || !relic.Enabled)
+        var fragments = runState?.Players?.SelectMany(p => p.Relics).OfType<FourSoulsFragment>().ToList();
+        if (runState == null || fragments == null || fragments.Count == 0 || !fragments.Any(f => f.Enabled))
         {
             return;
         }
@@ -313,17 +321,32 @@ internal static class FourSoulsSystem
             return;
         }
 
-        foreach (var group in souls.GroupBy(s => s))
+        // 每位玩家的碎片各加一份，保证两端、各玩家进度一致
+        foreach (var fragment in fragments)
         {
-            relic.AddFragments(group.Key, group.Count());
+            foreach (var group in souls.GroupBy(s => s))
+            {
+                fragment.AddFragments(group.Key, group.Count());
+            }
+            fragment.RefreshBadge();
         }
-        relic.RefreshBadge();
 
-        // 奇魂：每获得一片血上限 +5（永久，不随开关回退）
+        // 奇魂：每位玩家各 +5 最大生命（永久，不随开关回退）
         int wonder = souls.Count(s => s == SoulKind.Wonder);
-        if (wonder > 0 && player.Creature != null)
+        if (wonder > 0)
         {
-            await CreatureCmd.GainMaxHp(player.Creature, wonder * 5);
+            foreach (var target in runState.Players)
+            {
+                if (target.Creature != null)
+                {
+                    await CreatureCmd.GainMaxHp(target.Creature, wonder * 5);
+                }
+            }
         }
     }
+
+    // 每场战斗开始时复位"本场已结算"标记（由 FourSoulsFragment.BeforeCombatStart 调用）
+    internal static void ResetCombatAward() => s_awardedThisCombat = false;
+
+    private static bool s_awardedThisCombat;
 }

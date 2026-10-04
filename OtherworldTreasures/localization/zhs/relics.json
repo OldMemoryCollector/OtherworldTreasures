@@ -17,7 +17,7 @@
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_4.title": "四点结界",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_4.desc": "本场战斗中获得[green]8[/green]层[gold]缓冲[/gold]、[green]8[/green]层[gold]无实体[/gold]和[green]8[/green]层[gold]人工制品[/gold]{Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.title": "五点爆炸",
-    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.desc": "对每名玩家造成[blue]300[/blue]点伤害，平均分配给所有敌人{Status}",
+    "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_5.desc": "对每个敌人造成联机人数次[blue]300[/blue]点伤害{Status}",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_6.title": "六点实现愿望",
     "OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_6.desc": "获得[blue]999[/blue]金币；恢复全部生命值；升级你的所有卡牌；获得[blue]6[/blue]件遗物；该遗物永久失效{Status}",
 
@@ -47,7 +47,7 @@
     "OTHERWORLD_TREASURES_RELIC_AIR_CANNON.flavor": "哆啦A梦的道具之一。套在手上，就能像大炮一样打出压缩空气，把人轰飞却不会受伤。",
 
     "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.title": "桃太郎丸子",
-    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.description": "拥有[blue]3[/blue]颗丸子。右键点击后选择[blue]1[/blue]名敌人收服：只能收服当前生命不超过[green]10[/green]点、最大生命不超过[green]80[/green]的敌人，首领无法收服。收服后回满血、生命上限降低[blue]20%[/blue]，它会保留原本的招式与意图为你作战，造成的伤害减少[blue]50%[/blue]，无法被治疗，死亡后永久消失。",
+    "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.description": "拥有[blue]3[/blue]颗丸子。右键点击后选择[blue]1[/blue]名敌人收服：普通怪物当前生命低于[green]10[/green]、精英怪物当前生命低于[green]15[/green]时可以收服，首领无法收服。被收服的敌人会在本场战斗立即死亡；从下一场战斗开始，它以随从的身份登场：生命上限变为原怪的[blue]80%[/blue]（普通怪物）或[blue]60%[/blue]（精英怪物），并回满血。它会保留原本的招式与意图为你作战，造成的伤害减少[blue]50%[/blue]，无法被治疗，死亡后永久消失。",
     "OTHERWORLD_TREASURES_RELIC_MOMOTARO_DUMPLINGS.flavor": "哆啦A梦的道具之一。桃太郎用来收服同伴的丸子，给动物吃下，它就会对你言听计从。",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_DIMENSIONAL_POCKET.title": "哆啦A梦的四次元口袋",
@@ -92,7 +92,7 @@
     "OTHERWORLD_TREASURES_RELIC_OMNITRIX.flavor": "小小年纪所向无敌，神秘超能力，双手并用变身启动，实在好神奇，捍卫和平维护正义，叫他第一名。Ben 10。",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.title": "四魂之玉",
-    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.description": "相传能实现持有者的愿望，也会让持有者的力量大涨。取得时会自行破碎，化作[gold]四魂之玉碎片[/gold]，并使地图上除Boss之外的敌人也带上碎片。",
+    "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.description": "相传能实现持有者的愿望，也会让持有者的力量大涨。取得时会因未知原因破碎，化作[gold]四魂之玉碎片[/gold]，并使地图上除Boss之外的敌人也带上碎片。",
     "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.flavor": "数百年前，巫女翠子夺走大妖怪的魂魄，与自己的灵魂一同释出，只余下这颗魂的结晶。翠子与妖怪的争斗，至今仍在玉中永无休止。",
 
     "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.title": "四魂之玉碎片",

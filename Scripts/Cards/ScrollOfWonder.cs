@@ -79,7 +79,8 @@ public class ScrollOfWonder : ModCardTemplate
 
         if (allPlayableCards.Count > 0)
         {
-            var randomCanonical = allPlayableCards[System.Random.Shared.Next(allPlayableCards.Count)];
+            // 走联机一致的随机流（RunState.Rng），避免两端抽到不同的卡导致分叉
+            var randomCanonical = allPlayableCards[Owner.RunState.Rng.Niche.NextInt(allPlayableCards.Count)];
             var combatState = CombatManager.Instance.DebugOnlyGetState();
             var randomCard = combatState.CreateCard(randomCanonical, Owner);
 

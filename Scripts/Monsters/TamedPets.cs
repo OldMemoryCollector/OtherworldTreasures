@@ -21,10 +21,9 @@ namespace OtherworldTreasures.Scripts.Monsters;
 // 记录编码： "MONSTER.entry|80|72.5"，用 | 分隔，decimal 走 invariant 防止欧洲小数点炸档。
 public static class TamedPets
 {
-    public const decimal MaxTameableHp = 80m;
-
-    // 可驯服的血线：当前生命不超过这个值（含）
-    public const decimal TameableCurrentHp = 10m;
+    // 可收服的当前生命线（不含）：普通怪 < 10，精英怪 < 15
+    public const int NormalTameableCurrentHp = 10;
+    public const int EliteTameableCurrentHp = 15;
 
     // 本局已驯服怪物的持久记录（读档后由遗物用存档值覆盖）
     public static List<TamedPetRecord> Records { get; private set; } = new();
@@ -98,23 +97,24 @@ public static class TamedPets
         return string.Join(';', Records.Select(r => r.Encode()));
     }
 
-    // 能否用丸子驯服：敌方、存活、非首领房间、最大生命 <= 80、当前生命 <= 10
-    // （"效果写在玩家方"的招式不再限制捕捉 —— 随从执行时会自动转成 6 点格挡）
+    // 能否用丸子收服：敌方、存活、身处【普通战斗房】或【精英房】，
+    // 且当前生命低于对应血线（普通怪 < 10、精英怪 < 15）。首领不可收服。
+    // 收服后的代价（生命上限折扣：普通怪 -20%、精英怪 -40%）见 MomotaroDumplings。
     public static bool CanTame(Creature target, Creature playerCreature)
     {
-        // 首领不可收服。Boss 的血量本来就超过上限，这里再显式挡一层，
-        // 免得以后出现"低血 Boss"或血量被削后变成可收服
         var room = playerCreature?.Player?.RunState?.CurrentRoom;
-        if (room != null && room.RoomType == RoomType.Boss)
+        if (room == null || (room.RoomType != RoomType.Monster && room.RoomType != RoomType.Elite))
         {
             return false;
         }
+        var currentHpLimit = room.RoomType == RoomType.Elite
+            ? EliteTameableCurrentHp
+            : NormalTameableCurrentHp;
 
         return target != null
             && target.IsAlive
             && target.Side != playerCreature.Side
-            && target.MaxHp <= MaxTameableHp
-            && target.CurrentHp <= TameableCurrentHp;
+            && target.CurrentHp < currentHpLimit;
     }
 
     // === 表现层：朝向 / 站位 / 血条 ===

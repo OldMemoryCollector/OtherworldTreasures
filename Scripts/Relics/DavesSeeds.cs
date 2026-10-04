@@ -1,9 +1,11 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -13,9 +15,11 @@ using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.RelicPools;
 using MegaCrit.Sts2.Core.Rooms;
+using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib;
 using STS2RitsuLib.Interactions.RightClick;
 using STS2RitsuLib.Interop.AutoRegistration;
+using STS2RitsuLib.Networking.ManagedActions;
 using STS2RitsuLib.Scaffolding.Content;
 using OtherworldTreasures.Scripts.Cards;
 using OtherworldTreasures.Scripts.Monsters;
@@ -34,13 +38,17 @@ namespace OtherworldTreasures.Scripts.Relics;
 [RegisterRelic(typeof(SharedRelicPool))]
 public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
 {
-    // 本场战斗是否已经召唤过。
-    // static：战斗中遗物会被克隆，用 static 跨实例共享（与时光布/库拉的骰子一致）。
+    // 按玩家隔离的状态（遗物实例每次战斗会被克隆，static 又会被两名玩家共享）。
     // 刻意不做 [SavedProperty] 持久化：允许玩家战斗中存档→重进（SL）后重新召唤。
-    private static bool s_summonedThisCombat;
+    private sealed class PlayerState
+    {
+        // 本场战斗是否已经召唤过
+        public bool SummonedThisCombat;
+        // 本场战斗是否已经领过【施肥】卡
+        public bool GotGrowthCardThisCombat;
+    }
 
-    // 本场战斗是否已经领过【施肥】卡（同样不持久化，允许 SL）
-    private static bool s_gotGrowthCardThisCombat;
+    private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
 
     private bool _summonedThisCombat;
 
@@ -70,16 +78,16 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
     private DavesSeeds? LiveRelic => Owner?.Relics.OfType<DavesSeeds>().FirstOrDefault();
 
     // 本场是否已经召唤过
-    private bool AlreadySummoned => s_summonedThisCombat || (LiveRelic?.SummonedThisCombat ?? false);
+    private bool AlreadySummoned => S.SummonedThisCombat || (LiveRelic?.SummonedThisCombat ?? false);
 
     // 本场是否已经领过【施肥】卡
-    private bool AlreadyGotGrowthCard => s_gotGrowthCardThisCombat || (LiveRelic?.GotGrowthCardThisCombat ?? false);
+    private bool AlreadyGotGrowthCard => S.GotGrowthCardThisCombat || (LiveRelic?.GotGrowthCardThisCombat ?? false);
 
     // 读档/新开跑时复位（见 RunLifecycle）：允许玩家 SL 后重新召唤/领卡
     internal static void ResetCombatScopedState()
     {
-        s_summonedThisCombat = false;
-        s_gotGrowthCardThisCombat = false;
+        // 按玩家隔离：整体清空（下次取用时重建为默认值）
+        PerPlayerState<PlayerState>.ClearAll();
     }
 
     // 由先古之民给予，使用 Ancient 稀有度
@@ -166,18 +174,18 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
     // 清空本场的使用记录与图标状态
     private void ResetUsage()
     {
-        s_summonedThisCombat = false;
+        S.SummonedThisCombat = false;
         SummonedThisCombat = false;
-        s_gotGrowthCardThisCombat = false;
+        S.GotGrowthCardThisCombat = false;
         GotGrowthCardThisCombat = false;
         Status = RelicStatus.Normal;
     }
 
-    // 标记"本场已召唤"（static 与存档字段都要写）
+    // 标记"本场已召唤"（按玩家状态与存档字段都要写）
     // 注意：召唤完图标保持可点，因为还有第二段用法（领【施肥】卡）
     private void MarkSummoned()
     {
-        s_summonedThisCombat = true;
+        S.SummonedThisCombat = true;
         var relic = LiveRelic;
         if (relic != null)
         {
@@ -189,7 +197,7 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
     // 标记"本场已领过【施肥】卡"（两段都用完，图标变灰）
     private void MarkGotGrowthCard()
     {
-        s_gotGrowthCardThisCombat = true;
+        S.GotGrowthCardThisCombat = true;
         var relic = LiveRelic;
         if (relic != null)
         {
@@ -224,75 +232,180 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
         return !AlreadyGotGrowthCard;
     }
 
-    // 右键：先按"是否召唤过"分流到两段用法
+    // 右键：先按"是否召唤过"分流到两段用法。
+    // 关键：只有发起者本机负责入队；**选择和结算都放进联机动作里**，由动作队列在所有端统一执行。
+    // 这样"玩家选择"的 id 记账在所有端都是对称的（原版卡牌也是这个模型：OnPlay 在所有端跑、各端都调选择接口）。
+    // 不这么做的话：要么远端不执行（只有一端生效），要么只有一端记账（choice id 分叉）。
     public async Task OnRightClick(ModRightClickExecutionContext context)
     {
-        if (!AlreadySummoned)
+        if (Owner == null || !Entry.IsLocalPlayer(Owner) || s_seedsDescriptor == null)
         {
-            await SummonByChoice(context.PlayerChoiceContext);
             return;
         }
-        await OfferGrowthCard(context.PlayerChoiceContext);
+
+        var phase = (byte)(AlreadySummoned ? 1 : 0);
+        var queued = RitsuLibManagedNetActions.Request(RunManager.Instance, s_seedsDescriptor, phase);
+        Entry.Logger.Info($"[DavesSeeds] 动作已入队={queued} 阶段={(phase == 0 ? "召唤植物" : "施肥卡")}");
     }
 
-    // 右键：弹出卡牌三选一（向日葵/豌豆射手/坚果墙），选中后扣掉该卡费用并召唤
-    private async Task SummonByChoice(PlayerChoiceContext choiceContext)
-    {
-        var player = Owner;
-        if (player == null)
-        {
-            return;
-        }
-        if (AlreadySummoned)
-        {
-            Entry.Logger.Info("[DavesSeeds] SummonByChoice aborted: already summoned this combat");
-            return;
-        }
-        var combatState = CombatManager.Instance.DebugOnlyGetState();
-        if (combatState == null || player.PlayerCombatState == null)
-        {
-            Entry.Logger.Info("[DavesSeeds] SummonByChoice aborted: not in combat");
-            return;
-        }
+    // === 联机：种子动作（所有端按动作队列执行同一份逻辑）===
 
-        // 只列出当前付得起的植物（费用写在各自的召唤卡上）
-        var options = new List<CardModel>();
-        foreach (var canonical in new CardModel[]
-                 {
-                     ModelDb.Card<SunflowerCard>(),
-                     ModelDb.Card<PeaShooterCard>(),
-                     ModelDb.Card<WallNutCard>(),
-                 })
+    private static RitsuLibManagedNetActionDescriptor<byte>? s_seedsDescriptor;
+
+    internal static void RegisterSeedsAction()
+    {
+        if (s_seedsDescriptor != null)
         {
-            var card = combatState.CreateCard(canonical, player);
-            if (player.PlayerCombatState.HasEnoughResourcesFor(card, out _))
+            return;
+        }
+        try
+        {
+            s_seedsDescriptor = new RitsuLibManagedNetActionDescriptor<byte>(
+                Entry.ModId,
+                "daves_seeds",
+                static _ => new byte[1],
+                static _ => (byte)0,
+                ExecuteSeedsAsync,
+                GameActionType.CombatPlayPhaseOnly);
+            RitsuLibManagedNetActions.Register(s_seedsDescriptor);
+            Entry.Logger.Info("[DavesSeeds] 动作已注册到联机动作队列");
+        }
+        catch (Exception e)
+        {
+            Entry.Logger.Info($"[DavesSeeds] 动作注册失败（已忽略）：{e}");
+        }
+    }
+
+    private static async Task ExecuteSeedsAsync(RitsuLibManagedNetActionContext<byte> context)
+    {
+        try
+        {
+            var player = context.Player;
+            var relic = player?.Relics?.OfType<DavesSeeds>().FirstOrDefault();
+            if (relic == null)
             {
-                options.Add(card);
+                return;
+            }
+
+            var phase = context.Message;
+            var index = phase == 0
+                ? await relic.ChooseSummonIndex(context.PlayerChoiceContext)
+                : await relic.ChooseGrowthIndex(context.PlayerChoiceContext);
+            if (index is not int choice)
+            {
+                return;
+            }
+
+            if (phase == 0)
+            {
+                await relic.ApplySummon(context.PlayerChoiceContext, choice);
+            }
+            else
+            {
+                await relic.ApplyGrowth(choice);
             }
         }
-        if (options.Count == 0)
+        catch (Exception e)
+        {
+            Entry.Logger.Info($"[DavesSeeds] 动作执行异常（已忽略）：{e}");
+        }
+    }
+
+    // === 选择（所有端都会调用；发起者本机弹界面，其它端等远端结果）===
+
+    // 三选一：向日葵 / 豌豆射手 / 坚果墙（只列出付得起的；返回固定序号，两端一致）
+    private async Task<int?> ChooseSummonIndex(PlayerChoiceContext choiceContext)
+    {
+        var player = Owner;
+        var combatState = CombatManager.Instance.DebugOnlyGetState();
+        if (player == null || player.PlayerCombatState == null || combatState == null)
+        {
+            return null;
+        }
+
+        var candidates = new List<(int Index, CardModel Card)>();
+        for (var i = 0; i < 3; i++)
+        {
+            var card = combatState.CreateCard(CanonicalPlantCard(i), player);
+            if (player.PlayerCombatState.HasEnoughResourcesFor(card, out _))
+            {
+                candidates.Add((i, card));
+            }
+        }
+        if (candidates.Count == 0)
         {
             Entry.Logger.Info("[DavesSeeds] 没有付得起的植物");
-            return;
+            return null;
         }
 
         // 复用原版"选择一张牌"界面（与时光布的【抉择】同一套）
         var chosen = await CardSelectCmd.FromChooseACardScreen(
-            new BlockingPlayerChoiceContext(), options, player);
+            choiceContext, candidates.Select(c => c.Card).ToList(), player);
         if (chosen == null)
         {
             Entry.Logger.Info("[DavesSeeds] 玩家取消了选择");
+            return null;
+        }
+        foreach (var candidate in candidates)
+        {
+            if (ReferenceEquals(candidate.Card, chosen))
+            {
+                return candidate.Index;
+            }
+        }
+        return null;
+    }
+
+    // 三选一：施肥卡（基础 / 除外 / 湮灭）
+    private async Task<int?> ChooseGrowthIndex(PlayerChoiceContext choiceContext)
+    {
+        var player = Owner;
+        var combatState = CombatManager.Instance.DebugOnlyGetState();
+        if (player == null || player.PlayerCombatState == null || combatState == null)
+        {
+            return null;
+        }
+
+        var options = new List<CardModel>
+        {
+            combatState.CreateCard(ModelDb.Card<PlantGrowthCard>(), player),
+            combatState.CreateCard(ModelDb.Card<PlantGrowthExcludeCard>(), player),
+            combatState.CreateCard(ModelDb.Card<PlantGrowthAnnihilateCard>(), player),
+        };
+        var chosen = await CardSelectCmd.FromChooseACardScreen(choiceContext, options, player);
+        if (chosen == null)
+        {
+            Entry.Logger.Info("[DavesSeeds] 玩家取消了选择（不消耗这次机会）");
+            return null;
+        }
+        var index = options.FindIndex(c => ReferenceEquals(c, chosen));
+        return index < 0 ? null : index;
+    }
+
+    private static CardModel CanonicalPlantCard(int index) => index switch
+    {
+        0 => ModelDb.Card<SunflowerCard>(),
+        1 => ModelDb.Card<PeaShooterCard>(),
+        _ => ModelDb.Card<WallNutCard>(),
+    };
+
+    // 召唤（所有端各执行一次）：扣费 → 加植物 → 当回合立刻行动一次
+    private async Task ApplySummon(PlayerChoiceContext choiceContext, int plantIndex)
+    {
+        var player = Owner;
+        var combatState = CombatManager.Instance.DebugOnlyGetState();
+        if (player == null || combatState == null || player.PlayerCombatState == null || AlreadySummoned)
+        {
             return;
         }
 
-        // 扣掉该卡的费用
-        await PlayerCmd.LoseEnergy(chosen.EnergyCost.GetWithModifiers(CostModifiers.All), player);
+        var card = combatState.CreateCard(CanonicalPlantCard(plantIndex), player);
+        await PlayerCmd.LoseEnergy(card.EnergyCost.GetWithModifiers(CostModifiers.All), player);
 
-        // 召唤选中的植物
-        Creature pet = chosen switch
+        Creature pet = plantIndex switch
         {
-            SunflowerCard => await PlayerCmd.AddPet<SunflowerPlant>(player),
-            PeaShooterCard => await PlayerCmd.AddPet<PeaShooterPlant>(player),
+            0 => await PlayerCmd.AddPet<SunflowerPlant>(player),
+            1 => await PlayerCmd.AddPet<PeaShooterPlant>(player),
             _ => await PlayerCmd.AddPet<WallNutPlant>(player),
         };
 
@@ -306,54 +419,25 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
         MarkSummoned();
 
         Flash();
-        Entry.Logger.Info($"[DavesSeeds] 召唤植物：{pet.Monster.Id.Entry}（{chosen.Id.Entry}）");
+        Entry.Logger.Info($"[DavesSeeds] 召唤植物：{pet.Monster.Id.Entry}（{card.Id.Entry}）");
     }
 
-    // 第二段用法：三选一给一张【施肥】卡（直接进手牌），每场战斗只能领一张，领完图标变灰
-    private async Task OfferGrowthCard(PlayerChoiceContext choiceContext)
+    // 领施肥卡（所有端各执行一次）：领卡本身不花钱（卡自己的 1 费在打出时结算）
+    private async Task ApplyGrowth(int index)
     {
         var player = Owner;
-        if (player == null)
+        if (player?.Creature == null || AlreadyGotGrowthCard)
         {
-            return;
-        }
-        if (AlreadyGotGrowthCard)
-        {
-            Entry.Logger.Info("[DavesSeeds] OfferGrowthCard aborted: already got the card this combat");
-            return;
-        }
-        var combatState = CombatManager.Instance.DebugOnlyGetState();
-        if (combatState == null || player.PlayerCombatState == null)
-        {
-            Entry.Logger.Info("[DavesSeeds] OfferGrowthCard aborted: not in combat");
             return;
         }
 
-        // 三张卡效果一致，区别只在词条（基础 / 除外 / 湮灭）
-        var options = new List<CardModel>
+        switch (index)
         {
-            combatState.CreateCard(ModelDb.Card<PlantGrowthCard>(), player),
-            combatState.CreateCard(ModelDb.Card<PlantGrowthExcludeCard>(), player),
-            combatState.CreateCard(ModelDb.Card<PlantGrowthAnnihilateCard>(), player),
-        };
-
-        // 复用原版"选择一张牌"界面（与召唤步骤同一套）
-        var chosen = await CardSelectCmd.FromChooseACardScreen(
-            new BlockingPlayerChoiceContext(), options, player);
-        if (chosen == null)
-        {
-            Entry.Logger.Info("[DavesSeeds] 玩家取消了选择（不消耗这次机会）");
-            return;
-        }
-
-        // 领卡本身不花钱（卡自己的 1 费在打出时结算），直接进手牌
-        switch (chosen)
-        {
-            case PlantGrowthExcludeCard:
+            case 1:
                 await CardPileCmd.AddToCombatAndPreview<PlantGrowthExcludeCard>(
                     player.Creature, PileType.Hand, 1, player);
                 break;
-            case PlantGrowthAnnihilateCard:
+            case 2:
                 await CardPileCmd.AddToCombatAndPreview<PlantGrowthAnnihilateCard>(
                     player.Creature, PileType.Hand, 1, player);
                 break;
@@ -365,6 +449,6 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
 
         MarkGotGrowthCard();
         Flash();
-        Entry.Logger.Info($"[DavesSeeds] 获得施肥卡：{chosen.Id.Entry}");
+        Entry.Logger.Info($"[DavesSeeds] 获得施肥卡：序号={index}");
     }
 }
