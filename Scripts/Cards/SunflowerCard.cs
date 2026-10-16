@@ -23,7 +23,7 @@ public class SunflowerCard : ModCardTemplate, IDerivedCard
     // 卡面描述里的数值用 {VarName} 占位，直接读植物上的常量 → 改数值不用同步文本
     protected override IEnumerable<DynamicVar> CanonicalVars => [
         new DynamicVar("Hp", SunflowerPlant.MaxHpValue),
-        new DynamicVar("Energy", SunflowerPlant.EnergyPerTurn),
+        new EnergyVar("Energy", SunflowerPlant.EnergyPerTurn),
     ];
 
     // 卡图（244x184 横版）

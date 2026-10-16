@@ -1,0 +1,6 @@
+{
+  "OTHERWORLD_TREASURES_POTION_GOLDEN_APPLE.title": "金のリンゴ",
+  "OTHERWORLD_TREASURES_POTION_GOLDEN_APPLE.description": "[gold]ダメージ吸収[/gold]を[blue]10[/blue]、[gold]再生[/gold]を[blue]3[/blue]得る。",
+  "OTHERWORLD_TREASURES_POTION_ENCHANTED_GOLDEN_APPLE.title": "エンチャントされた金のリンゴ",
+  "OTHERWORLD_TREASURES_POTION_ENCHANTED_GOLDEN_APPLE.description": "[gold]ダメージ吸収[/gold]を[blue]40[/blue]、[gold]再生[/gold]を[blue]6[/blue]得る。\nこの戦闘中、受けるダメージが[blue]20%[/blue]減少し、[gold]火炎耐性[/gold]を得る。"
+}

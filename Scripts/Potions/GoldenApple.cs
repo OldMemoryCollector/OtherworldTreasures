@@ -10,20 +10,23 @@ using MegaCrit.Sts2.Core.Models.PotionPools;
 using MegaCrit.Sts2.Core.Models.Powers;
 using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Scaffolding.Content;
+using OtherworldTreasures.Scripts.Powers;
+using MegaCrit.Sts2.Core.HoverTips;
 
 namespace OtherworldTreasures.Scripts.Potions;
 
-// 金苹果：生命上限 +10，获得 8 点再生。获取来源：商店。
+// 商店专属，效果限本场战斗。
 [RegisterPotion(typeof(SharedPotionPool))]
 public class GoldenApple : ModPotionTemplate
 {
-    private const decimal MaxHpGain = 10m;
-    private const decimal RegenGain = 8m;
+    private const decimal TemporaryHealthGain = 10m;
+    private const decimal RegenGain = 3m;
 
     // 自定义稀有度「极稀有」（原版枚举无法扩展，用未定义值；随机抽药不会滚到这个值）
     public override PotionRarity Rarity => ModPotionRarity.VeryRare;
 
-    public override PotionUsage Usage => PotionUsage.AnyTime;
+    public override PotionUsage Usage => PotionUsage.CombatOnly;
+    protected override IEnumerable<IHoverTip> AdditionalHoverTips => AppleHoverTips.For(false);
 
     public override TargetType TargetType => TargetType.AnyPlayer;
 
@@ -36,15 +39,14 @@ public class GoldenApple : ModPotionTemplate
     );
 
     protected override IEnumerable<DynamicVar> CanonicalVars => [
-        new MaxHpVar(MaxHpGain),
+        new PowerVar<TemporaryHealthPower>(TemporaryHealthGain),
         new PowerVar<RegenPower>(RegenGain)
     ];
 
     protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
     {
         PotionModel.AssertValidForTargetedPotion(target);
-        // 加上限并同时回复等量生命
-        await CreatureCmd.GainMaxHp(target, MaxHpGain);
+        await PowerCmd.Apply<TemporaryHealthPower>(choiceContext, target, TemporaryHealthGain, target, null);
         await PowerCmd.Apply<RegenPower>(choiceContext, target, RegenGain, target, null);
     }
 }

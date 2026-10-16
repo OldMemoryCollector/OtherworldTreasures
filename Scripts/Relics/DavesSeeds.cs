@@ -107,7 +107,7 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
             "sunflower",
             new DynamicVar("Cost", SunflowerCard.CardEnergyCost),
             new DynamicVar("Hp", SunflowerPlant.MaxHpValue),
-            new DynamicVar("Energy", SunflowerPlant.EnergyPerTurn)))
+            new EnergyVar("Energy", SunflowerPlant.EnergyPerTurn)))
         .Append(PlantTip(
             "pea_shooter",
             new DynamicVar("Cost", PeaShooterCard.CardEnergyCost),
@@ -236,16 +236,17 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
     // 关键：只有发起者本机负责入队；**选择和结算都放进联机动作里**，由动作队列在所有端统一执行。
     // 这样"玩家选择"的 id 记账在所有端都是对称的（原版卡牌也是这个模型：OnPlay 在所有端跑、各端都调选择接口）。
     // 不这么做的话：要么远端不执行（只有一端生效），要么只有一端记账（choice id 分叉）。
-    public async Task OnRightClick(ModRightClickExecutionContext context)
+    public Task OnRightClick(ModRightClickExecutionContext context)
     {
         if (Owner == null || !Entry.IsLocalPlayer(Owner) || s_seedsDescriptor == null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         var phase = (byte)(AlreadySummoned ? 1 : 0);
         var queued = RitsuLibManagedNetActions.Request(RunManager.Instance, s_seedsDescriptor, phase);
         Entry.Logger.Info($"[DavesSeeds] 动作已入队={queued} 阶段={(phase == 0 ? "召唤植物" : "施肥卡")}");
+        return Task.CompletedTask;
     }
 
     // === 联机：种子动作（所有端按动作队列执行同一份逻辑）===

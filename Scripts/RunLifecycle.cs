@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Runs;
 using OtherworldTreasures.Scripts.Relics;
+using OtherworldTreasures.Scripts.Monsters;
 // TimeCloth 既是遗物类名又是同级的 TimeClothState 所在命名空间名，直接用简单名会解析成命名空间，故起别名
 using TimeClothRelic = OtherworldTreasures.Scripts.Relics.TimeCloth;
 
@@ -33,6 +34,7 @@ internal static class RunLifecycle
         WhatIfPhoneBooth.ResetCombatScopedState();
         BambooCopter.ResetCombatScopedState();
         SporeSac.ResetCombatScopedState();
+        TamedPets.ResetActiveCombatState();
         Entry.Logger.Info("[RunLifecycle] 已重置本场战斗状态（读档/新开跑，允许 SL）");
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Godot;
+using MegaCrit.Sts2.Core.Combat;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -32,7 +33,7 @@ namespace OtherworldTreasures.Scripts.Relics;
 /// 小破表（Omnitrix）：右键点击变身成为外星英雄。
 /// - 战斗内右键：播放变身动画 → 显示英雄选择界面 → 选中后替换角色形象
 /// - 可选英雄：火焰人、四手霸王、超能兽
-/// - 极低概率变身被鬼影替换
+/// - 选择的英雄有 2% 的概率被鬼影替换
 /// - 变身持续 3 个回合（由 OmnitrixTransformPower 计时），可以重复变身，
 ///   但变回原形后要等 CooldownTurns 个回合才能再变（内部规则，不对玩家显示）
 /// 与先古遗物池成员。
@@ -40,7 +41,7 @@ namespace OtherworldTreasures.Scripts.Relics;
 [RegisterRelic(typeof(SharedRelicPool))]
 public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
 {
-    // 鬼影替换概率（极低）
+    // 正式概率；移除临时的 50% 测试分支，避免上传包误用。
     private const double GhostFreakChance = 0.02;
 
     // 火焰人的三套专精：变身时随机抽一套（玩家不可选）
@@ -50,6 +51,10 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         AlienSpecialization.Shaping,
         AlienSpecialization.Propulsion,
     };
+    private static readonly AlienSpecialization[] FourArmsSpecs =
+    [AlienSpecialization.Frenzy, AlienSpecialization.OffenseDefense, AlienSpecialization.Destruction];
+    private static readonly AlienSpecialization[] WildmuttSpecs = [AlienSpecialization.Leap, AlienSpecialization.Senses, AlienSpecialization.Predator];
+    private static readonly AlienSpecialization[] GhostfreakSpecs = [AlienSpecialization.Phase, AlienSpecialization.Terror, AlienSpecialization.Dominion];
 
     // 音效（放在 OtherworldTreasures/audio/ 下，随模组 pck 打包）
     private const string StartSfxPath = "res://OtherworldTreasures/audio/omnitrix_start.wav";
@@ -185,6 +190,7 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         var queued = RitsuLibManagedNetActions.Request(
             RunManager.Instance, s_transformDescriptor, new TransformPayload(selection.Value.Hero, selection.Value.Specialization));
         Entry.Logger.Info($"[Omnitrix] 变身动作已入队={queued}：{selection.Value.Hero}");
+        if (!queued) OmnitrixSelectScreen.ClosePending();
     }
 
     // === 联机：变身动作（所有端按动作队列执行同一份变身逻辑）===
@@ -237,14 +243,22 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         {
             Entry.Logger.Info($"[Omnitrix] 变身动作执行异常（已忽略）：{e}");
         }
+        finally
+        {
+            if (context.Player != null && Entry.IsLocalPlayer(context.Player)) OmnitrixSelectScreen.ClosePending();
+        }
     }
 
     // 执行变身：绿色闪光过渡 → 在最亮的一刻换形象、换牌组、挂被动、上 3 回合变身状态
     private async Task Transform(HeroSelection selection)
     {
+        // 选择窗口打开后可能又排入了另一次变身；在共享动作里重新验证。
+        if (Owner?.PlayerCombatState is not { } combatState
+            || combatState.TurnNumber < S.CooldownUntilTurn
+            || IsTransformed(Owner) || !Enum.IsDefined(selection.Hero)) return;
         var hero = selection.Hero;
 
-        // 极低概率：变身被鬼影替换。
+        // 按当前概率让变身被鬼影替换；专项测试版为 100%。
         // 这个 roll 用的是玩家共享的 Transformations 随机序列，**必须在所有端都消费一次**，
         // 所以放在这里（联机动作里，所有端都会执行），不能放在右键预检/OnRightClick——
         // 那两处远端是否执行不可靠，只在一端消费就会让两端 RNG 流分叉（联机分叉诊断实锤过）。
@@ -255,15 +269,28 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
             Entry.Logger.Info("[Omnitrix] 变身被鬼影替换");
         }
 
-        // 流派不由玩家选：火焰人变身时随机抽一套（用玩家共享的 Transformations 随机序列，联机各端一致）
-        if (hero == AlienHero.Heatblast && Owner != null)
+        // 按最终英雄随机抽一套专精，联机各端消费同一玩家随机序列。
+        if (Owner != null)
         {
-            var spec = HeatblastSpecs[Owner.PlayerRng.Transformations.NextInt(HeatblastSpecs.Length)];
+            var specs = hero switch
+            {
+                AlienHero.FourArms => FourArmsSpecs,
+                AlienHero.Wildmutt => WildmuttSpecs,
+                AlienHero.Ghostfreak => GhostfreakSpecs,
+                _ => HeatblastSpecs,
+            };
+            var spec = specs[Owner.PlayerRng.Transformations.NextInt(specs.Length)];
             selection = new HeroSelection(hero, spec);
             Entry.Logger.Info($"[Omnitrix] 本次变身随机流派：{spec}");
         }
 
         S.EndSequenceStarted = false;
+
+        // 共享随机结果确定后再揭示鬼影；所有客户端保持同一等待顺序，不在 UI 中掷骰。
+        bool isLocalPlayer = Owner is { } localOwner && Entry.IsLocalPlayer(localOwner);
+        if (isLocalPlayer) OmnitrixSelectScreen.RevealResolvedHero(hero);
+        if (hero == AlienHero.Ghostfreak) await Cmd.CustomScaledWait(0.9f, 0.9f);
+        if (isLocalPlayer) OmnitrixSelectScreen.ClosePending();
 
         // 先把屏幕闪绿，再在最亮的时候换形象（变身音也在这一刻，声画同步）
         PlayGreenFlash(TransformFlashIn, TransformFlashHold, TransformFlashOut);
@@ -273,7 +300,9 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         var creature = player?.Creature;
 
         // 变身前快照（原牌组 + 自身能力）：变回时按它还原
-        S.TransformSnapshot = player != null ? await TransformSnapshot.Capture(player) : null;
+        // 尚无专属牌组的英雄只换形象，不能把玩家原牌组挪走后留下空牌堆。
+        S.TransformSnapshot = player != null && AlienDecks.HasDeck(hero)
+            ? await TransformSnapshot.Capture(player) : null;
 
         ReplaceAppearance(creature, hero, S);
         S.CurrentHero = hero;
@@ -442,6 +471,9 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
     // 战斗结束时恢复原形（变身已到期时是空操作）
     public override async Task AfterCombatEnd(CombatRoom room)
     {
+        S.EndSequenceStarted = false;
+        S.TransformSnapshot = null;
+        S.AlienCleanupTurnsLeft = 0;
         RestoreAppearanceSilently(Owner);
         await base.AfterCombatEnd(room);
     }
@@ -555,6 +587,22 @@ public class Omnitrix : ModRelicTemplate, IModRightClickableRelic
         if (state.EndSequenceStarted)
         {
             return;
+        }
+        RestoreOriginalAppearance(state);
+    }
+
+    internal static async Task OnTransformationRemoved(Player? player)
+    {
+        if (player == null) return;
+        var state = PerPlayerState<PlayerState>.Of(player);
+        if (state.EndSequenceStarted) return;
+        var snapshot = state.TransformSnapshot;
+        state.TransformSnapshot = null;
+        if (snapshot != null && CombatManager.Instance.IsInProgress && !CombatManager.Instance.IsEnding)
+        {
+            // 被驱散时也必须归还暂存牌组，不能只恢复外观、留下空牌堆。
+            await snapshot.Restore(player);
+            state.CooldownUntilTurn = (player.PlayerCombatState?.TurnNumber ?? 0) + CooldownTurns;
         }
         RestoreOriginalAppearance(state);
     }
@@ -737,15 +785,19 @@ public enum AlienHero
 }
 
 /// <summary>
-/// 火焰人专精流派。
-/// 选火焰人时同时选定一个流派，决定变身时携带哪 7 张专精牌。
-/// 未指定时默认【烈焰爆破】；鬼影模式固定【烈焰爆破】。
+/// 英雄专精流派；每次变身由英雄对应的三套流派随机抽取。
+/// 保留原有前三项的序号，新英雄的值追加，保持已有动作载荷含义。
 /// </summary>
 public enum AlienSpecialization
 {
     Blast,        // 烈焰爆破：灼伤引爆爆发
     Shaping,      // 熔岩塑形：燃尽状态牌换格挡/回血
     Propulsion,   // 喷射推进：额外能量 + 0 费牌输出
+    Frenzy,       // 四手霸王：狂暴连击
+    OffenseDefense, // 四手霸王：攻守一体
+    Destruction,  // 四手霸王：毁灭重击
+    Leap, Senses, Predator, // 超能兽：飞跃猛袭、超感追踪、野性扑杀
+    Phase, Terror, Dominion, // 鬼影：虚实穿行、恐惧化身、附身支配
 }
 
 /// <summary>

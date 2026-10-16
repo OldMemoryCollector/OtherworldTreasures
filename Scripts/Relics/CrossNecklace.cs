@@ -17,13 +17,13 @@ using STS2RitsuLib.Scaffolding.Content;
 namespace OtherworldTreasures.Scripts.Relics;
 
 // 十字章护身符（来自《泰拉瑞亚》Cross Necklace）：
-// 抽到状态牌或诅咒牌时将其消耗并抽一张牌；回合结束时，将手牌中的状态牌与诅咒牌消耗，获得 2 点格挡。
+// 抽到状态牌或诅咒牌时将其消耗并抽一张牌；回合结束时消耗手牌中的状态牌与诅咒牌，每张获得 2 点格挡。
 [RegisterRelic(typeof(SharedRelicPool))]
 public class CrossNecklace : ModRelicTemplate
 {
     private const int BlockAmount = 2;
 
-    // 由先古之民给予，使用 Ancient 稀有度
+    // 泰拉瑞亚向导赠送的专属遗物。
     public override RelicRarity Rarity => RelicRarity.Ancient;
 
     protected override IEnumerable<DynamicVar> CanonicalVars => new[]
@@ -49,7 +49,7 @@ public class CrossNecklace : ModRelicTemplate
         await base.AfterCardDrawn(choiceContext, card, fromHandDraw);
     }
 
-    // 回合结束：消耗手牌中所有状态牌/诅咒牌，获得 2 点格挡
+    // 回合结束：每成功消耗一张手牌中的状态牌/诅咒牌，获得 2 点格挡
     public override async Task BeforeSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
     {
         if (participants.Contains(Owner.Creature))
@@ -61,9 +61,11 @@ public class CrossNecklace : ModRelicTemplate
                 Flash();
                 foreach (var card in junkInHand)
                 {
-                    await CardCmd.Exhaust(choiceContext, card);
+                    if (card.Pile?.Type != PileType.Hand) continue;
+                    var exhausted = await CardCmd.Exhaust(choiceContext, card);
+                    if (exhausted is { success: true })
+                        await CreatureCmd.GainBlock(Owner.Creature, DynamicVars.Block, null);
                 }
-                await CreatureCmd.GainBlock(Owner.Creature, DynamicVars.Block, null);
             }
         }
         await base.BeforeSideTurnEnd(choiceContext, side, participants);

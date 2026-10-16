@@ -26,8 +26,11 @@ namespace OtherworldTreasures.Scripts;
 [RegisterOwnedCardKeyword(nameof(Incinerate))]
 [RegisterOwnedCardKeyword(nameof(Detonate))]
 [RegisterOwnedCardKeyword(nameof(Cleanse))]
+[RegisterOwnedCardKeyword(nameof(Remove), CardDescriptionPlacement = ModKeywordCardDescriptionPlacement.BeforeCardDescription)]
 public class MyKeywords
 {
+    public static readonly CardKeyword Remove =
+        ModContentRegistry.GetQualifiedKeywordId(Entry.ModId, nameof(Remove)).GetModCardKeyword();
     public static readonly CardKeyword Exclude =
         ModContentRegistry.GetQualifiedKeywordId(Entry.ModId, nameof(Exclude)).GetModCardKeyword();
 

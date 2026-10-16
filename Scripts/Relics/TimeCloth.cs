@@ -121,21 +121,22 @@ public class TimeCloth : ModRelicTemplate, IDoraemonItem, IModRightClickableReli
             && CombatManager.Instance.DebugOnlyGetState() != null;
     }
 
-    public async Task OnRightClick(ModRightClickExecutionContext context)
+    public Task OnRightClick(ModRightClickExecutionContext context)
     {
         // 只有发起者本机负责入队；真正的发放由动作队列在所有端统一执行。
         // 不再依赖 RitsuLib 右键的跨端执行——实测远端没有执行到，导致手牌两端分叉。
         if (Owner == null || !Entry.IsLocalPlayer(Owner) || s_grantDescriptor == null)
         {
-            return;
+            return Task.CompletedTask;
         }
         if (S.GrantedThisCombat)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         var queued = RitsuLibManagedNetActions.Request(RunManager.Instance, s_grantDescriptor, (byte)0);
         Entry.Logger.Info($"[TimeCloth] 发放动作已入队={queued}");
+        return Task.CompletedTask;
     }
 
     // === 联机：发放动作（所有端按动作队列执行同一份逻辑）===

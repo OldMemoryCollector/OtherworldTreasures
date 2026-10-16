@@ -268,13 +268,14 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
     }
 
     // 只有发起者本机负责入队；真正的开关由联机动作在所有端统一执行
-    public async Task OnRightClick(ModRightClickExecutionContext context)
+    public Task OnRightClick(ModRightClickExecutionContext context)
     {
         if (Owner == null || !Entry.IsLocalPlayer(Owner))
         {
-            return;
+            return Task.CompletedTask;
         }
         RelicRightClickSync.Request(Owner, this);
+        return Task.CompletedTask;
     }
 
     async Task RelicRightClickSync.ICrossEndRightClickEffect.ApplyRightClickAsync(PlayerChoiceContext choiceContext)

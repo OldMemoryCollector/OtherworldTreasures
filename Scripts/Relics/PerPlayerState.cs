@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Players;
 
 namespace OtherworldTreasures.Scripts.Relics;
@@ -11,20 +11,16 @@ namespace OtherworldTreasures.Scripts.Relics;
 // 表现为"一个人用了，另一个人也用不了"（库拉的骰子就是这么发现的）。
 //
 // 用法：为每件遗物定义一个状态类，然后用 PerPlayerState<状态类>.Of(owner) 取它。
-// 每个 T 各自一张表，互不干扰。新的一局由各遗物在自己的 AfterObtained 里 ClearAll()。
+// 以玩家实例为键：同一 NetId 在新局/读档后会复用，但玩家对象不会。
+// 弱引用表不会把已经结束的跑局及其卡牌、Godot 节点永久留在内存中。
 internal static class PerPlayerState<T> where T : class, new()
 {
-    private static readonly Dictionary<ulong, T> s_map = new();
+    private static readonly ConditionalWeakTable<Player, T> s_map = new();
 
     internal static T Of(Player? owner)
     {
-        var netId = owner?.NetId ?? 0UL;
-        if (!s_map.TryGetValue(netId, out var state))
-        {
-            state = new T();
-            s_map[netId] = state;
-        }
-        return state;
+        // 图鉴里的 canonical 模型没有玩家，不能和 NetId=0 的实际玩家共享状态。
+        return owner == null ? new T() : s_map.GetValue(owner, static _ => new T());
     }
 
     internal static void ClearAll() => s_map.Clear();

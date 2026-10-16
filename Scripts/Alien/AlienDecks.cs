@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Models.Powers;
 using OtherworldTreasures.Scripts.Cards.Alien;
 using OtherworldTreasures.Scripts.Powers;
 using OtherworldTreasures.Scripts.Relics;
@@ -69,11 +70,52 @@ internal static class AlienDecks
         typeof(HeatblastMeteorImpact),
     };
 
-    // 每位英雄的牌组表（火焰人按流派动态组合，其余英雄暂无专精）
-    private static readonly Dictionary<AlienHero, Type[]> DeckTypes = new()
+    private static readonly Type[] FourArmsCommon =
+    [typeof(FourArmsHeavyPunch), typeof(FourArmsDoublePunch), typeof(FourArmsQuickJab),
+     typeof(FourArmsSweepingStrike), typeof(FourArmsShoulderCharge), typeof(FourArmsGuard),
+     typeof(FourArmsGrapple), typeof(FourArmsCombatBreathing)];
+    private static readonly Type[] FourArmsCombo =
+    [typeof(FourArmsGaleUppercut), typeof(FourArmsTriplePunch), typeof(FourArmsPursuingStrike),
+     typeof(FourArmsAlternatingPunches), typeof(FourArmsComboRhythm), typeof(FourArmsRapidOffensive), typeof(FourArmsFrenzy)];
+    private static readonly Type[] FourArmsDefense =
+    [typeof(FourArmsCounterPunch), typeof(FourArmsElbowChain), typeof(FourArmsCrossGuard),
+     typeof(FourArmsGuardingFootwork), typeof(FourArmsIronSuplex), typeof(FourArmsDefenseToOffense), typeof(FourArmsOffenseDefense)];
+    private static readonly Type[] FourArmsHeavy =
+    [typeof(FourArmsRockBreaker), typeof(FourArmsGroundClap), typeof(FourArmsMightyThrow),
+     typeof(FourArmsConcussiveCharge), typeof(FourArmsTitanPunch), typeof(FourArmsSiegeStance), typeof(FourArmsAftershock)];
+
+    private static readonly Type[] WildmuttCommon = [typeof(WildmuttSwiftClaw), typeof(WildmuttFangBite), typeof(WildmuttSavagePounce), typeof(WildmuttQuadrupedSweep), typeof(WildmuttGroundRush), typeof(WildmuttScentTrail), typeof(WildmuttAgileDodge), typeof(WildmuttBeastGrowl)];
+    private static readonly Type[] WildmuttOne = [typeof(WildmuttAirbornePounce), typeof(WildmuttWallClimbStrike), typeof(WildmuttRapidReturn), typeof(WildmuttHighDive), typeof(WildmuttVaultDodge), typeof(WildmuttParkour), typeof(WildmuttLeapingInstinct)];
+    private static readonly Type[] WildmuttTwo = [typeof(WildmuttBlindSpotClaw), typeof(WildmuttWindCounter), typeof(WildmuttHeatPursuit), typeof(WildmuttGillSniff), typeof(WildmuttSoundLocation), typeof(WildmuttTasteTrail), typeof(WildmuttThermalSense)];
+    private static readonly Type[] WildmuttThree = [typeof(WildmuttRendingClaws), typeof(WildmuttThroatBite), typeof(WildmuttBonePounce), typeof(WildmuttTripleBite), typeof(WildmuttBloodScent), typeof(WildmuttHuntCharge), typeof(WildmuttFeedingFrenzy)];
+    private static readonly Type[] GhostfreakCommon = [typeof(GhostfreakGhostClaw), typeof(GhostfreakColdTouch), typeof(GhostfreakPhasePierce), typeof(GhostfreakShadowSweep), typeof(GhostfreakSoulScream), typeof(GhostfreakDeadStare), typeof(GhostfreakShadowWhisper), typeof(GhostfreakManifestation)];
+    private static readonly Type[] GhostfreakOne = [typeof(GhostfreakSilentAmbush), typeof(GhostfreakWallPierce), typeof(GhostfreakColdInvasion), typeof(GhostfreakShadowSkim), typeof(GhostfreakSpiritGlide), typeof(GhostfreakRealityReverse), typeof(GhostfreakInterlace)];
+    private static readonly Type[] GhostfreakTwo = [typeof(GhostfreakSoulEntangle), typeof(GhostfreakWraithWail), typeof(GhostfreakPanicGrab), typeof(GhostfreakEvilManifest), typeof(GhostfreakNightmareSpread), typeof(GhostfreakDespairEcho), typeof(GhostfreakTrueForm)];
+    private static readonly Type[] GhostfreakThree = [typeof(GhostfreakSoulTentacle), typeof(GhostfreakSoulDevour), typeof(GhostfreakMentalHostage), typeof(GhostfreakBodySteal), typeof(GhostfreakPuppetCounter), typeof(GhostfreakMindControl), typeof(GhostfreakDominion)];
+    internal static Type[] OtherHeroDeck(AlienHero hero, AlienSpecialization spec)
     {
-        // 非火焰人英雄暂时没有牌组（后续添加）
-    };
+        var common = hero == AlienHero.Wildmutt ? WildmuttCommon : GhostfreakCommon;
+        var specialized = spec switch
+        {
+            AlienSpecialization.Senses => WildmuttTwo,
+            AlienSpecialization.Predator => WildmuttThree,
+            AlienSpecialization.Terror => GhostfreakTwo,
+            AlienSpecialization.Dominion => GhostfreakThree,
+            _ => hero == AlienHero.Wildmutt ? WildmuttOne : GhostfreakOne,
+        };
+        return common.Concat(specialized).ToArray();
+    }
+
+    internal static bool HasDeck(AlienHero hero)
+        => hero is AlienHero.Heatblast or AlienHero.FourArms or AlienHero.Wildmutt or AlienHero.Ghostfreak;
+
+    internal static Type[] FourArmsDeck(AlienSpecialization spec) => FourArmsCommon.Concat(spec switch
+    {
+        AlienSpecialization.Frenzy => FourArmsCombo,
+        AlienSpecialization.OffenseDefense => FourArmsDefense,
+        AlienSpecialization.Destruction => FourArmsHeavy,
+        _ => FourArmsCombo,
+    }).ToArray();
 
     /// <summary>根据流派取对应的 7 张专精牌。</summary>
     private static Type[] SpecCards(AlienSpecialization spec) => spec switch
@@ -108,9 +150,13 @@ internal static class AlienDecks
             // 8 通用 + 7 专精 = 15 张
             cardTypes = CommonCards.Concat(SpecCards(selection.Specialization)).ToArray();
         }
-        else if (DeckTypes.TryGetValue(selection.Hero, out var types))
+        else if (selection.Hero == AlienHero.FourArms)
         {
-            cardTypes = types;
+            cardTypes = FourArmsDeck(selection.Specialization);
+        }
+        else if (selection.Hero is AlienHero.Wildmutt or AlienHero.Ghostfreak)
+        {
+            cardTypes = OtherHeroDeck(selection.Hero, selection.Specialization);
         }
         else
         {
@@ -133,6 +179,21 @@ internal static class AlienDecks
 
         // 洗牌
         await CardPileCmd.Shuffle(choiceContext, player);
+
+        if (selection.Hero != AlienHero.Heatblast)
+        {
+            await CardPileCmd.Draw(choiceContext, 5, player);
+            CardModel canonicalAncient = selection.Hero switch
+            {
+                AlienHero.Wildmutt => ModelDb.Card<WildmuttPrimalHunt>(),
+                AlienHero.Ghostfreak => ModelDb.Card<GhostfreakUltimateTerror>(),
+                _ => ModelDb.Card<FourArmsAncient>(),
+            };
+            var ancient = combat.CreateCard(canonicalAncient, player);
+            await CardPileCmd.AddGeneratedCardToCombat(ancient, PileType.Hand, player, CardPilePosition.Random);
+            Entry.Logger.Info($"[Omnitrix] {selection.Hero}({selection.Specialization})：15 张牌组 + 1 张先古");
+            return;
+        }
 
         // ===== 起手保底 =====
         // 1) 从抽牌堆取出 1 张【火球】或【火焰喷射】（随机）置入手牌
@@ -183,12 +244,19 @@ internal static class AlienDecks
         {
             case AlienHero.Heatblast:
                 await PowerCmd.Apply<HeatblastPassivePower>(choiceContext, creature, 1m, creature, null, silent: true);
-                // 记录当前流派（供炎狱天降的流派分支效果读取）
-                var passive = creature.GetPower<HeatblastPassivePower>();
-                if (passive != null)
-                {
-                    passive.CurrentSpec = selection.Specialization;
-                }
+                await creature.GetPower<HeatblastPassivePower>()!.AfterPlayerTurnStart(choiceContext, player);
+                break;
+            case AlienHero.FourArms:
+                await PowerCmd.Apply<FourArmsPassivePower>(choiceContext, creature, 1m, creature, null, silent: true);
+                await PowerCmd.Apply<StrengthPower>(choiceContext, creature, 2m, creature, null);
+                break;
+            case AlienHero.Wildmutt:
+                await PowerCmd.Apply<WildmuttPassivePower>(choiceContext, creature, 1m, creature, null, silent: true);
+                await creature.GetPower<WildmuttPassivePower>()!.AfterPlayerTurnStart(choiceContext, player);
+                break;
+            case AlienHero.Ghostfreak:
+                await PowerCmd.Apply<GhostfreakPassivePower>(choiceContext, creature, 1m, creature, null, silent: true);
+                await creature.GetPower<GhostfreakPassivePower>()!.AfterPlayerTurnStart(choiceContext, player);
                 break;
         }
     }

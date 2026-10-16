@@ -109,7 +109,7 @@ public class SporeSac : ModRelicTemplate,
     public IReadOnlyList<ExtraIconAmountLabelSpec> GetRelicExtraIconAmountLabelSpecs()
     {
         // 局外（图鉴/收藏）不显示角标，避免把上一局的层数带进图鉴
-        if (!(RunManager.Instance?.IsInProgress ?? false))
+        if (!IsMutable || !(RunManager.Instance?.IsInProgress ?? false))
         {
             return new List<ExtraIconAmountLabelSpec>();
         }

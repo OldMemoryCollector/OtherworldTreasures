@@ -16,14 +16,14 @@ namespace OtherworldTreasures.Scripts.Powers;
 /// 灼伤（外星英雄体系）：叠在敌人身上的燃料，同时自带伤害。
 /// - 该敌人【自己回合结束时】，受到 2 × 层数 的伤害（可被格挡）。
 /// - 触发后**层数全部消耗**（所以它是"攒够了就炸一次"的燃料，要么被【爆燃】提前用掉，要么等它自己结算）。
-/// - 火焰人免疫：持有【熔岩之躯】(HeatblastPassivePower) 的火焰人不吃这次伤害。
+/// - 火焰人免疫：持有【热爆】(HeatblastPassivePower) 的火焰人不吃这次伤害。
 /// 名字与本地化都改回原名【灼伤】/ Burn，与原版灼伤牌同名不同物。
 /// </summary>
 [RegisterPower]
 public class AlienScorchPower : ModPowerTemplate
 {
     // 每层造成的伤害
-    private const decimal DamagePerStack = 2m;
+    internal const decimal DamagePerStack = 2m;
 
     // 上次结算的回合号：AfterSideTurnEnd 实测一个回合可能被触发两次，用回合号防重
     private int _lastResolvedRound = -1;
@@ -32,9 +32,7 @@ public class AlienScorchPower : ModPowerTemplate
 
     public override PowerStackType StackType => PowerStackType.Counter;
 
-    // 占位图（借用原版中毒图标），专属图标做好后改这里
-    public override PowerAssetProfile AssetProfile => new(
-        IconPath: "res://images/powers/poison_power.png");
+    public override PowerAssetProfile AssetProfile => AlienPowerArt.Profile("heatblast/scorch");
 
     public override LocString Title => new LocString("powers", "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.title");
 
@@ -57,7 +55,7 @@ public class AlienScorchPower : ModPowerTemplate
         {
             return;
         }
-        // ③ 火焰人免疫：持有【熔岩之躯】的火焰人不吃这次伤害（玩家侧万一被上了灼伤也不掉血）
+        // ③ 保留原有的自身灼伤能力免疫；灼伤状态牌的免伤来自回合结束前被消耗。
         if (Owner.HasPower<HeatblastPassivePower>())
         {
             return;

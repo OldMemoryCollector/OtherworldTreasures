@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.Models;
 using OtherworldTreasures.Scripts.Cards.Alien;
+using OtherworldTreasures.Scripts.Powers;
 using STS2RitsuLib.CardPiles;
 
 namespace OtherworldTreasures.Scripts.Alien;
@@ -70,6 +71,7 @@ internal sealed class TransformSnapshot
         // 2) 自身能力（正面负面都记；变身后新增的会被移回/移除）
         foreach (var power in player.Creature.Powers.ToList())
         {
+            if (power is KaiokenPower or KaiokenDoomPower or SpiritBombPower or GoldenApplePower) continue;
             snapshot._selfPowers.Add((power, power.Amount));
         }
         Entry.Logger.Info($"[Omnitrix] 快照：牌堆 {snapshot._originalCards.Count} 张，自身能力 {snapshot._selfPowers.Count} 个");
@@ -93,7 +95,7 @@ internal sealed class TransformSnapshot
             // 1) 清掉英雄专属牌。调用时点特意选在"玩家回合已结束、手牌是空的"时候（见 Omnitrix.StartTransformationEnd），
             //    所以这里只涉及不渲染的牌堆，不会像以前那样在手牌里留下卡牌节点"尸体"。
             int removedAlienCards = await RemoveAlienCards(player);
-            // 1b) 清掉手里**我们自己塞进来**的状态牌（【灼伤】）：熔岩之躯一撤掉，
+            // 1b) 清掉手里**我们自己塞进来**的状态牌（【灼伤】）：热爆一撤掉，
             //     这些牌既不会被燃尽、还会在回合末反过来伤害玩家。敌人塞进来的保持原样。
             int removedStatusCards = await RemoveStatusCardsInHand(player);
 
@@ -105,21 +107,7 @@ internal sealed class TransformSnapshot
             }
 
             // 3) 自身能力回滚：快照里有的恢复层数，快照里没有的（alien 造成的）移除
-            var snapshotAmounts = _selfPowers.ToDictionary(p => p.Power, p => p.Amount, ReferenceEqualityComparer.Instance);
-            foreach (var power in player.Creature.Powers.ToList())
-            {
-                if (snapshotAmounts.TryGetValue(power, out int amount))
-                {
-                    if (power.Amount != amount)
-                    {
-                        power.SetAmount(amount, silent: true);
-                    }
-                }
-                else
-                {
-                    await PowerCmd.Remove(power);
-                }
-            }
+            await RestoreSnapshotPowers(player.Creature, _selfPowers);
 
             Entry.Logger.Info(
                 $"[Omnitrix] 还原：移出英雄牌 {removedAlienCards} 张、残留状态牌 {removedStatusCards} 张，原始牌堆 {originals.Count} 张塞回抽牌堆");
@@ -133,6 +121,35 @@ internal sealed class TransformSnapshot
         {
             _originalCards.Clear();
             _selfPowers.Clear();
+        }
+    }
+
+    internal static async Task RestoreSnapshotPowers(
+        MegaCrit.Sts2.Core.Entities.Creatures.Creature creature,
+        IReadOnlyList<(PowerModel Power, int Amount)> originalPowers)
+    {
+        var snapshotAmounts = new Dictionary<PowerModel, int>(ReferenceEqualityComparer.Instance);
+        foreach (var (power, amount) in originalPowers) snapshotAmounts[power] = amount;
+        foreach (var power in creature.Powers.ToList())
+        {
+            // 变身计时器需要留到下一回合结算冷却，不能被快照还原提前移除。
+            if (power is OmnitrixTransformPower or KaiokenPower or KaiokenDoomPower or SpiritBombPower or GoldenApplePower) continue;
+            if (snapshotAmounts.TryGetValue(power, out int amount))
+            {
+                if (power.Amount != amount) power.SetAmount(amount, silent: true);
+            }
+            else
+            {
+                await PowerCmd.Remove(power);
+            }
+        }
+        foreach (var (power, amount) in originalPowers)
+        {
+            if (!creature.Powers.Contains(power) && amount != 0)
+            {
+                // 精确还原同一个能力实例，不作为一次新施加去消费人工制品或触发额外层数。
+                power.ApplyInternal(creature, amount, silent: true);
+            }
         }
     }
 
@@ -168,7 +185,7 @@ internal sealed class TransformSnapshot
     /// <summary>
     /// 把玩家手牌里**由我们自己塞进来的**状态牌移出战斗，返回移除张数。
     /// 变身结束时用：这些牌是变身期间我们的牌/被动生成的（【灼伤】），
-    /// 熔岩之躯一撤掉它们既不会被燃尽、还会在回合末反过来伤害玩家，所以一并清掉。
+    /// 热爆一撤掉它们既不会被消耗、还会在回合末反过来伤害玩家，所以一并清掉。
     /// 敌人塞进来的状态牌**保持原样**（原版【灼伤】是同一个卡牌模型，靠 HeatblastBurns 的标记区分来源）。
     /// </summary>
     public static async Task<int> RemoveStatusCardsInHand(Player player)

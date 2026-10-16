@@ -1,25 +1,20 @@
 {
-    "OTHERWORLD_TREASURES_KEYWORD_EXCLUDE.title": "除外",
-    "OTHERWORLD_TREASURES_KEYWORD_EXCLUDE.description": "不同于消耗被除外的卡牌无法取回",
-
-    "OTHERWORLD_TREASURES_KEYWORD_CHOICE.title": "抉择",
-    "OTHERWORLD_TREASURES_KEYWORD_CHOICE.description": "打出时从多个效果中选择[blue]1[/blue]个。",
-
-    "OTHERWORLD_TREASURES_KEYWORD_ANNIHILATE.title": "湮灭",
-    "OTHERWORLD_TREASURES_KEYWORD_ANNIHILATE.description": "回合结束时，若此牌仍在[gold]手牌[/gold]中，则将其[gold]除外[/gold]。",
-
-    "OTHERWORLD_TREASURES_KEYWORD_REWIND.title": "回溯",
-    "OTHERWORLD_TREASURES_KEYWORD_REWIND.description": "回到上一回合开始时的状态：恢复生命、[gold]格挡[/gold]与状态层数，敌人的意图也会一并还原。对带回合计数的遗物使用时，把计数退回上一回合。",
-
-    "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.title": "加速",
-    "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.description": "快进到下一回合的状态：对自己使用时结算身上的持续状态，对敌人使用时推进其意图。对带回合计数的遗物使用时，把计数推进[blue]1[/blue]回合。",
-
-    "OTHERWORLD_TREASURES_KEYWORD_INCINERATE.title": "燃尽",
-    "OTHERWORLD_TREASURES_KEYWORD_INCINERATE.description": "消耗手牌中的所有状态牌。[gold]熔岩之躯[/gold]在回合结束时燃尽手牌，每[blue]1[/blue]张回复[green]2[/green]点生命。",
-
-    "OTHERWORLD_TREASURES_KEYWORD_DETONATE.title": "引爆",
-    "OTHERWORLD_TREASURES_KEYWORD_DETONATE.description": "清除目标身上全部[gold]灼伤[/gold]，并按引爆的层数造成额外伤害，然后层数归零。",
-
-    "OTHERWORLD_TREASURES_KEYWORD_CLEANSE.title": "清除",
-    "OTHERWORLD_TREASURES_KEYWORD_CLEANSE.description": "移除目标身上的[gold]灼伤[/gold]，层数归零，但不产生引爆伤害。"
+  "OTHERWORLD_TREASURES_KEYWORD_EXCLUDE.title": "除外",
+  "OTHERWORLD_TREASURES_KEYWORD_EXCLUDE.description": "不同于[gold]消耗[/gold]，被[gold]除外[/gold]的卡牌无法取回。",
+  "OTHERWORLD_TREASURES_KEYWORD_CHOICE.title": "抉择",
+  "OTHERWORLD_TREASURES_KEYWORD_CHOICE.description": "打出时从多个效果中选择[blue]1[/blue]个。",
+  "OTHERWORLD_TREASURES_KEYWORD_ANNIHILATE.title": "湮灭",
+  "OTHERWORLD_TREASURES_KEYWORD_ANNIHILATE.description": "回合结束时，若此牌仍在[gold]手牌[/gold]中，则将其[gold]除外[/gold]。",
+  "OTHERWORLD_TREASURES_KEYWORD_REWIND.title": "回溯",
+  "OTHERWORLD_TREASURES_KEYWORD_REWIND.description": "回到上一回合开始时的状态：恢复生命、[gold]格挡[/gold]与状态层数，敌人的意图也会一并还原。对带回合计数的遗物使用时，把计数退回上一回合。",
+  "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.title": "加速",
+  "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.description": "快进到下一回合的状态：对自己使用时结算身上的持续状态，对敌人使用时推进其意图。对带回合计数的遗物使用时，把计数推进[blue]1[/blue]回合。",
+  "OTHERWORLD_TREASURES_KEYWORD_INCINERATE.title": "燃尽",
+  "OTHERWORLD_TREASURES_KEYWORD_INCINERATE.description": "消耗手牌中的所有状态牌。[gold]熔岩之躯[/gold]在回合结束时燃尽手牌，每[blue]1[/blue]张回复[green]2[/green]点生命。",
+  "OTHERWORLD_TREASURES_KEYWORD_DETONATE.title": "引爆",
+  "OTHERWORLD_TREASURES_KEYWORD_DETONATE.description": "清除目标身上全部[gold]灼伤[/gold]，并按引爆的层数造成额外伤害，然后层数归零。",
+  "OTHERWORLD_TREASURES_KEYWORD_CLEANSE.title": "清除",
+  "OTHERWORLD_TREASURES_KEYWORD_CLEANSE.description": "移除目标身上的[gold]灼伤[/gold]，层数归零，但不产生引爆伤害。",
+  "OTHERWORLD_TREASURES_KEYWORD_REMOVE.title": "移除",
+  "OTHERWORLD_TREASURES_KEYWORD_REMOVE.description": "打出后离开本场战斗，无法取回。剩余使用次数不为零时，下场战斗仍可使用。"
 }

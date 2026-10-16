@@ -5,6 +5,7 @@
     <LangVersion>13.0</LangVersion>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RitsuLibAutoCopy Condition="'$(SkipModDeploy)' == 'true'">false</RitsuLibAutoCopy>
 
     <!-- 杀戮尖塔2安装目录 -->
     <Sts2Dir>F:\SteamLibrary\steamapps\common\Slay the Spire 2</Sts2Dir>
@@ -44,11 +45,11 @@
     </Reference>
 
     <!-- RitsuLib NuGet包 -->
-    <PackageReference Include="STS2.RitsuLib" Version="*" />
+    <PackageReference Include="STS2.RitsuLib" Version="0.6.7" />
   </ItemGroup>
 
   <!-- 构建后自动复制dll、pdb、json到mods文件夹 -->
-  <Target Name="Copy Mod" AfterTargets="PostBuildEvent">
+  <Target Name="Copy Mod" AfterTargets="PostBuildEvent" Condition="'$(SkipModDeploy)' != 'true'">
     <Message Text="Copying mod to Slay the Spire 2 mods folder..." Importance="high" />
     <MakeDir Directories="$(Sts2Dir)\mods\" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\" />

@@ -12,6 +12,7 @@ using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Rooms;
+using OtherworldTreasures.Scripts.Relics;
 
 namespace OtherworldTreasures.Scripts.Monsters;
 
@@ -26,19 +27,27 @@ public static class TamedPets
     public const int EliteTameableCurrentHp = 15;
 
     // 本局已驯服怪物的持久记录（读档后由遗物用存档值覆盖）
-    public static List<TamedPetRecord> Records { get; private set; } = new();
+    private sealed class PlayerRecords
+    {
+        public List<TamedPetRecord> Records = new();
+    }
+
+    public static List<TamedPetRecord> RecordsFor(Player owner)
+        => PerPlayerState<PlayerRecords>.Of(owner).Records;
 
     // 本场战斗的活动随从：creature -> 对应记录
     private static readonly Dictionary<Creature, TamedPetRecord> s_active = new();
+    private static readonly Dictionary<Creature, Player> s_owners = new();
 
     public static bool IsTamed(Creature creature) => s_active.ContainsKey(creature);
 
     public static IEnumerable<Creature> ActiveCreatures => s_active.Keys.ToList();
 
     // 活动实例登记（战斗开始重召 / 当场驯服时）
-    public static void Register(Creature creature, TamedPetRecord record)
+    public static void Register(Creature creature, TamedPetRecord record, Player owner)
     {
         s_active[creature] = record;
+        s_owners[creature] = owner;
     }
 
     // 死亡：移除活动实例 + 永久记录；返回被删掉的记录
@@ -48,33 +57,50 @@ public static class TamedPets
         {
             return null;
         }
-        Records.Remove(record);
+        if (s_owners.Remove(creature, out var owner)) RecordsFor(owner).Remove(record);
         return record;
     }
 
     // 战斗结束：把存活随从的当前血量写回记录
-    public static void SnapshotAndClear()
+    public static void SnapshotAndClear(Player owner)
     {
-        foreach (var (creature, record) in s_active)
+        foreach (var (creature, record) in s_active.ToList())
         {
+            if (!s_owners.TryGetValue(creature, out var petOwner) || petOwner != owner) continue;
             if (creature.IsAlive)
             {
                 record.SyncCurrentHp(creature.CurrentHp);
             }
             // 死亡的在 AfterDeath 已从 Records 移除，这里不处理
+            s_active.Remove(creature);
+            s_owners.Remove(creature);
         }
-        s_active.Clear();
     }
 
-    public static void ResetRun()
+    public static void ResetRun(Player owner)
+    {
+        ClearActive(owner);
+        RecordsFor(owner).Clear();
+    }
+
+    internal static void ResetActiveCombatState()
     {
         s_active.Clear();
-        Records = new List<TamedPetRecord>();
+        s_owners.Clear();
+    }
+
+    private static void ClearActive(Player owner)
+    {
+        foreach (var creature in s_owners.Where(p => p.Value == owner).Select(p => p.Key).ToList())
+        {
+            s_active.Remove(creature);
+            s_owners.Remove(creature);
+        }
     }
 
     // 读档恢复。存档里是一条字符串（[SavedProperty] 不支持 List<string>，会抛序列化异常），
     // 多条记录用 ';' 分隔，单条内部用 '|' 分隔
-    public static void LoadRecords(string? encoded)
+    public static void LoadRecords(Player owner, string? encoded)
     {
         var records = new List<TamedPetRecord>();
         if (!string.IsNullOrWhiteSpace(encoded))
@@ -87,14 +113,14 @@ public static class TamedPets
                 }
             }
         }
-        Records = records;
-        s_active.Clear();
+        PerPlayerState<PlayerRecords>.Of(owner).Records = records;
+        ClearActive(owner);
     }
 
     // 写档
-    public static string EncodeRecords()
+    public static string EncodeRecords(Player owner)
     {
-        return string.Join(';', Records.Select(r => r.Encode()));
+        return string.Join(';', RecordsFor(owner).Select(r => r.Encode()));
     }
 
     // 能否用丸子收服：敌方、存活、身处【普通战斗房】或【精英房】，
@@ -102,6 +128,7 @@ public static class TamedPets
     // 收服后的代价（生命上限折扣：普通怪 -20%、精英怪 -40%）见 MomotaroDumplings。
     public static bool CanTame(Creature target, Creature playerCreature)
     {
+        if (playerCreature == null) return false;
         var room = playerCreature?.Player?.RunState?.CurrentRoom;
         if (room == null || (room.RoomType != RoomType.Monster && room.RoomType != RoomType.Elite))
         {
@@ -127,7 +154,7 @@ public static class TamedPets
     public static List<Creature> ActiveInTameOrder(Player owner)
     {
         var result = new List<Creature>();
-        foreach (var record in Records)
+        foreach (var record in RecordsFor(owner))
         {
             foreach (var pair in s_active)
             {
@@ -300,7 +327,8 @@ public class TamedPetRecord
             return false;
         }
         if (!decimal.TryParse(parts[1], NumberStyles.Number, CultureInfo.InvariantCulture, out var maxHp)
-            || !decimal.TryParse(parts[2], NumberStyles.Number, CultureInfo.InvariantCulture, out var currentHp))
+            || !decimal.TryParse(parts[2], NumberStyles.Number, CultureInfo.InvariantCulture, out var currentHp)
+            || maxHp <= 0 || currentHp <= 0)
         {
             return false;
         }

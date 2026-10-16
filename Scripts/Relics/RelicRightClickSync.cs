@@ -79,6 +79,13 @@ internal static class RelicRightClickSync
                 return;
             }
 
+            // 载荷不能指挥另一位玩家的遗物；动作的发起者才是权威。
+            if (chooser!.NetId != context.Message.OwnerNetId)
+            {
+                Entry.Logger.Warn("[RelicRightClick] 动作发起者与遗物持有者不一致，跳过");
+                return;
+            }
+
             foreach (var player in runState.Players)
             {
                 if (player.NetId != context.Message.OwnerNetId)

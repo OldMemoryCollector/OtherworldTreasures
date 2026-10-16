@@ -1,43 +1,66 @@
 {
   "OTHERWORLD_TREASURES_POWER_AMPLIFY_POWER.title": "三点强化",
   "OTHERWORLD_TREASURES_POWER_AMPLIFY_POWER.description": "本回合造成的伤害与获得的[gold]格挡[/gold]变为[blue]3[/blue]倍。",
-
   "OTHERWORLD_TREASURES_POWER_BAMBOO_COPTER_FLIGHT_POWER.title": "起飞",
   "OTHERWORLD_TREASURES_POWER_BAMBOO_COPTER_FLIGHT_POWER.description": "被攻击时受到的伤害减少[blue]50%[/blue]。被攻击[blue]5[/blue]次后失效。",
-
   "OTHERWORLD_TREASURES_POWER_TAMED_PET.title": "驯服",
   "OTHERWORLD_TREASURES_POWER_TAMED_PET.description": "造成的攻击伤害减少[blue]50%[/blue]。",
-
   "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.title": "孢子囊",
   "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description": "本回合受到攻击时，对攻击者施加{Amount}层中毒。",
-
   "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.title": "变身",
   "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.description": "变身时长剩余{Amount}回合。",
-
   "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.title": "灼伤",
-  "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.description": "该敌人回合结束时，每层受到[blue]2[/blue]点伤害（可被格挡），然后层数全部消耗。可用[gold]爆燃[/gold]等卡提前消费掉。",
-
+  "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.description": "该敌人回合结束时，受到当前[gold]灼伤[/gold]层数[blue]2[/blue]倍的伤害，然后清除所有[gold]灼伤[/gold]。\n该伤害可被[gold]格挡[/gold]。",
   "OTHERWORLD_TREASURES_POWER_ALIEN_TERROR.title": "恐惧",
-  "OTHERWORLD_TREASURES_POWER_ALIEN_TERROR.description": "该敌人每层使其造成的伤害减少[blue]10%[/blue]，最多减少[blue]50%[/blue]。",
-
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.title": "熔岩之躯",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.description": "每回合开始时，将[blue]1[/blue]张[gold]灼伤[/gold]状态牌加入手牌（手牌已满时不加入）。每回合能量上限提高[blue]1[/blue]。回合结束时[gold]燃尽[/gold]手牌中所有状态牌，每[gold]燃尽[/gold][blue]1[/blue]张回复[green]2[/green]生命。免疫自己手牌中[gold]灼伤[/gold]状态牌的回合结束伤害。",
-
+  "OTHERWORLD_TREASURES_POWER_ALIEN_TERROR.description": "该敌人的[blue]{SoulFrightThreshold}[/blue]层恐惧触发[gold]魂飞[/gold]：仅[gold]格挡[/gold]意图生效，其他意图均被禁止。\r\n该敌人的[blue]{DisperseThreshold}[/blue]层恐惧触发[gold]魄散[/gold]：下次行动时立刻死亡。\r\n[gold]恐惧[/gold]不会自行减少。\r\n鬼影变身结束后的下一个玩家回合结束时，清除所有[gold]恐惧[/gold]，同时解除[gold]魂飞[/gold]和[gold]魄散[/gold]。",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_SOUL_FRIGHT.title": "魂飞",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_DISPERSE.title": "魄散",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.title": "热爆",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.description": "每回合开始时，将1张灼伤状态牌加入手牌，给予所有敌人1层灼伤。回合结束时，消耗手牌中所有状态牌。任何时候消耗1张灼伤状态牌，回复2点生命；其他状态牌不回血。",
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.title": "太阳耀斑",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.description": "每回合首次给予[gold]灼伤[/gold]时，额外给予[green]2[/green]层[gold]灼伤[/gold]。每回合开始时，将[blue]1[/blue]张[gold]灼伤[/gold]状态牌加入你的[gold]手牌[/gold]（手牌已满时不加入）。",
-
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_FEEDBACK.title": "灼热反噬",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_FEEDBACK.description": "每当你[gold]燃尽[/gold][blue]1[/blue]张状态牌，对所有敌人造成[blue]2[/blue]点伤害。每回合最多触发[blue]4[/blue]次。",
-
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_DOMAIN.title": "炽热领域",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_DOMAIN.description": "回合结束时，若本回合[gold]燃尽[/gold]过至少[blue]3[/blue]张状态牌，获得[green]7[/green]点[gold]格挡[/gold]。若此时仍有敌人拥有[gold]灼伤[/gold]，额外获得[green]3[/green]点[gold]格挡[/gold]。",
-
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.description": "每次给予敌人灼伤时，每层额外给予1层，包含热爆的回合开始效果。",
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.title": "灼热核心",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.description": "每回合你累计[gold]燃尽[/gold]到第[blue]3[/blue]张状态牌时，对所有敌人造成[blue]6[/blue]点伤害并获得[green]6[/green]点[gold]格挡[/gold]。每回合最多触发[blue]1[/blue]次。",
-
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.description": "每消耗1张状态牌，每层获得4点格挡，包含回合结束时的消耗。",
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.title": "超燃加速",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.description": "本回合每当你通过卡牌或能力获得额外能量，下一次攻击额外造成[blue]3[/blue]点伤害。每回合最多触发[blue]3[/blue]次。",
-
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.description": "每次实际获得额外能量时，每层使下一张攻击的每段伤害增加5点。多次触发可叠加，无次数上限。不计回合开始的基础能量重置。",
   "OTHERWORLD_TREASURES_POWER_FOUR_SOULS.title": "持有四魂之玉碎片",
-  "OTHERWORLD_TREASURES_POWER_FOUR_SOULS.description": "此敌人持有：{Souls}。"
+  "OTHERWORLD_TREASURES_POWER_FOUR_SOULS.description": "此敌人持有：{Souls}。",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_PASSIVE.title": "四臂",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_PASSIVE.description": "变身时获得[blue]2[/blue]点[gold]力量[/gold]。每打出[blue]4[/blue]张攻击牌，将当前[gold]力量[/gold]翻倍。",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_FRENZY.title": "四臂狂攻",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_FRENZY.description": "每当你的力量翻倍时，每层抽1张牌并获得1点能量。",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_OFFENSE_DEFENSE.title": "攻守一体",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_OFFENSE_DEFENSE.description": "每当你的攻击命中敌人时，每层获得等同于当前力量的格挡。每段、每个敌人分别触发。",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_AFTERSHOCK.title": "震荡余波",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_AFTERSHOCK.description": "每当你的力量翻倍时，每层对所有敌人造成等同于当前力量的伤害。该伤害不额外获得力量加成。",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_PASSIVE.title": "野性追猎",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_PASSIVE.description": "变身时标记生命值最低的敌人为猎物。每张攻击牌攻击猎物时额外攻击一次6点伤害；击杀猎物获得1能量并抽1张牌，立即标记新的最低生命敌人。",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_PREY.title": "猎物",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_PREY.description": "野性追猎标记的目标。",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_LEAPING_INSTINCT.title": "跃动本能",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_LEAPING_INSTINCT.description": "每回合第一次打出攻击牌攻击猎物时，获得6点格挡并抽1张牌。",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_THERMAL_SENSE.title": "热能感应",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_THERMAL_SENSE.description": "每回合开始时，若猎物意图攻击，获得8点格挡；否则抽1张牌。",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_FEEDING_FRENZY.title": "捕食狂热",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_FEEDING_FRENZY.description": "野性追猎的额外攻击伤害由6提高至10。",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_PASSIVE.title": "鬼影",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_PASSIVE.description": "变身时及每回合开始时，获得1层无实体，给予所有敌人1层恐惧。\n鬼影变身结束后的下一个玩家回合结束时，清除所有[gold]恐惧[/gold]，同时解除[gold]魂飞[/gold]和[gold]魄散[/gold]。",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_INTERLACE.title": "虚实交错",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_INTERLACE.description": "每回合第一次主动消耗无实体时，每层获得1点能量，并给予所有敌人2层恐惧。",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_TRUE_FORM.title": "噬魂夺魄",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_TRUE_FORM.description": "给予敌人恐惧时，每层额外给予1层，不递归触发。",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_DOMINION.title": "附身支配",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_DOMINION.description": "每当敌人[gold]魂飞[/gold]时，每层使其失去[blue]12[/blue]点生命。\n每当敌人获得[gold]格挡[/gold]时，每层获得其数值一半的[gold]格挡[/gold]。",
+  "OTHERWORLD_TREASURES_POWER_KAIOKEN_POWER.title": "界王拳",
+  "OTHERWORLD_TREASURES_POWER_KAIOKEN_POWER.description": "本场战斗造成的伤害提高[blue]{Amount}%[/blue]。",
+  "OTHERWORLD_TREASURES_POWER_KAIOKEN_DOOM_POWER.title": "生命透支",
+  "OTHERWORLD_TREASURES_POWER_KAIOKEN_DOOM_POWER.description": "下一个自己的回合开始时死亡。",
+  "OTHERWORLD_TREASURES_POWER_SPIRIT_BOMB_POWER.title": "元气汇聚",
+  "OTHERWORLD_TREASURES_POWER_SPIRIT_BOMB_POWER.description": "等待队友献出元气，或结束回合。所有供能机会结束后释放元气弹。",
+  "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.title": "伤害吸收",
+  "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.description": "拥有[blue]{Amount}[/blue]点[gold]伤害吸收[/gold]。受到伤害时，在格挡之后优先扣除；失去生命时也优先扣除。\n普通治疗不会恢复伤害吸收，不改变最大生命值。战斗结束时清除。",
+  "OTHERWORLD_TREASURES_POWER_APPLE_RESISTANCE.title": "抗性提升",
+  "OTHERWORLD_TREASURES_POWER_APPLE_RESISTANCE.description": "本场战斗受到的伤害降低[blue]20%[/blue]。不减少失去生命的代价。",
+  "OTHERWORLD_TREASURES_POWER_APPLE_FIRE_RESISTANCE.title": "抗火",
+  "OTHERWORLD_TREASURES_POWER_APPLE_FIRE_RESISTANCE.description": "本场战斗免疫[gold]灼伤[/gold]状态牌造成的伤害。"
 }

@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Map;
@@ -23,16 +24,19 @@ namespace OtherworldTreasures.Scripts.Relics;
 // 实现：用原版"跳进指定房间"通道 EnterRoomDebug（控制台 fight 命令同款），
 // 传入当前这场遭遇战的全新副本（怪物重新生成），而不是走存档载入通道。
 [RegisterRelic(typeof(SharedRelicPool))]
-public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClickableRelic
+public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClickableRelic,
+    RelicRightClickSync.ICrossEndRightClickEffect
 {
     // 每场战斗的使用次数上限。当前给 999（等于不限制），后续要加限制改这里即可。
     private const int maxUsesPerCombat = 999;
 
-    // 本场战斗已用次数（重开战斗后仍保留，战斗结束才复位）
-    private static int s_usesThisCombat;
+    private sealed class PlayerState
+    {
+        public int UsesThisCombat;
+        public int CombatStartHp = -1;
+    }
 
-    // 战斗开始时的玩家血量，重开时还原（等同"退出重进"回到战斗开始的血量）
-    private static int s_combatStartHp = -1;
+    private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
 
     // 哆啦A梦道具：自定义稀有度
     public override RelicRarity Rarity => ModRelicRarity.Doraemon;
@@ -58,8 +62,8 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
 
     public override async Task AfterObtained()
     {
-        s_usesThisCombat = 0;
-        s_combatStartHp = -1;
+        S.UsesThisCombat = 0;
+        S.CombatStartHp = -1;
         var identity = RitsuLibFramework.EnsureModelIdentity(this);
         Entry.Logger.Info($"[WhatIfPhoneBooth] AfterObtained, EnsureModelIdentity => {identity.Value}");
         await base.AfterObtained();
@@ -68,10 +72,10 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
     // 战斗开始：记录起始血量（重开战斗时会再次触发，用已用次数防止覆盖）
     public override async Task AfterRoomEntered(AbstractRoom room)
     {
-        if (room is CombatRoom && s_usesThisCombat == 0)
+        if (room is CombatRoom && S.UsesThisCombat == 0)
         {
-            s_combatStartHp = Owner?.Creature?.CurrentHp ?? -1;
-            Entry.Logger.Info($"[WhatIfPhoneBooth] Combat start HP snapshot = {s_combatStartHp}");
+            S.CombatStartHp = Owner?.Creature?.CurrentHp ?? -1;
+            Entry.Logger.Info($"[WhatIfPhoneBooth] Combat start HP snapshot = {S.CombatStartHp}");
         }
         await base.AfterRoomEntered(room);
     }
@@ -79,15 +83,14 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
     // 战斗结束：复位本场已用次数
     public override async Task AfterCombatEnd(CombatRoom room)
     {
-        s_usesThisCombat = 0;
+        S.UsesThisCombat = 0;
         await base.AfterCombatEnd(room);
     }
 
     // 读档/新开跑时复位（见 RunLifecycle）：允许玩家 SL 后重新使用
     internal static void ResetCombatScopedState()
     {
-        s_usesThisCombat = 0;
-        s_combatStartHp = -1;
+        PerPlayerState<PlayerState>.ClearAll();
     }
 
     public bool CanHandleRightClickLocal(ModRightClickContext context)
@@ -100,17 +103,22 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
     public bool CanExecuteRightClick(ModRightClickExecutionContext context)
     {
         return Owner != null
-            && s_usesThisCombat < maxUsesPerCombat
+            && S.UsesThisCombat < maxUsesPerCombat
             && CombatManager.Instance.DebugOnlyGetState() != null;
     }
 
-    public async Task OnRightClick(ModRightClickExecutionContext context)
+    public Task OnRightClick(ModRightClickExecutionContext context)
     {
-        await RestartCombatWithNewTimeline();
+        if (Owner != null && Entry.IsLocalPlayer(Owner)) RelicRightClickSync.Request(Owner, this);
+        return Task.CompletedTask;
     }
+
+    Task RelicRightClickSync.ICrossEndRightClickEffect.ApplyRightClickAsync(PlayerChoiceContext choiceContext)
+        => RestartCombatWithNewTimeline();
 
     private async Task RestartCombatWithNewTimeline()
     {
+        if (S.UsesThisCombat >= maxUsesPerCombat || CombatManager.Instance.DebugOnlyGetState() == null) return;
         if (Owner?.RunState is not RunState runState)
         {
             return;
@@ -131,7 +139,7 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
             return;
         }
 
-        s_usesThisCombat++;
+        S.UsesThisCombat++;
 
         // 1) 换一个新的时间线：重播种影响洗牌/选牌的随机数
         // 改走联机一致的 RNG，避免两端分叉：种子从共享的 Shuffle 子流取，不再用进程本地随机数
@@ -142,13 +150,9 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
         // 2) 血量还原到战斗开始时（等同"退出重进"）
         // 注意：若战斗中途存档重进，本场开始的快照在进程重启后已丢失（static 重置），此时跳过回血，
         // 但"重开本场战斗"的主体效果不受影响。
-        if (Owner.Creature != null && s_combatStartHp > 0)
+        if (Owner.Creature != null && S.CombatStartHp > 0)
         {
-            int delta = s_combatStartHp - Owner.Creature.CurrentHp;
-            if (delta > 0)
-            {
-                await CreatureCmd.Heal(Owner.Creature, delta);
-            }
+            await CreatureCmd.SetCurrentHp(Owner.Creature, Math.Min(S.CombatStartHp, Owner.Creature.MaxHp));
         }
         else
         {
@@ -157,12 +161,13 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
 
         // 3) 取当前这场遭遇战的全新副本 → 同一场战斗，怪物重新生成
         var encounter = ModelDb.GetById<EncounterModel>(currentRoom.Encounter.Id).ToMutable();
-        encounter.DebugRandomizeRng();
+        // 保持同一遭遇的确定性生成；DebugRandomizeRng 使用各端的 UTC 时间播种，
+        // 会在跨秒/时钟不同的客户端生成不同怪物，不能在正式联机流程里调用。
 
         Flash();
         Entry.Logger.Info(
             $"[WhatIfPhoneBooth] Restarting combat: encounter={encounter.Id.Entry}, roomType={currentRoom.RoomType}, " +
-            $"seed={seed}, usesThisCombat={s_usesThisCombat}");
+            $"seed={seed}, usesThisCombat={S.UsesThisCombat}");
 
         // 4) 走原版"跳进指定房间"通道重新进入这场战斗
         await runManager.EnterRoomDebug(currentRoom.RoomType, MapPointType.Unassigned, encounter);

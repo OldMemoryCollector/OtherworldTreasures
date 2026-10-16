@@ -1,7 +1,6 @@
 {
   "OTHERWORLD_TREASURES_POTION_GOLDEN_APPLE.title": "Golden Apple",
-  "OTHERWORLD_TREASURES_POTION_GOLDEN_APPLE.description": "Gain [blue]10[/blue] Max HP and [green]8[/green] [gold]Regen[/gold].",
-
+  "OTHERWORLD_TREASURES_POTION_GOLDEN_APPLE.description": "Gain [blue]10[/blue] [gold]Absorption[/gold] and [blue]3[/blue] [gold]Regen[/gold].",
   "OTHERWORLD_TREASURES_POTION_ENCHANTED_GOLDEN_APPLE.title": "Enchanted Golden Apple",
-  "OTHERWORLD_TREASURES_POTION_ENCHANTED_GOLDEN_APPLE.description": "Gain [blue]40[/blue] Max HP, [green]32[/green] [gold]Regen[/gold], and [green]10[/green] [gold]Plating[/gold]."
+  "OTHERWORLD_TREASURES_POTION_ENCHANTED_GOLDEN_APPLE.description": "Gain [blue]40[/blue] [gold]Absorption[/gold] and [blue]6[/blue] [gold]Regen[/gold].\nTake [blue]20%[/blue] less damage and gain [gold]Fire Resistance[/gold] this combat."
 }

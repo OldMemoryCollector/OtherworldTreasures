@@ -58,6 +58,24 @@ public partial class OmnitrixSelectScreen : Control
     private Label _hintLabel = null!;
 
     private int _currentIndex;
+    private static OmnitrixSelectScreen? _pending;
+
+    internal static void RevealResolvedHero(AlienHero hero)
+    {
+        if (_pending == null || !GodotObject.IsInstanceValid(_pending)) return;
+        if (hero == AlienHero.Ghostfreak)
+        {
+            _pending.ShowImage(GhostfreakPath);
+            _pending._hintLabel.Text = Omnitrix.GetHeroDisplayName(hero);
+            _pending._hintLabel.Visible = true;
+        }
+    }
+
+    internal static void ClosePending()
+    {
+        if (_pending != null && GodotObject.IsInstanceValid(_pending)) _pending.QueueFree();
+        _pending = null;
+    }
 
     public OmnitrixSelectScreen(AlienHero? forcedHero = null)
     {
@@ -101,7 +119,13 @@ public partial class OmnitrixSelectScreen : Control
             result = await _tcs.Task;
         }
 
-        QueueFree();
+        if (result.HasValue && !_forcedHero.HasValue)
+        {
+            ClosePending();
+            _pending = this;
+            _leftArrow.Visible = _rightArrow.Visible = _confirmButton.Visible = _hintLabel.Visible = false;
+        }
+        else QueueFree();
         return result;
     }
 
@@ -224,6 +248,9 @@ public partial class OmnitrixSelectScreen : Control
 
     private void OnConfirmPressed()
     {
+        if (!_confirmButton.Visible) return;
+        _confirmButton.Visible = false;
+        _leftArrow.Visible = _rightArrow.Visible = false;
         // 流派不再由玩家选：变身时随机决定（见 Omnitrix.Transform），这里统一给默认值
         _tcs?.TrySetResult(new HeroSelection(Heroes[_currentIndex], AlienSpecialization.Blast));
     }

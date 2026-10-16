@@ -16,9 +16,6 @@ namespace OtherworldTreasures.Scripts.Alien;
 /// </summary>
 internal static class HeatblastBurns
 {
-    // 手牌上限（与太阳耀斑/熔岩之躯一致：手牌满就不再塞）
-    private const int MaxHandSize = 10;
-
     private static readonly object Marker = new();
 
     // 我方生成的【灼伤】。用弱引用表，不阻止卡牌被回收
@@ -33,7 +30,7 @@ internal static class HeatblastBurns
         for (int i = 0; i < count; i++)
         {
             if (player.PlayerCombatState is not { } playerCombatState
-                || playerCombatState.Hand.Cards.Count >= MaxHandSize)
+                || playerCombatState.Hand.Cards.Count >= CardPile.MaxCardsInHand)
             {
                 return;
             }

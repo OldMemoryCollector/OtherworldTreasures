@@ -42,9 +42,20 @@ public class OmnitrixTransformPower : ModPowerTemplate
 
     // 悬浮时把"变身后获得的能力"一并显示出来（目前的英雄被动）。同样要避开 canonical 模型。
     protected override IEnumerable<IHoverTip> AdditionalHoverTips
-        => IsMutable && Owner?.GetPower<HeatblastPassivePower>() is { } passive
-            ? new[] { HoverTipFactory.FromPower(passive) }
-            : Array.Empty<IHoverTip>();
+    {
+        get
+        {
+            if (!IsMutable) yield break;
+            if (Owner?.GetPower<HeatblastPassivePower>() is { } heatblast)
+                yield return HoverTipFactory.FromPower(heatblast);
+            if (Owner?.GetPower<FourArmsPassivePower>() is { } fourArms)
+                yield return HoverTipFactory.FromPower(fourArms);
+            if (Owner?.GetPower<WildmuttPassivePower>() is { } wildmutt)
+                yield return HoverTipFactory.FromPower(wildmutt);
+            if (Owner?.GetPower<GhostfreakPassivePower>() is { } ghostfreak)
+                yield return HoverTipFactory.FromPower(ghostfreak);
+        }
+    }
 
     public override LocString Title => new LocString("powers", "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.title");
 
@@ -102,7 +113,6 @@ public class OmnitrixTransformPower : ModPowerTemplate
     public override Task AfterRemoved(Creature oldOwner)
     {
         // 按玩家恢复：状态是按玩家隔离的，必须明确指定是谁变回来
-        Omnitrix.RestoreAppearanceSilently(oldOwner.Player);
-        return Task.CompletedTask;
+        return Omnitrix.OnTransformationRemoved(oldOwner.Player);
     }
 }

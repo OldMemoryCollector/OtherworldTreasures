@@ -63,7 +63,7 @@ public static class GamePatches
 /// </summary>
 internal static class HiddenPotions
 {
-    public const bool GoldenApplesHidden = true;
+    public const bool GoldenApplesHidden = false;
 
     public static bool IsHidden(PotionModel potion)
         => GoldenApplesHidden && potion is GoldenApple or EnchantedGoldenApple;
@@ -975,7 +975,7 @@ public static class Patch_PotionFactory_ExcludeShopOnly
 {
     static void Postfix(ref IEnumerable<PotionModel> __result)
     {
-        __result = __result.Where(p => !HiddenPotions.IsHidden(p));
+        __result = __result.Where(p => p is not (GoldenApple or EnchantedGoldenApple));
     }
 }
 
@@ -1005,7 +1005,7 @@ public static class Patch_MerchantInventory_StockGoldenApple
             }
 
             // 按概率投放，否则每次进商店都会必有一瓶
-            if (System.Random.Shared.NextDouble() >= StockChance)
+            if (__instance.Player.PlayerRng.Shops.NextFloat() >= StockChance)
             {
                 return;
             }
@@ -1028,15 +1028,15 @@ public static class Patch_MerchantInventory_StockGoldenApple
     }
 }
 
-// 金苹果定价 150（原版价格按稀有度写死：Rare 100 / Uncommon 75 / 其他 50）
-[HarmonyPatch(typeof(MerchantEntry), "Cost", MethodType.Getter)]
+// Set base cost; native merchant discounts still apply normally.
+[HarmonyPatch(typeof(MerchantPotionEntry), nameof(MerchantPotionEntry.CalcCost))]
 public static class Patch_MerchantEntry_Cost_GoldenApple
 {
-    static void Postfix(MerchantEntry __instance, ref int __result)
+    static void Postfix(MerchantPotionEntry __instance, ref int ____cost)
     {
-        if (__instance is MerchantPotionEntry entry && entry.Model is GoldenApple)
+        if (__instance.Model is GoldenApple)
         {
-            __result = 150;
+            ____cost = 200;
         }
     }
 }

@@ -1,4 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -11,12 +13,21 @@ namespace OtherworldTreasures.Scripts.Powers;
 
 /// <summary>
 /// 强化（buff 名：三点强化）：造成的伤害和获得的格挡值变为三倍。
-/// 由库拉的骰子三点能力添加。在 KurasDice 遗物的 AfterPlayerTurnStart 中移除。
+/// 由库拉的骰子三点能力添加，在持有者所在的玩家回合结束时自行移除。
 /// </summary>
 public class AmplifyPower : PowerModel
 {
     public override PowerType Type => PowerType.Buff;
     public override PowerStackType StackType => PowerStackType.Counter;
+
+    public override async Task AfterSideTurnEnd(
+        PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
+    {
+        if (Owner != null && side == Owner.Side)
+        {
+            await PowerCmd.Remove(this);
+        }
+    }
 
     // 本地化：buff 名称与描述（powers 表，见 localization/zhs/powers.json）
     // 显式指定 key，避免依赖模型自动生成的 Id.Entry

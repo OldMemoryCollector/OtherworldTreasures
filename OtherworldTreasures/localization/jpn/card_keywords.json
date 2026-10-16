@@ -1,0 +1,20 @@
+{
+  "OTHERWORLD_TREASURES_KEYWORD_EXCLUDE.title": "除外",
+  "OTHERWORLD_TREASURES_KEYWORD_EXCLUDE.description": "[gold]廃棄[/gold]とは異なり、[gold]除外[/gold]されたカードは取り戻せない。",
+  "OTHERWORLD_TREASURES_KEYWORD_CHOICE.title": "選択",
+  "OTHERWORLD_TREASURES_KEYWORD_CHOICE.description": "プレイ時、複数の効果から[blue]1[/blue]つ選ぶ。",
+  "OTHERWORLD_TREASURES_KEYWORD_ANNIHILATE.title": "消滅",
+  "OTHERWORLD_TREASURES_KEYWORD_ANNIHILATE.description": "ターン終了時、このカードがまだ[gold]手札[/gold]にある場合、それを[gold]除外[/gold]する。",
+  "OTHERWORLD_TREASURES_KEYWORD_REWIND.title": "巻き戻し",
+  "OTHERWORLD_TREASURES_KEYWORD_REWIND.description": "前のターン開始時の状態に戻す：HP、[gold]ブロック[/gold]、能力の層数、そして敵の意図もすべて元に戻る。合計カウント型のレリックに使うと、そのカウントを1ターン分戻す。",
+  "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.title": "早送り",
+  "OTHERWORLD_TREASURES_KEYWORD_ACCELERATE.description": "次のターン開始時の状態まで進める：自分に使うと持続効果を解決し、敵に使うとその意図を進める。合計カウント型のレリックに使うと、そのカウントを[blue]1[/blue]ターン分進める。",
+  "OTHERWORLD_TREASURES_KEYWORD_INCINERATE.title": "焼却",
+  "OTHERWORLD_TREASURES_KEYWORD_INCINERATE.description": "[gold]手札[/gold]にある状態異常カードを[gold]廃棄[/gold]する。ターン終了時に[gold]溶岩の体[/gold]が手札を焼却するとき、[blue]1[/blue]枚につきHPを[green]2[/green]回復する。",
+  "OTHERWORLD_TREASURES_KEYWORD_DETONATE.title": "起爆",
+  "OTHERWORLD_TREASURES_KEYWORD_DETONATE.description": "ターゲットの[gold]火傷[/gold]をすべて除去し、[gold]起爆[/gold]した層数に応じた追加ダメージを与える。その後、層は失われる。",
+  "OTHERWORLD_TREASURES_KEYWORD_CLEANSE.title": "浄化",
+  "OTHERWORLD_TREASURES_KEYWORD_CLEANSE.description": "起爆ダメージなしで、ターゲットの[gold]火傷[/gold]を除去する。層は失われる。",
+  "OTHERWORLD_TREASURES_KEYWORD_REMOVE.title": "Remove",
+  "OTHERWORLD_TREASURES_KEYWORD_REMOVE.description": "After playing, remove this card from the combat. It returns next combat if run uses remain."
+}

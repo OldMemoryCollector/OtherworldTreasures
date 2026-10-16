@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
@@ -46,8 +47,10 @@ public static class TimeClothState
 
     private static Dictionary<Creature, CreatureSnapshot>? _previousTurn;
     private static Dictionary<Creature, CreatureSnapshot>? _currentTurn;
-    private static Dictionary<Type, int>? _previousRelicCounters;
-    private static Dictionary<Type, int>? _currentRelicCounters;
+    private static Dictionary<(Player Owner, Type RelicType), int>? _previousRelicCounters;
+    private static Dictionary<(Player Owner, Type RelicType), int>? _currentRelicCounters;
+    private static ICombatState? _capturedCombat;
+    private static int _capturedTurn = -1;
 
     // 由 TimeClothCard 在两步选择之间传递"回溯 or 加速"
     public static bool PendingIsRewind;
@@ -62,6 +65,8 @@ public static class TimeClothState
         _currentTurn = null;
         _previousRelicCounters = null;
         _currentRelicCounters = null;
+        _capturedCombat = null;
+        _capturedTurn = -1;
         PendingIsRewind = false;
         IsTargeting = false;
     }
@@ -70,10 +75,16 @@ public static class TimeClothState
     public static void CaptureAtPlayerTurnStart(Player owner)
     {
         var combatState = owner?.Creature?.CombatState;
-        if (combatState == null)
+        if (combatState == null || owner?.PlayerCombatState == null)
         {
             return;
         }
+
+        // 联机每位持有者都会调用这个钩子，同一回合只能滚动一次快照。
+        int turnNumber = owner.PlayerCombatState.TurnNumber;
+        if (ReferenceEquals(_capturedCombat, combatState) && _capturedTurn == turnNumber) return;
+        _capturedCombat = combatState;
+        _capturedTurn = turnNumber;
 
         _previousTurn = _currentTurn;
         var turn = new Dictionary<Creature, CreatureSnapshot>();
@@ -88,7 +99,7 @@ public static class TimeClothState
         _currentTurn = turn;
 
         _previousRelicCounters = _currentRelicCounters;
-        _currentRelicCounters = CaptureRelicCounters(owner);
+        _currentRelicCounters = CaptureRelicCounters(combatState.Players);
     }
 
     // === 回溯：还原到"上一回合开始时" ===
@@ -149,6 +160,7 @@ public static class TimeClothState
 
         foreach (var power in target.Powers.ToList())
         {
+            if (power is OtherworldTreasures.Scripts.Powers.KaiokenPower or OtherworldTreasures.Scripts.Powers.KaiokenDoomPower or OtherworldTreasures.Scripts.Powers.SpiritBombPower or OtherworldTreasures.Scripts.Powers.GoldenApplePower) continue;
             // 中毒：直接触发一次结算
             if (power is PoisonPower poison)
             {
@@ -276,7 +288,7 @@ public static class TimeClothState
     // 回溯：把计数还原到"上一回合开始时"
     public static void RewindRelicCounter(RelicModel relic)
     {
-        if (_previousRelicCounters == null || !_previousRelicCounters.TryGetValue(relic.GetType(), out int value))
+        if (_previousRelicCounters == null || !_previousRelicCounters.TryGetValue((relic.Owner, relic.GetType()), out int value))
         {
             Entry.Logger.Info("[TimeCloth] Rewind skipped: no previous counter for this relic");
             return;
@@ -332,6 +344,7 @@ public static class TimeClothState
         };
         foreach (var power in creature.Powers)
         {
+            if (power is OtherworldTreasures.Scripts.Powers.KaiokenPower or OtherworldTreasures.Scripts.Powers.KaiokenDoomPower or OtherworldTreasures.Scripts.Powers.SpiritBombPower or OtherworldTreasures.Scripts.Powers.GoldenApplePower) continue;
             snapshot.PowerAmounts[power.Id.Entry] = power.Amount;
         }
         if (creature.Monster != null)
@@ -341,26 +354,23 @@ public static class TimeClothState
         return snapshot;
     }
 
-    private static Dictionary<Type, int> CaptureRelicCounters(Player owner)
+    private static Dictionary<(Player Owner, Type RelicType), int> CaptureRelicCounters(IEnumerable<Player> owners)
     {
-        var result = new Dictionary<Type, int>();
-        if (owner == null)
+        var result = new Dictionary<(Player Owner, Type RelicType), int>();
+        foreach (var owner in owners)
         {
-            return result;
-        }
-        foreach (var relic in owner.Relics)
-        {
-            // 我们自己的计数遗物（计数是 static，走接口）
-            if (relic is ITimeClothCounter counter)
+            foreach (var relic in owner.Relics)
             {
-                result[relic.GetType()] = counter.TimeClothCounter;
-                continue;
-            }
-            // 原版回合计数遗物（如开心小花的 TurnsSeen）
-            var property = FindTurnCounterProperty(relic);
-            if (property?.GetValue(relic) is int value)
-            {
-                result[relic.GetType()] = value;
+                if (relic is ITimeClothCounter counter)
+                {
+                    result[(owner, relic.GetType())] = counter.TimeClothCounter;
+                    continue;
+                }
+                var property = FindTurnCounterProperty(relic);
+                if (property?.GetValue(relic) is int value)
+                {
+                    result[(owner, relic.GetType())] = value;
+                }
             }
         }
         return result;
@@ -371,6 +381,7 @@ public static class TimeClothState
         // 现存的、快照里没有的 → 移除
         foreach (var power in target.Powers.ToList())
         {
+            if (power is OtherworldTreasures.Scripts.Powers.KaiokenPower or OtherworldTreasures.Scripts.Powers.KaiokenDoomPower or OtherworldTreasures.Scripts.Powers.SpiritBombPower or OtherworldTreasures.Scripts.Powers.GoldenApplePower) continue;
             if (!snapshot.PowerAmounts.ContainsKey(power.Id.Entry))
             {
                 await PowerCmd.Remove(power);
@@ -381,6 +392,7 @@ public static class TimeClothState
         foreach (var kv in snapshot.PowerAmounts)
         {
             var existing = target.Powers.FirstOrDefault(p => p.Id.Entry == kv.Key);
+            if (existing is OtherworldTreasures.Scripts.Powers.KaiokenPower or OtherworldTreasures.Scripts.Powers.KaiokenDoomPower or OtherworldTreasures.Scripts.Powers.SpiritBombPower or OtherworldTreasures.Scripts.Powers.GoldenApplePower) continue;
             if (existing != null)
             {
                 existing.SetAmount(kv.Value, silent: true);

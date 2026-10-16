@@ -21,6 +21,10 @@ using STS2RitsuLib.Combat.Rewards;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Interop;
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Nodes.Combat;
+using OtherworldTreasures.Scripts.UI;
+using STS2RitsuLib.Scaffolding.Godot.NodeAttachments;
+using STS2RitsuLib.Interactions.RightClick;
 using Logger = MegaCrit.Sts2.Core.Logging.Logger;
 
 namespace OtherworldTreasures.Scripts;
@@ -39,18 +43,43 @@ public class Entry
 
     // 自定义奖励：生命水晶（战后奖励小概率出现，领取后生命上限 +10）
     public static RewardType LifeCrystalRewardType;
+    public static RewardType EnchantedAppleRewardType;
 
     public static void Init()
     {
         var assembly = Assembly.GetExecutingAssembly();
         RitsuLibFramework.EnsureGodotScriptsRegistered(assembly, Logger);
         ModTypeDiscoveryHub.RegisterModAssembly(ModId, assembly);
+        Events.TrainingProgress.Initialize();
+        AppleChestDrops.Initialize();
+        System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Events.GoldenRelics).TypeHandle);
+        System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Events.SilverRelics).TypeHandle);
+        ModRightClickRegistry.Register(ScouterDisplayRightClick.Instance);
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NCreature, ScouterReadout>(
+            "scouter_readout", static _ => new ScouterReadout());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NHealthBar, TemporaryHealthReadout>(
+            "temporary_health_readout", static _ => new TemporaryHealthReadout());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<MegaCrit.Sts2.Core.Nodes.Relics.NRelic, GoldenRelicBorder>(
+            "golden_relic_border", static _ => new GoldenRelicBorder());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<MegaCrit.Sts2.Core.Nodes.Relics.NRelic, TrueExcaliburGlow>(
+            "true_excalibur_glow", static _ => new TrueExcaliburGlow());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NIntent, GhostIntentSeal>(
+            "ghostfreak_intent_seal", static _ => new GhostIntentSeal(), new NodeAttachmentOptions
+            {
+                Name = "OtherworldGhostIntentSeal",
+                DuplicatePolicy = NodeAttachmentDuplicatePolicy.ReuseExistingByName,
+            });
 
         // 注册自定义奖励：生命水晶。无动态状态，读档时工厂直接重建新实例
         LifeCrystalRewardType = ModRewardRegistry.For(ModId)
             .RegisterOwned(
                 "life_crystal",
                 (save, player, json) => new LifeCrystalReward(player))
+            .RewardType;
+
+        EnchantedAppleRewardType = ModRewardRegistry.For(ModId)
+            .RegisterOwned("enchanted_apple_chest", (save, player, json) =>
+                new EnchantedAppleChestReward(player, System.Text.Json.JsonSerializer.Deserialize<string>(json!)!))
             .RewardType;
 
         // Harmony patches
@@ -129,11 +158,17 @@ public class Entry
         }).PileType;
 
         // 火焰人卡池的图鉴筛选器：让火焰人的专属牌在卡牌图鉴里单列一类。
-        // 图标直接用战士的角色图标（没专门做卡池图标，复用原版资源）。
+        // 使用四位外星英雄各自的图鉴头像。
         ModContentRegistry.For(ModId)
             .RegisterCardLibraryCompendiumSharedPoolFilter<HeatblastCardPool>(
                 "heatblast_pool",
-                "res://images/ui/top_panel/character_icon_ironclad.png");
+                "res://OtherworldTreasures/images/heroes/compendium/Heatblast.png");
+        ModContentRegistry.For(ModId)
+            .RegisterCardLibraryCompendiumSharedPoolFilter<FourArmsCardPool>(
+                "four_arms_pool",
+                "res://OtherworldTreasures/images/heroes/compendium/FourArms.png");
+        ModContentRegistry.For(ModId).RegisterCardLibraryCompendiumSharedPoolFilter<WildmuttCardPool>("wildmutt_pool", "res://OtherworldTreasures/images/heroes/compendium/Wildmutt.png");
+        ModContentRegistry.For(ModId).RegisterCardLibraryCompendiumSharedPoolFilter<GhostfreakCardPool>("ghostfreak_pool", "res://OtherworldTreasures/images/heroes/compendium/Ghostfreak.png");
 
         // 附魔金苹果作为先古之民的选项之一，在 MemoryKeeper.GenerateInitialOptions 里与遗物一起抽取
 

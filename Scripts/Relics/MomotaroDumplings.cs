@@ -123,7 +123,7 @@ public class MomotaroDumplings : ModRelicTemplate,
     public IReadOnlyList<ExtraIconAmountLabelSpec> GetRelicExtraIconAmountLabelSpecs()
     {
         // 局外（图鉴/收藏）不显示角标，避免把上一局的丸数带进图鉴
-        if (!(RunManager.Instance?.IsInProgress ?? false))
+        if (!IsMutable || !(RunManager.Instance?.IsInProgress ?? false))
         {
             return new List<ExtraIconAmountLabelSpec>();
         }
@@ -141,7 +141,7 @@ public class MomotaroDumplings : ModRelicTemplate,
     {
         S.Remaining = InitialDumplings;
         SavedRemaining = InitialDumplings;
-        TamedPets.ResetRun();
+        TamedPets.ResetRun(Owner);
         SavedPetsData = string.Empty;
         RitsuLibFramework.EnsureModelIdentity(this);
         RefreshBadge();
@@ -158,8 +158,8 @@ public class MomotaroDumplings : ModRelicTemplate,
             S.Remaining = live._savedRemaining;
             RefreshBadge();
         }
-        TamedPets.LoadRecords(live._savedPetsData);
-        Entry.Logger.Info($"[MomotaroDumplings] 读档同步：丸子 {S.Remaining}，随从 {TamedPets.Records.Count}");
+        TamedPets.LoadRecords(Owner, live._savedPetsData);
+        Entry.Logger.Info($"[MomotaroDumplings] 读档同步：丸子 {S.Remaining}，随从 {TamedPets.RecordsFor(Owner).Count}");
     }
 
     // 把本玩家的状态写回持有的那件（可变）遗物
@@ -171,13 +171,13 @@ public class MomotaroDumplings : ModRelicTemplate,
             if (live.IsMutable)
             {
                 live.SavedRemaining = S.Remaining;
-                live.SavedPetsData = TamedPets.EncodeRecords();
+                live.SavedPetsData = TamedPets.EncodeRecords(Owner);
             }
         }
         else if (IsMutable)
         {
             SavedRemaining = S.Remaining;
-            SavedPetsData = TamedPets.EncodeRecords();
+            SavedPetsData = TamedPets.EncodeRecords(Owner);
         }
     }
 
@@ -324,7 +324,7 @@ public class MomotaroDumplings : ModRelicTemplate,
         if (Owner?.Creature?.CombatState != null)
         {
             // 快照遍历：召唤过程中 Records 可能被清理（怪物模型已不存在的旧档）
-            foreach (var record in TamedPets.Records.ToList())
+            foreach (var record in TamedPets.RecordsFor(Owner).ToList())
             {
                 await SummonPet(record);
             }
@@ -444,7 +444,7 @@ public class MomotaroDumplings : ModRelicTemplate,
         PlayerChoiceContext choiceContext, Creature creature,
         bool wasRemovalPrevented, float deathAnimLength)
     {
-        if (TamedPets.IsTamed(creature))
+        if (!wasRemovalPrevented && creature.PetOwner == Owner && TamedPets.IsTamed(creature))
         {
             var removed = TamedPets.NotifyDeath(creature);
             Persist();
@@ -455,7 +455,7 @@ public class MomotaroDumplings : ModRelicTemplate,
 
     public override async Task AfterCombatVictory(CombatRoom room)
     {
-        TamedPets.SnapshotAndClear();
+        TamedPets.SnapshotAndClear(Owner);
         Persist();
         await base.AfterCombatVictory(room);
     }
@@ -465,7 +465,8 @@ public class MomotaroDumplings : ModRelicTemplate,
     public async Task<bool> ApplyCapture(PlayerChoiceContext choiceContext, Creature enemy)
     {
         var player = Owner;
-        if (player == null || !TamedPets.CanTame(enemy, player.Creature))
+        S.Remaining = (LiveRelic ?? this).SavedRemaining;
+        if (player == null || S.Remaining <= 0 || !TamedPets.CanTame(enemy, player.Creature))
         {
             return false;
         }
@@ -485,7 +486,7 @@ public class MomotaroDumplings : ModRelicTemplate,
         //    战斗中动态加生物不会经过原版指令流程，两端会各建各的实例；
         //    随从统一在下一场战斗开始时由 BeforeCombatStartLate 召唤。
         var record = new TamedPetRecord(id, hp, hp);
-        TamedPets.Records.Add(record);
+        TamedPets.RecordsFor(player).Add(record);
 
         // 2. 原敌人以"受伤致死"的方式正常死亡：走原版伤害与死亡流程，两端结果一致。
         await CreatureCmd.Damage(choiceContext, enemy, enemy.CurrentHp, ValueProp.Unblockable, null);
@@ -516,7 +517,7 @@ public class MomotaroDumplings : ModRelicTemplate,
         if (canonical == null)
         {
             Entry.Logger.Info($"[MomotaroDumplings] 旧档怪物已不存在，丢弃随从记录：{record.MonsterId}");
-            TamedPets.Records.Remove(record);
+            TamedPets.RecordsFor(player).Remove(record);
             return null;
         }
 
@@ -526,7 +527,7 @@ public class MomotaroDumplings : ModRelicTemplate,
             pet = combatState.CreateCreature(canonical.ToMutable(), player.Creature.Side, null);
             // 先登记活动实例：AddPet 会触发 NCombatRoom.AddCreature，
             // 随从排版 patch（朝向/站位/血条）需要在那时就能认出它
-            TamedPets.Register(pet, record);
+            TamedPets.Register(pet, record, player);
             await PlayerCmd.AddPet(pet, player);
             await CreatureCmd.SetMaxHp(pet, record.MaxHp);
             await CreatureCmd.SetCurrentHp(pet, record.CurrentHp);
@@ -545,7 +546,7 @@ public class MomotaroDumplings : ModRelicTemplate,
             {
                 TamedPets.NotifyDeath(pet);
             }
-            TamedPets.Records.Remove(record);
+            TamedPets.RecordsFor(player).Remove(record);
             return null;
         }
     }

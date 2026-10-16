@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.RelicPools;
 using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Rooms;
+using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Scaffolding.Content;
 
@@ -22,14 +23,23 @@ public class FourDimensionalPocket : ModRelicTemplate
 {
     private const int initialCharges = 3;
 
-    // 跨战斗实例持久化：遗物在战斗中会被克隆，普通实例字段会丢失。
-    // 状态按玩家隔离（遗物实例每次战斗重建，static 又会被两名玩家共享）
-    private sealed class PlayerState
+    private int _savedRemaining = initialCharges;
+
+    [SavedProperty]
+    public int SavedRemaining
     {
-        public int Remaining = initialCharges;
+        get => _savedRemaining;
+        set
+        {
+            AssertMutable();
+            _savedRemaining = Math.Max(0, value);
+            Status = _savedRemaining == 0 ? RelicStatus.Disabled : RelicStatus.Normal;
+        }
     }
 
-    private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
+    // 克隆只负责执行，跨战斗进度写在背包里的实际遗物上，由原版存档保存。
+    private FourDimensionalPocket Progress => IsMutable
+        ? Owner?.Relics.OfType<FourDimensionalPocket>().FirstOrDefault() ?? this : this;
 
     public override RelicRarity Rarity => RelicRarity.Ancient;
 
@@ -44,9 +54,9 @@ public class FourDimensionalPocket : ModRelicTemplate
     );
 
     // 剩余次数角标
-    public override bool ShowCounter => S.Remaining > 0;
+    public override bool ShowCounter => Progress.SavedRemaining > 0;
 
-    public override int DisplayAmount => S.Remaining;
+    public override int DisplayAmount => Progress.SavedRemaining;
 
     // 悬浮提示：预览道具池中的哆啦A梦道具（只取各自的遗物说明，不嵌套子提示）
     protected override IEnumerable<IHoverTip> AdditionalHoverTips => base.AdditionalHoverTips.Concat(new IHoverTip[]
@@ -64,10 +74,10 @@ public class FourDimensionalPocket : ModRelicTemplate
     // 并立即随机获得一件哆啦A梦道具（原版 LargeCapsule 同款做法）
     public override async Task AfterObtained()
     {
-        S.Remaining = initialCharges;
+        Progress.SavedRemaining = initialCharges;
         Status = RelicStatus.Normal;
         InvokeDisplayAmountChanged();
-        Entry.Logger.Info($"[FourDimensionalPocket] AfterObtained: charges reset to {S.Remaining}");
+        Entry.Logger.Info($"[FourDimensionalPocket] AfterObtained: charges reset to {Progress.SavedRemaining}");
 
         var item = PickRandomItem(Owner);
         if (item != null)
@@ -94,7 +104,7 @@ public class FourDimensionalPocket : ModRelicTemplate
         {
             return false;
         }
-        if (S.Remaining <= 0)
+        if (Progress.SavedRemaining <= 0)
         {
             return false;
         }
@@ -117,13 +127,14 @@ public class FourDimensionalPocket : ModRelicTemplate
             rewards.Add(replacement);
         }
 
-        S.Remaining--;
+        Progress.SavedRemaining--;
+        Progress.InvokeDisplayAmountChanged();
         InvokeDisplayAmountChanged();
-        if (S.Remaining <= 0)
+        if (Progress.SavedRemaining <= 0)
         {
-            Status = RelicStatus.Disabled;
+            Progress.Status = RelicStatus.Disabled;
         }
-        Entry.Logger.Info($"[FourDimensionalPocket] Elite relic replaced by {item.GetType().Name}, remaining={S.Remaining}");
+        Entry.Logger.Info($"[FourDimensionalPocket] Elite relic replaced by {item.GetType().Name}, remaining={Progress.SavedRemaining}");
         return true;
     }
 

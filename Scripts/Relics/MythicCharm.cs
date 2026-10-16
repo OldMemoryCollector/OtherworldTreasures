@@ -21,7 +21,7 @@ public class MythicCharm : ModRelicTemplate
     private const int HealPerTurn = 1;
     private const int LowHealthHealPerTurn = 2;
 
-    // 由先古之民给予，使用 Ancient 稀有度
+    // 泰拉瑞亚向导赠送的专属遗物。
     public override RelicRarity Rarity => RelicRarity.Ancient;
 
     // 遗物图片资源（IconPath=小图标85x85，IconOutlinePath=轮廓85x85，BigIconPath=大图标256x256）

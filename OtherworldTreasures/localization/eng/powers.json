@@ -1,43 +1,66 @@
 {
   "OTHERWORLD_TREASURES_POWER_AMPLIFY_POWER.title": "Amplify",
   "OTHERWORLD_TREASURES_POWER_AMPLIFY_POWER.description": "Damage dealt and [gold]Block[/gold] gained are tripled this turn.",
-
   "OTHERWORLD_TREASURES_POWER_BAMBOO_COPTER_FLIGHT_POWER.title": "Takeoff",
   "OTHERWORLD_TREASURES_POWER_BAMBOO_COPTER_FLIGHT_POWER.description": "You take [blue]50%[/blue] less damage from attacks. Expires after you are hit [blue]5[/blue] times.",
-
   "OTHERWORLD_TREASURES_POWER_TAMED_PET.title": "Tamed",
   "OTHERWORLD_TREASURES_POWER_TAMED_PET.description": "Deals [blue]50%[/blue] less attack damage.",
-
   "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.title": "Spore Sac",
   "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description": "When you take attack damage this turn, apply {Amount} Poison to the attacker.",
-
   "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.title": "Transformation",
   "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.description": "{Amount} turn(s) of transformation remaining.",
-
   "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.title": "Burn",
   "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.description": "At the end of this enemy's turn, it takes [blue]2[/blue] damage per stack (this damage can be blocked), then all stacks are consumed. Cards such as [gold]Detonate[/gold] can consume the stacks early.",
-
   "OTHERWORLD_TREASURES_POWER_ALIEN_TERROR.title": "Fear",
-  "OTHERWORLD_TREASURES_POWER_ALIEN_TERROR.description": "This enemy deals [blue]10%[/blue] less damage per stack, up to a maximum of [blue]50%[/blue].",
-
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.title": "Magma Body",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.description": "At the start of each turn, add [blue]1[/blue] [gold]Burn[/gold] Status card to your hand (not added if your hand is full). Raise your Energy max by [blue]1[/blue] each turn. At the end of your turn, [gold]Incinerate[/gold] all Status cards in your hand, healing [green]2[/green] HP for each card [gold]Incinerated[/gold]. Immune to the end-of-turn damage from [gold]Burn[/gold] Status cards in your own hand.",
-
+  "OTHERWORLD_TREASURES_POWER_ALIEN_TERROR.description": "This enemy is afflicted with [gold]Soul Fright[/gold] at [blue]{SoulFrightThreshold}[/blue] Fear: only Block intents work; all other intents are disabled.\r\nAt [blue]{DisperseThreshold}[/blue] Fear, this enemy is afflicted with [gold]Disperse[/gold] and dies on its next action.\r\nFear does not decay.\r\nAt the end of the next player turn after Ghostfreak ends, remove ALL Fear and its Soul Fright/Disperse effects.",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.title": "Heatblast",
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_PASSIVE.description": "At the start of your turn, add 1 Burn to your Hand and apply 1 Scorch to ALL enemies. At the end of your turn, exhaust ALL Status cards in your Hand. Whenever you exhaust a Burn, heal 2 HP. Other Status cards do not heal.",
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.title": "Solar Flare",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.description": "The first time you apply [gold]Burn[/gold] each turn, apply [green]2[/green] additional [gold]Burn[/gold]. At the start of each turn, add [blue]1[/blue] [gold]Burn[/gold] Status card to your hand (not added if your hand is full).",
-
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_FEEDBACK.title": "Scorching Feedback",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_FEEDBACK.description": "Whenever you [gold]Incinerate[/gold] [blue]1[/blue] Status card, deal [blue]2[/blue] damage to ALL enemies. Triggers up to [blue]4[/blue] times per turn.",
-
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_DOMAIN.title": "Scorching Domain",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_DOMAIN.description": "At end of turn, if you have [gold]Incinerated[/gold] at least [blue]3[/blue] Status cards this turn, gain [green]7[/green] [gold]Block[/gold]. If any enemy still has [gold]Burn[/gold] at that point, gain [green]3[/green] additional [gold]Block[/gold].",
-
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SOLAR_FLARE.description": "Whenever you apply Scorch to an enemy, apply 1 additional stack per stack of this power, including at turn start.",
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.title": "Scorching Core",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.description": "Each turn, when you [gold]Incinerate[/gold] your [blue]3[/blue]rd Status card, deal [blue]6[/blue] damage to ALL enemies and gain [green]6[/green] [gold]Block[/gold]. Triggers once per turn.",
-
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SCORCHING_CORE.description": "Whenever you exhaust a Status, gain 4 Block per stack, including end-of-turn exhaustion.",
   "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.title": "Supercombustion",
-  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.description": "Whenever you gain extra Energy from cards or powers this turn, your next Attack deals [blue]3[/blue] additional damage. Triggers up to [blue]3[/blue] times per turn.",
-
+  "OTHERWORLD_TREASURES_POWER_HEATBLAST_SUPERCOMBUSTION.description": "Whenever you gain extra Energy, each hit of your next Attack deals 5 additional damage per stack. Multiple triggers stack without a limit. Normal turn-start Energy resets do not count.",
   "OTHERWORLD_TREASURES_POWER_FOUR_SOULS.title": "Four Souls",
-  "OTHERWORLD_TREASURES_POWER_FOUR_SOULS.description": "Holds: {Souls}."
+  "OTHERWORLD_TREASURES_POWER_FOUR_SOULS.description": "Holds: {Souls}.",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_PASSIVE.title": "Four Arms",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_PASSIVE.description": "Gain [blue]2[/blue] [gold]Strength[/gold] on transformation. Every [blue]4[/blue] Attack cards played, double your current Strength.",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_FRENZY.title": "Four-Arm Frenzy",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_FRENZY.description": "Whenever your Strength doubles, draw 1 card and gain 1 Energy per stack.",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_OFFENSE_DEFENSE.title": "Offense and Defense",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_OFFENSE_DEFENSE.description": "Whenever your attack hits an enemy, gain Block equal to your current Strength per stack. Each hit on each enemy triggers separately.",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_AFTERSHOCK.title": "Aftershock",
+  "OTHERWORLD_TREASURES_POWER_FOUR_ARMS_AFTERSHOCK.description": "Whenever your Strength doubles, deal damage equal to your current Strength to ALL enemies per stack. This damage gains no extra Strength bonus.",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_PASSIVE.title": "Wild Pursuit",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_PASSIVE.description": "Mark the lowest-HP enemy as Prey. Each Attack card that hits Prey deals one extra 6-damage attack. On a Prey kill, gain 1 Energy and draw 1 card, then mark the next lowest-HP enemy.",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_PREY.title": "Prey",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_PREY.description": "Target marked by Wild Pursuit.",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_LEAPING_INSTINCT.title": "Leaping Instinct",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_LEAPING_INSTINCT.description": "The first time each turn an Attack card hits Prey, gain 6 Block and draw 1 card.",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_THERMAL_SENSE.title": "Thermal Sense",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_THERMAL_SENSE.description": "At turn start, if Prey intends to attack, gain 8 Block; otherwise draw 1 card.",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_FEEDING_FRENZY.title": "Feeding Frenzy",
+  "OTHERWORLD_TREASURES_POWER_WILDMUTT_FEEDING_FRENZY.description": "Wild Pursuit deals 10 additional attack damage instead of 6.",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_PASSIVE.title": "Ghostfreak",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_PASSIVE.description": "On transformation and at turn start, gain 1 Intangible and apply 1 Fear to ALL enemies.\nAt the end of the next player turn after Ghostfreak ends, remove ALL Fear and its Soul Fright/Disperse effects.",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_INTERLACE.title": "Phasing Interlace",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_INTERLACE.description": "The first time each turn you actively consume Intangible, gain 1 Energy and apply 2 Fear to ALL enemies per stack.",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_TRUE_FORM.title": "True Form",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_TRUE_FORM.description": "Whenever you apply Fear, apply 1 additional Fear per stack, without recursion.",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_DOMINION.title": "Possession Dominion",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_DOMINION.description": "Whenever an enemy enters Soul Fright, it loses [blue]12[/blue] HP per stack.\nWhenever an enemy gains Block, gain half that amount per stack.",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_SOUL_FRIGHT.title": "Soul Fright",
+  "OTHERWORLD_TREASURES_POWER_GHOSTFREAK_DISPERSE.title": "Soul Dissolution",
+  "OTHERWORLD_TREASURES_POWER_KAIOKEN_POWER.title": "Kaioken",
+  "OTHERWORLD_TREASURES_POWER_KAIOKEN_POWER.description": "Deal [blue]{Amount}%[/blue] more damage this combat.",
+  "OTHERWORLD_TREASURES_POWER_KAIOKEN_DOOM_POWER.title": "Overdrawn Life",
+  "OTHERWORLD_TREASURES_POWER_KAIOKEN_DOOM_POWER.description": "Die at the start of your next turn.",
+  "OTHERWORLD_TREASURES_POWER_SPIRIT_BOMB_POWER.title": "Gathering Energy",
+  "OTHERWORLD_TREASURES_POWER_SPIRIT_BOMB_POWER.description": "Waiting for teammates to donate energy or end their turn. Release the Spirit Bomb when all opportunities end.",
+  "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.title": "Absorption",
+  "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.description": "[blue]{Amount}[/blue] extra HP. Absorbs damage after Block and pays HP-loss costs before normal HP.\nHealing cannot restore it. Does not change Max HP. Removed at the end of combat.",
+  "OTHERWORLD_TREASURES_POWER_APPLE_RESISTANCE.title": "Resistance",
+  "OTHERWORLD_TREASURES_POWER_APPLE_RESISTANCE.description": "Take [blue]20%[/blue] less damage this combat. Does not reduce HP-loss costs.",
+  "OTHERWORLD_TREASURES_POWER_APPLE_FIRE_RESISTANCE.title": "Fire Resistance",
+  "OTHERWORLD_TREASURES_POWER_APPLE_FIRE_RESISTANCE.description": "Immune to damage from [gold]Burn[/gold] Status cards this combat."
 }

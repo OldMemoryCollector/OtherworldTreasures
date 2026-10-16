@@ -1,7 +1,6 @@
 {
   "OTHERWORLD_TREASURES_POTION_GOLDEN_APPLE.title": "金苹果",
-  "OTHERWORLD_TREASURES_POTION_GOLDEN_APPLE.description": "获得[blue]10[/blue]点最大生命值，并获得[green]8[/green]层[gold]再生[/gold]。",
-
+  "OTHERWORLD_TREASURES_POTION_GOLDEN_APPLE.description": "获得[blue]10[/blue]点[gold]伤害吸收[/gold]与[blue]3[/blue]层[gold]再生[/gold]。",
   "OTHERWORLD_TREASURES_POTION_ENCHANTED_GOLDEN_APPLE.title": "附魔金苹果",
-  "OTHERWORLD_TREASURES_POTION_ENCHANTED_GOLDEN_APPLE.description": "获得[blue]40[/blue]点最大生命值，并获得[green]32[/green]层[gold]再生[/gold]与[green]10[/green]层[gold]覆甲[/gold]。"
+  "OTHERWORLD_TREASURES_POTION_ENCHANTED_GOLDEN_APPLE.description": "获得[blue]40[/blue]点[gold]伤害吸收[/gold]与[blue]6[/blue]层[gold]再生[/gold]。\n本场战斗受到的伤害降低[blue]20%[/blue]，并获得[gold]抗火[/gold]。"
 }

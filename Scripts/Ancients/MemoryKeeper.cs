@@ -1,15 +1,11 @@
 using System.Collections;
 using Godot;
-using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Extensions;
-using MegaCrit.Sts2.Core.HoverTips;
-using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Acts;
 using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Scaffolding.Content;
-using OtherworldTreasures.Scripts.Potions;
 using OtherworldTreasures.Scripts.Relics;
 
 namespace OtherworldTreasures.Scripts.Ancients;
@@ -37,7 +33,7 @@ public class MemoryKeeper : ModAncientEventTemplate
         RunHistoryIconOutlinePath: "res://OtherworldTreasures/images/ancients/memory_keeper_head.png"
     );
 
-    // 池子：十件"先古遗物"。
+    // 七件遗物；泰拉瑞亚三饰品由向导事件赠送，不进入先古之民选项池。
     // 哆啦A梦道具（任意门/缩小灯/竹蜻蜓/如果电话亭/时光布/空气炮/桃太郎丸子）是【四次元口袋】的附属遗物，不进这里。
     // 四魂之玉只在本选项池出现；点击后实际获得的是随机的【四魂之玉碎片】（碎片本身不进选项池）。
     private IReadOnlyList<EventOption> RelicPool => [
@@ -46,20 +42,13 @@ public class MemoryKeeper : ModAncientEventTemplate
         CreateModRelicOption<AshenFlask>(),
         CreateModRelicOption<FourDimensionalPocket>(),
         CreateModRelicOption<DavesSeeds>(),
-        CreateModRelicOption<MythicCharm>(),
-        CreateModRelicOption<SporeSac>(),
-        CreateModRelicOption<CrossNecklace>(),
         CreateModRelicOption<FourSoulsGem>(),
         CreateModRelicOption<Omnitrix>()
     ];
 
-    // 所有可能的选项（含先古之民专属药水；图鉴等使用）
-    // 附魔金苹果被暂时隐藏时不列出它，先古图鉴里也看不到
-    public override IEnumerable<EventOption> AllPossibleOptions =>
-        EnchantedGoldenAppleOption is { } potionOption ? RelicPool.Append(potionOption) : RelicPool;
+    public override IEnumerable<EventOption> AllPossibleOptions => RelicPool;
 
-    // 生成初始选项：与原版一致 —— 洗牌后随机取 3 个
-    // 未隐藏时，先古之民专属药水（附魔金苹果）与遗物一起参与抽取
+    // 生成初始选项：洗牌后随机取 4 个
     protected override IReadOnlyList<EventOption> GenerateInitialOptions()
     {
         var owned = Owner?.Relics.Select(r => r.GetType()).ToHashSet() ?? new HashSet<Type>();
@@ -73,34 +62,7 @@ public class MemoryKeeper : ModAncientEventTemplate
             available = RelicPool.ToList();
         }
 
-        if (EnchantedGoldenAppleOption is { } potionOption)
-        {
-            available.Add(potionOption);
-        }
-
-        return available.UnstableShuffle(Rng).Take(3).ToList();
+        return available.UnstableShuffle(Rng).Take(4).ToList();
     }
 
-    // 先古之民专属药水（附魔金苹果）选项；它被暂时隐藏时返回 null
-    private EventOption? EnchantedGoldenAppleOption =>
-        HiddenPotions.GoldenApplesHidden ? null : BuildEnchantedGoldenAppleOption();
-
-    // 构造「附魔金苹果」选项：选中后直接获得该药水
-    private EventOption BuildEnchantedGoldenAppleOption()
-    {
-        var potion = ModelDb.Potion<EnchantedGoldenApple>().ToMutable();
-        return new EventOption(
-            this,
-            async () =>
-            {
-                if (Owner != null)
-                {
-                    await PotionCmd.TryToProcure(potion, Owner);
-                }
-            },
-            new LocString("potions", "OTHERWORLD_TREASURES_POTION_ENCHANTED_GOLDEN_APPLE.title"),
-            new LocString("potions", "OTHERWORLD_TREASURES_POTION_ENCHANTED_GOLDEN_APPLE.description"),
-            "OTHERWORLD_TREASURES_ENCHANTED_GOLDEN_APPLE",
-            Array.Empty<IHoverTip>());
-    }
 }
