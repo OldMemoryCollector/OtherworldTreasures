@@ -107,14 +107,18 @@ public sealed partial class SCP294Potion
     private static int RollAmount(Rng rng, BrewEffect effect, int density, BrewRecipient recipient = BrewRecipient.Self)
     {
         if (!HasAdjustableAmount(effect)) return 1;
-        density = RollDensity(rng, effect, density);
         if (Scp294Settings.CrazyMode)
-            return RollBiased(rng, 0, VanillaBaseline(effect) * 10, density);
+            return rng.NextInt(0, VanillaBaseline(effect) * 10 + 1);
+        density = RollDensity(rng, effect, density);
         if (effect == BrewEffect.Doom && recipient is BrewRecipient.SelectedEnemy or BrewRecipient.AllEnemies or BrewRecipient.BothSides or BrewRecipient.SelfAndEnemy)
             return RollBiased(rng, 20, 50, density);
         var (min, max) = NormalRange(effect, density);
         return rng.NextInt(min, max + 1);
     }
+
+    private static int RollFoulSplashMultiplier(Rng rng, int density) => Scp294Settings.CrazyMode
+        ? rng.NextInt(0, 1001)
+        : RollBiased(rng, 50, 150, RollDensity(rng, BrewEffect.FoulSplash, density));
 
     internal static (int Min, int Max) NormalRange(BrewEffect effect, int density) => effect switch
         {

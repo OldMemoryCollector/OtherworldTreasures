@@ -40,7 +40,7 @@ public sealed partial class SCP294Potion
         {
             int density = Math.Clamp(value, 0, 5);
             if (Scp294Settings.CrazyMode)
-                result = Text("强度随机为原版的0～10倍；浓度影响强弱倾向。", "Potency: 0–10× vanilla; concentration biases the roll.", "強度は原作の0～10倍。濃度で強弱の傾向が変わる。");
+                result = Text("强度在0～原版对应数值的10倍之间等概率随机，包含两端。", "Potency is uniformly random from 0 to 10× the vanilla value, inclusive.", "強度は原作の0～10倍の整数から等確率で抽選し、両端を含みます。");
             else
             {
                 string Range(BrewEffect effect)

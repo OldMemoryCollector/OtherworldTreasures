@@ -276,8 +276,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         var recipient = RecipientFor(rng, effect, feeling);
         return new BrewIngredient(effect, RollAmount(rng, effect, density, recipient), recipient, RollTiming(rng, effect),
             OrbEntry: effect == BrewEffect.ChannelSameOrbs ? rng.NextItem(OrbEntries) : null,
-            SecondaryAmount: effect == BrewEffect.FoulSplash ? RollBiased(rng, Scp294Settings.CrazyMode ? 0 : 50,
-                Scp294Settings.CrazyMode ? 1000 : 150, RollDensity(rng, effect, density))
+            SecondaryAmount: effect == BrewEffect.FoulSplash ? RollFoulSplashMultiplier(rng, density)
                 : effect == BrewEffect.Doom && recipient is BrewRecipient.BothSides or BrewRecipient.SelfAndEnemy
                     ? RollAmount(rng, effect, density, BrewRecipient.Self) : null);
     }

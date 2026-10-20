@@ -42,7 +42,7 @@ internal static class Scp294Settings
                     section.WithTitle(Text("药水模式", "Potion modes", "薬のモード"));
                     section.AddToggle("crazy", Text("疯狂模式", "Crazy mode", "クレイジーモード"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.CrazyMode, (d, v) => d.CrazyMode = v),
-                        Text("可变强度在0～原版对应数值的10倍之间随机；无原版对应的自定义项按常规上限计算，浓度仍影响高低倾向。", "Variable potency ranges from zero to ten times vanilla. Custom effects without a vanilla counterpart use their normal maximum; concentration still biases the roll.", "可変効果は原作の0～10倍。対応する原作効果がなければ通常上限を基準にし、濃度は強度の傾向に影響します。"));
+                        Text("可变强度在0～原版对应数值的10倍之间等概率随机，包含两端；无原版对应的自定义项按常规上限计算。", "Variable potency is uniformly random from zero to ten times vanilla, inclusive. Custom effects without a vanilla counterpart use their normal maximum.", "可変効果は原作の0～10倍の整数から等確率で抽選し、両端を含みます。対応する原作効果がなければ通常上限を基準にします。"));
                     section.AddToggle("everywhere", Text("常态模式", "Everywhere mode", "常態モード"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.EverywhereMode, (d, v) => d.EverywhereMode = v),
                         Text("禁用咖啡机事件，局内新获得的所有药水变为随机调合药水；可与疯狂模式同时开启。", "Disables the coffee-machine event and randomizes every new potion acquired during a run. Can combine with Crazy mode.", "コーヒーマシンのイベントを無効化し、ラン中の新しい薬をすべてランダム化。クレイジーモードと併用できます。"));
