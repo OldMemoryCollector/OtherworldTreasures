@@ -103,7 +103,7 @@ public sealed partial class Scp294
         string key=ModOptionKey("NAMED","CLAIM");_brewPreviews[key]=_pendingBrew;
         var choices=new List<EventOption>{NamedOption("CLAIM",Text("领取 · ","Take · ","受け取る・")+SCP294Potion.BrewNameOf(_pendingBrew),SCP294Potion.SummaryOf(_pendingBrew),ClaimBrew,[BrewPreviewHoverTip(_pendingBrew,key)])};
         choices.AddRange(NamedRedoOptions());choices.Add(Leave());
-        string text=Text("出口滑出了一杯", "The machine serves ","出口から出てきたのは ")+"[gold]"+SCP294Potion.BrewNameOf(_pendingBrew)+"[/gold]。";
+        string text=Text("出口滑出了", "The machine serves ","出口から出てきたのは ")+"[gold]"+SCP294Potion.BrewNameOf(_pendingBrew)+"[/gold]。";
         if(_namedIncident.Length>0)text+="\n"+SCP294Potion.FormatPotionText(_namedIncident,LocManager.Instance.Language);
         SetEventState(Literal(text),choices);
     }
