@@ -58,7 +58,7 @@
   "OTHERWORLD_TREASURES_POWER_SPIRIT_BOMB_POWER.title": "Gathering Energy",
   "OTHERWORLD_TREASURES_POWER_SPIRIT_BOMB_POWER.description": "Waiting for teammates to donate energy or end their turn. Release the Spirit Bomb when all opportunities end.",
   "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.title": "ダメージ吸収",
-  "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.description": "追加のHP：[blue]{Amount}[/blue]。ブロックの後にダメージを受け持ち、HPを失うコストも通常HPより先に支払う。\n回復で戻らず、最大HPは変化しない。戦闘終了時に消失する。",
+  "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.description": "[blue]{Amount}[/blue]のダメージ吸収。ブロックの後にダメージを受け持ち、HPを失うコストも通常HPより先に支払う。\n回復で戻らず、最大HPは変化しない。戦闘終了時、残りのダメージ吸収を消費し、同じ量のHPを回復する。",
   "OTHERWORLD_TREASURES_POWER_APPLE_RESISTANCE.title": "耐性",
   "OTHERWORLD_TREASURES_POWER_APPLE_RESISTANCE.description": "この戦闘中、受けるダメージが[blue]20%[/blue]減少する。HPを失うコストには影響しない。",
   "OTHERWORLD_TREASURES_POWER_APPLE_FIRE_RESISTANCE.title": "火炎耐性",

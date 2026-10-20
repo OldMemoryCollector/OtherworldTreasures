@@ -2660,7 +2660,7 @@
       "class": "TemporaryHealthPower",
       "kind": "powers",
       "title": "伤害吸收",
-      "description": "拥有[blue]1[/blue]点[gold]伤害吸收[/gold]。受到伤害时，在格挡之后优先扣除；失去生命时也优先扣除。\n普通治疗不会恢复伤害吸收，不改变最大生命值。战斗结束时清除。",
+      "description": "拥有[blue]1[/blue]点[gold]伤害吸收[/gold]。受到伤害时，在格挡之后优先扣除；失去生命时也优先扣除。\n普通治疗不会恢复伤害吸收，不改变最大生命值。战斗结束时，剩余伤害吸收转为等量生命恢复并清除。",
       "image": "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH_POWER.png"
     },
     {

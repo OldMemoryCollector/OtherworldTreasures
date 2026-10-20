@@ -31,7 +31,7 @@ export async function buildWiki({input,repoRoot,sharp}) {
  const sections={};for(const k of Object.keys(names))sections[k]=data.entries.filter(e=>e.kind===k);
  const notes={
   LifeCrystal:'战斗胜利后有2%的独立概率作为额外奖励出现。可重复获得。同类遗物会合并显示，第二颗起在图标上标记数量。可在微光湖消耗一颗并失去10点生命上限，换取活力水晶。',
-  LifeFruit:'战斗胜利后有2%的独立概率作为额外奖励出现。可重复获得并合并计数。每颗提供5点战斗开始时的伤害吸收。可在微光湖消耗一颗换取神盾果。',
+  LifeFruit:'战斗胜利后有2%的独立概率作为额外奖励出现。可重复获得并合并计数。每颗提供5点战斗开始时的伤害吸收，战斗结束时剩余层数转为等量生命恢复。可在微光湖消耗一颗换取神盾果。',
   VitalCrystal:'通过微光湖由生命水晶嬗变获得。每次拾取按当时的生命上限提高20%，向下取整，至少增加1点。',
   AegisFruit:'通过微光湖由生命果嬗变获得。同类遗物合并计数，每颗在战斗开始时提供4层金属化。',
   TerrariaCrossNecklace:'只改变同一次攻击后续段数的受伤数值。攻击命中仍正常结算，因此荆棘等命中反应仍会逐段触发。',
@@ -40,6 +40,8 @@ export async function buildWiki({input,repoRoot,sharp}) {
   HoneyThorns:'每只蜜蜂各自选择随机敌人，造成3点伤害并施加1层中毒。',
   CrossNecklace:'久别重逢中的隐藏候选，有较低概率进入本次三选一。',
   EnchantingTable:'战斗内为临时附魔；休息处可以永久附魔并升级。只从适配所选卡牌的附魔中抽取。',
+  GoldenApple:'战斗结束时，剩余伤害吸收会转为等量生命恢复，最多恢复到生命上限。',
+  EnchantedGoldenApple:'战斗结束时，剩余伤害吸收会转为等量生命恢复，最多恢复到生命上限。',
   AirCannonBashCard:'由空气炮生成，创建时自带击退Ⅱ附魔。',
   SCP294Potion:'由SCP-294调制，名称、效果、目标与外观由本次配方决定。没有统一固定配方；下面导出的默认效果只表示未附加配方时的占位实例。实际玩法见SCP-294页面。'
  };

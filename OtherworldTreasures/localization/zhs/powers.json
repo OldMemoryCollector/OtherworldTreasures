@@ -58,7 +58,7 @@
   "OTHERWORLD_TREASURES_POWER_SPIRIT_BOMB_POWER.title": "元气汇聚",
   "OTHERWORLD_TREASURES_POWER_SPIRIT_BOMB_POWER.description": "等待队友献出元气，或结束回合。所有供能机会结束后释放元气弹。",
   "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.title": "伤害吸收",
-  "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.description": "拥有[blue]{Amount}[/blue]点[gold]伤害吸收[/gold]。受到伤害时，在格挡之后优先扣除；失去生命时也优先扣除。\n普通治疗不会恢复伤害吸收，不改变最大生命值。战斗结束时清除。",
+  "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.description": "拥有[blue]{Amount}[/blue]点[gold]伤害吸收[/gold]。受到伤害时，在格挡之后优先扣除；失去生命时也优先扣除。\n普通治疗不会恢复伤害吸收，不改变最大生命值。战斗结束时，剩余伤害吸收转为等量生命恢复并清除。",
   "OTHERWORLD_TREASURES_POWER_APPLE_RESISTANCE.title": "抗性提升",
   "OTHERWORLD_TREASURES_POWER_APPLE_RESISTANCE.description": "本场战斗受到的伤害降低[blue]20%[/blue]。不减少失去生命的代价。",
   "OTHERWORLD_TREASURES_POWER_APPLE_FIRE_RESISTANCE.title": "抗火",

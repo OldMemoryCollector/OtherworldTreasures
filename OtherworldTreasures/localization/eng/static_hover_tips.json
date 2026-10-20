@@ -26,7 +26,7 @@
   "OTHERWORLD_TREASURES_ALIEN_DISPERSE.title": "Disperse",
   "OTHERWORLD_TREASURES_ALIEN_DISPERSE.description": "Gained at [blue]{DisperseThreshold}[/blue] [gold]Fear[/gold].\nThe enemy dies on its next action.\nRemoved with Fear at the end of the next player turn after Ghostfreak ends.",
   "OTHERWORLD_TREASURES_TEMPORARY_HEALTH.title": "Absorption",
-  "OTHERWORLD_TREASURES_TEMPORARY_HEALTH.description": "Extra HP that absorbs damage after Block and pays HP-loss costs before normal HP.\nAny remaining loss is paid with normal HP. Healing cannot restore it. Does not change Max HP. Removed at the end of combat.",
+  "OTHERWORLD_TREASURES_TEMPORARY_HEALTH.description": "Extra HP that absorbs damage after Block and pays HP-loss costs before normal HP.\nAny remaining loss is paid with normal HP. Healing cannot restore it. Does not change Max HP. At combat end, consume the remaining Absorption to heal that much HP.",
   "OTHERWORLD_TREASURES_APPLE_RESISTANCE.title": "Resistance",
   "OTHERWORLD_TREASURES_APPLE_RESISTANCE.description": "Take [blue]20%[/blue] less damage this combat. Does not reduce HP-loss costs.",
   "OTHERWORLD_TREASURES_APPLE_FIRE_RESISTANCE.title": "Fire Resistance",

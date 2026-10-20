@@ -26,7 +26,7 @@
   "OTHERWORLD_TREASURES_ALIEN_DISPERSE.title": "魄散",
   "OTHERWORLD_TREASURES_ALIEN_DISPERSE.description": "[gold]恐惧[/gold]达到[blue]{DisperseThreshold}[/blue]层时获得。\n该敌人在下次行动时立刻死亡。\n鬼影变身结束后的下一个玩家回合结束时，随[gold]恐惧[/gold]一同解除。",
   "OTHERWORLD_TREASURES_TEMPORARY_HEALTH.title": "伤害吸收",
-  "OTHERWORLD_TREASURES_TEMPORARY_HEALTH.description": "额外的生命值。在格挡之后优先承担伤害，也可支付失去生命的代价。\n耗尽后由正常生命承担剩余损失。普通治疗不会恢复伤害吸收，不改变最大生命值。战斗结束时清除。",
+  "OTHERWORLD_TREASURES_TEMPORARY_HEALTH.description": "额外的生命值。在格挡之后优先承担伤害，也可支付失去生命的代价。\n耗尽后由正常生命承担剩余损失。普通治疗不会恢复伤害吸收，不改变最大生命值。战斗结束时，剩余伤害吸收转为等量生命恢复并清除。",
   "OTHERWORLD_TREASURES_APPLE_RESISTANCE.title": "抗性提升",
   "OTHERWORLD_TREASURES_APPLE_RESISTANCE.description": "本场战斗受到的伤害降低[blue]20%[/blue]。不减少失去生命的代价。",
   "OTHERWORLD_TREASURES_APPLE_FIRE_RESISTANCE.title": "抗火",

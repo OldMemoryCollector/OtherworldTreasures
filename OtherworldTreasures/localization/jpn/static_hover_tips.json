@@ -26,7 +26,7 @@
   "OTHERWORLD_TREASURES_ALIEN_DISPERSE.title": "魄散",
   "OTHERWORLD_TREASURES_ALIEN_DISPERSE.description": "[gold]Fear[/gold]が[blue]{DisperseThreshold}[/blue]スタックに達すると発生する。\nその敵は次の行動時に即死する。\nRemoved with Fear at the end of the next player turn after Ghostfreak ends.",
   "OTHERWORLD_TREASURES_TEMPORARY_HEALTH.title": "ダメージ吸収",
-  "OTHERWORLD_TREASURES_TEMPORARY_HEALTH.description": "追加のHP。ブロックの後にダメージを受け持ち、HPを失うコストも通常HPより先に支払う。\n残りは通常HPで支払う。回復で戻らず、最大HPは変化しない。戦闘終了時に消失する。",
+  "OTHERWORLD_TREASURES_TEMPORARY_HEALTH.description": "追加のHP。ブロックの後にダメージを受け持ち、HPを失うコストも通常HPより先に支払う。\n残りは通常HPで支払う。回復で戻らず、最大HPは変化しない。戦闘終了時、残りのダメージ吸収を消費し、同じ量のHPを回復する。",
   "OTHERWORLD_TREASURES_APPLE_RESISTANCE.title": "耐性",
   "OTHERWORLD_TREASURES_APPLE_RESISTANCE.description": "この戦闘中、受けるダメージが[blue]20%[/blue]減少する。HPを失うコストには影響しない。",
   "OTHERWORLD_TREASURES_APPLE_FIRE_RESISTANCE.title": "火炎耐性",

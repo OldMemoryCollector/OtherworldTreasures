@@ -38,6 +38,17 @@ public sealed class TemporaryHealthPower : GoldenApplePower, IHealthBarForecastS
     public override PowerStackType StackType => PowerStackType.Counter;
     internal static int Available(Creature creature) => Math.Max(0, creature.GetPower<TemporaryHealthPower>()?.Amount ?? 0);
 
+    public override async Task AfterCombatEnd(CombatRoom room)
+    {
+        var creature = Owner;
+        if (creature.GetPower<TemporaryHealthPower>() != this) return;
+        int remaining = Math.Max(0, Amount);
+        // Consume the resource before healing so repeated cleanup cannot convert it twice.
+        await PowerCmd.Remove(this);
+        if (remaining > 0 && creature.IsPlayer && creature.IsAlive)
+            await CreatureCmd.Heal(creature, remaining);
+    }
+
     // Called only at committed HP loss, never while calculating a preview.
     // SetAmount raises the native power/UI notification. This resource payment
     // must not be multiplied or prevented by power-application modifiers.

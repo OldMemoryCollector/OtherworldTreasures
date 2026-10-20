@@ -58,7 +58,7 @@
   "OTHERWORLD_TREASURES_POWER_SPIRIT_BOMB_POWER.title": "Gathering Energy",
   "OTHERWORLD_TREASURES_POWER_SPIRIT_BOMB_POWER.description": "Waiting for teammates to donate energy or end their turn. Release the Spirit Bomb when all opportunities end.",
   "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.title": "Absorption",
-  "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.description": "[blue]{Amount}[/blue] extra HP. Absorbs damage after Block and pays HP-loss costs before normal HP.\nHealing cannot restore it. Does not change Max HP. Removed at the end of combat.",
+  "OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH.description": "[blue]{Amount}[/blue] Absorption. Absorbs damage after Block and pays HP-loss costs before normal HP.\nHealing cannot restore it. Does not change Max HP. At combat end, consume the remaining Absorption to heal that much HP.",
   "OTHERWORLD_TREASURES_POWER_APPLE_RESISTANCE.title": "Resistance",
   "OTHERWORLD_TREASURES_POWER_APPLE_RESISTANCE.description": "Take [blue]20%[/blue] less damage this combat. Does not reduce HP-loss costs.",
   "OTHERWORLD_TREASURES_POWER_APPLE_FIRE_RESISTANCE.title": "Fire Resistance",

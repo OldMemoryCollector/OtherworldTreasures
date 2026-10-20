@@ -22,6 +22,7 @@ export async function checkWiki(root){
  const sword=await fs.readFile(path.join(root,'Events-OTHERWORLD_TREASURES_EVENT_SWORD_IN_THE_LAKE.md'),'utf8');assert(sword.includes('0～2次')&&sword.includes('3次及以上')&&sword.includes('5次精英'),'sword evolution protection');
  assert(coffee.includes('每幕最多一次')&&coffee.includes('50%')&&coffee.includes('25%'),'coffee repeat limits');
  const scp914=await fs.readFile(path.join(root,'Events-OTHERWORLD_TREASURES_EVENT_SCP914.md'),'utf8');assert(scp914.includes('所有持有的遗物均可投入')&&!scp914.includes('可安全移除'),'SCP-914 accepts every owned relic');assert(!eventIndex.includes('可安全移除'),'event index does not add SCP-914 relic restrictions');
+ const absorption=await fs.readFile(path.join(root,'Powers-OTHERWORLD_TREASURES_POWER_TEMPORARY_HEALTH_POWER.md'),'utf8');assert(absorption.includes('剩余伤害吸收转为等量生命恢复'),'absorption heals remaining amount at combat end');
  assert.equal(errors.length,0,errors.join('\n'));return{pages:pages.length,entries:data.entries.length,images:imageNames.length,links,imageLinks,errors};
 }
 if(typeof process!=='undefined'&&process.argv[1]?.endsWith('check-wiki.mjs'))console.log(await checkWiki(path.resolve(process.argv[2]??'docs/wiki')));
