@@ -88,10 +88,10 @@ internal static partial class MartialArtsVfx
         if (!Available || Instant) return;
         var flash = new ColorRect
         {
-            Color = Colors.White, ZIndex = 400, MouseFilter = Control.MouseFilterEnum.Ignore,
+            Color = Colors.White, ZIndex = 0, MouseFilter = Control.MouseFilterEnum.Ignore,
             Modulate = new Color(1, 1, 1, 0),
         };
-        NCombatRoom.Instance!.AddChild(flash);
+        NCombatRoom.Instance!.CombatVfxContainer.AddChild(flash);
         Track(flash);
         flash.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         var tween = flash.CreateTween();
@@ -133,7 +133,7 @@ internal static partial class MartialArtsVfx
             if (bounds.Length == 0) return;
             var line = StraightBeamLine(node.VfxSpawnPosition, bounds);
             // 短蓄力：角色前方紫金色光点呼吸聚拢。
-            var charge = new ChargeGlow { ZIndex = 15 };
+            var charge = new ChargeGlow { ZIndex = 0 };
             container.AddChildSafely(charge);
             charge.GlobalPosition = line.Start;
             Track(charge);
@@ -141,13 +141,15 @@ internal static partial class MartialArtsVfx
             if (!Available || !GodotObject.IsInstanceValid(charge)) return;
             charge.EndCharge();
             var origin = charge.GlobalPosition;
-            var muzzle = new MuzzleFlash { ZIndex = 17 };
+            var muzzle = new MuzzleFlash { ZIndex = 0 };
             container.AddChildSafely(muzzle);
             muzzle.GlobalPosition = origin;
             Track(muzzle);
-            var beam = new PiercingBeam(line.End) { ZIndex = 15 };
+            var beam = new PiercingBeam(line.End) { ZIndex = 0 };
             container.AddChildSafely(beam);
             beam.GlobalPosition = origin;
+            // 同一特效容器内以树序叠放炮口与光束，不提升全局层级。
+            container.MoveChild(muzzle, container.GetChildCount() - 1);
             Track(beam);
             // One continuous piercing beam serves the existing all-enemy attack command.
             await Cmd.CustomScaledWait(.12f, .24f);
@@ -180,7 +182,7 @@ internal static partial class MartialArtsVfx
         if (Orbs.TryGetValue((caster.NetId, bombId), out var existing) && GodotObject.IsInstanceValid(existing) && !existing.IsQueuedForDeletion()) return;
         var node = CreatureNode(caster.Creature);
         if (node == null) return;
-        var orb = new SpiritBombOrb(caster.Creature) { Name = $"OtherworldSpiritBomb_{bombId}", ZIndex = 14 };
+        var orb = new SpiritBombOrb(caster.Creature) { Name = $"OtherworldSpiritBomb_{bombId}", ZIndex = 0 };
         node.AddChild(orb);
         orb.GlobalPosition = node.VfxSpawnPosition + new Vector2(0f, -170f);
         Orbs[(caster.NetId, bombId)] = orb;
@@ -200,7 +202,7 @@ internal static partial class MartialArtsVfx
         var container = NCombatRoom.Instance?.CombatVfxContainer;
         if (energy > 0 && fromNode != null && container != null && !Instant)
         {
-            var stream = new EnergyStream(orb) { ZIndex = 16 };
+            var stream = new EnergyStream(orb) { ZIndex = 0 };
             container.AddChildSafely(stream);
             stream.GlobalPosition = fromNode.VfxSpawnPosition;
             stream.StartAtCurrentPosition();

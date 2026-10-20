@@ -149,11 +149,9 @@ void fragment() {
             layer.SelfModulate = Colors.White;
             // 画在 %Icon 自己后面：这样在 %Outline 底板之上、图标本体之下
             layer.ShowBehindParent = true;
-            // 但绘制顺序用绝对 z 提到所有地图节点之上：地图节点是挨着排的，如果按树序绘制，
-            // 相邻节点的 %Outline 底板会把先画节点的光"切"掉一块，切口露底色 = 看着发黑。
-            // 提到上面之后就不会被任何节点遮挡，而 shader 已经把图标本体那块抠掉了，也不会糊住图标。
-            layer.ZAsRelative = false;
-            layer.ZIndex = 1;
+            // 跟随地图节点的绘制顺序，避免光芒越过弹窗与界面遮罩。
+            layer.ZAsRelative = true;
+            layer.ZIndex = 0;
             layer.Visible = false;
             layer.MouseFilter = Control.MouseFilterEnum.Ignore;
 

@@ -24,7 +24,7 @@ public partial class GhostIntentSeal : Node2D
         _sprite = _intentNode?.GetNodeOrNull<Sprite2D>("%Intent");
         for (Node? node = _intentNode; node != null; node = node.GetParent())
             if (node is NCreature creature) { _creature = creature; break; }
-        ZIndex = 10;
+        ZIndex = 0;
     }
 
     public static bool ShouldCrossOut(AlienTerrorPower? fear, IntentType type)

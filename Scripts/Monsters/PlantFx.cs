@@ -48,7 +48,7 @@ internal static class PlantFx
         {
             Texture = texture,
             Scale = Vector2.One * scale,
-            ZIndex = 10, // 盖在植物形象之上（但不要高过 UI）
+            ZIndex = 0, // 跟随植物的局部绘制顺序，保持在战斗UI下方
         };
         parent.AddChild(sprite);
         sprite.GlobalPosition = canvasPosition;

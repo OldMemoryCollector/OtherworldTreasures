@@ -723,7 +723,7 @@ internal static class CompassTargetMap
             Size = Vector2.One * size,
             Position = new Vector2((node.Size.X - size) * 0.5f, -size * 0.65f),
             MouseFilter = Control.MouseFilterEnum.Ignore,
-            ZIndex = 10,
+            ZIndex = 0,
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
         };

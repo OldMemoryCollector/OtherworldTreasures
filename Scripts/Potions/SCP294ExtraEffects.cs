@@ -175,7 +175,7 @@ public sealed partial class SCP294Potion
             (BrewEffect.FoulSplash, "eng") => $"Deal {n} damage to all players and enemies. Outside combat, throw at a merchant to gain {gold} Gold.",
             (BrewEffect.HealExtraTurn, "eng") => $"Heal {n}% of Max HP. In combat, also take an extra turn.",
             (BrewEffect.ExhaustHandDraw, "eng") => $"Exhaust your hand, then draw {n} cards.",
-            (BrewEffect.ChannelSameOrbs, "eng") => $"Channel {n} {orb} Orbs (all the same type).",
+            (BrewEffect.ChannelSameOrbs, "eng") => $"Channel {n} {orb} Orbs.",
             (BrewEffect.ChannelRandomOrbs, "eng") => $"Channel {n} random Orbs; each type is rolled separately.",
             (BrewEffect.FairyRevive, "jpn") => $"致死ダメージ時、この薬を消費し最大HPの{n}%を回復する。",
             (BrewEffect.FillPotionSlots, "jpn") => "空いているすべてのポーションスロットにランダムな薬を得る。",
@@ -183,7 +183,7 @@ public sealed partial class SCP294Potion
             (BrewEffect.FoulSplash, "jpn") => $"全プレイヤーと敵に{n}ダメージ。戦闘外では商人に投げて{gold}ゴールドを得る。",
             (BrewEffect.HealExtraTurn, "jpn") => $"最大HPの{n}%を回復する。戦闘中なら追加のターンを1回得る。",
             (BrewEffect.ExhaustHandDraw, "jpn") => $"手札をすべて廃棄し、カードを{n}枚引く。",
-            (BrewEffect.ChannelSameOrbs, "jpn") => $"{orb}オーブを{n}個生成する（すべて同じ種類）。",
+            (BrewEffect.ChannelSameOrbs, "jpn") => $"{orb}オーブを{n}個生成する。",
             (BrewEffect.ChannelRandomOrbs, "jpn") => $"ランダムなオーブを{n}個生成する。種類は1個ずつ抽選する。",
             (BrewEffect.FairyRevive, _) => $"受到致命伤害时，消耗此药水并回复最大生命值的{n}%。",
             (BrewEffect.FillPotionSlots, _) => "在所有空药水栏位中获得随机药水。",
@@ -191,7 +191,7 @@ public sealed partial class SCP294Potion
             (BrewEffect.FoulSplash, _) => $"对所有玩家和敌人造成{n}点伤害；战斗外可投掷给商人换取{gold}金币。",
             (BrewEffect.HealExtraTurn, _) => $"回复最大生命值的{n}%；在战斗中使用时额外进行1个回合。",
             (BrewEffect.ExhaustHandDraw, _) => $"消耗你的手牌，然后抽{n}张牌。",
-            (BrewEffect.ChannelSameOrbs, _) => $"生成{n}个{orb}充能球（全部为同一类型）。",
+            (BrewEffect.ChannelSameOrbs, _) => $"生成{n}个{orb}充能球。",
             (BrewEffect.ChannelRandomOrbs, _) => $"生成{n}个随机充能球，每个球的类型单独随机。",
             _ => null
         };

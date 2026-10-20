@@ -35,7 +35,7 @@ internal static class Scp294Settings
         RitsuLibFramework.RegisterModSettings(Entry.ModId, page =>
         {
             page.WithTitle(Text("随机药水", "Random potions", "ランダムポーション"))
-                .WithModDisplayName(Text("旧忆收藏家的遗物", "Otherworld Treasures", "旧憶収集家の遺物"))
+                .WithModDisplayName(Text("异次元乱入", "Otherworld Treasures", "異次元乱入"))
                 .WithDescription(Text("药效设置影响新药水；数值配色可随时切换。", "Effect settings apply to new brews. Number colors can be changed at any time.", "効果設定は新しい薬に適用。数値の配色はいつでも変更できます。"))
                 .AddSection("modes", section =>
                 {

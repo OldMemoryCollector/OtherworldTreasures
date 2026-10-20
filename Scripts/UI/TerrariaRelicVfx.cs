@@ -59,7 +59,7 @@ internal partial class TerrariaBeeFlight(Vector2 from, Vector2 to, float duratio
     public override void _Ready()
     {
         TextureFilter = TextureFilterEnum.Nearest;
-        ZIndex = 4;
+        ZIndex = 0;
         GlobalPosition = from;
         BuildRoute();
     }
