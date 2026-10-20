@@ -785,4 +785,3 @@ internal static class ActiveRelicTreasureChargePatch
         return gold;
     }
 }
-
