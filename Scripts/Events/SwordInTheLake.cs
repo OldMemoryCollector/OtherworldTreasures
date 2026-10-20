@@ -16,12 +16,16 @@ public sealed class SwordInTheLake : OtherworldEvent
         InitialPortraitPath: "res://OtherworldTreasures/images/events/sword_in_the_lake.png");
     protected override bool AncientExempt => true;
     public override bool IsAllowed(IRunState runState) => base.IsAllowed(runState) &&
-        runState.Players.Any(p => p.Relics.Any(r => r is SwordOfStone or SwordOfJade));
+        runState.Players.Any(p => p.Relics.Any(CanAwaken));
+
+    // Preserve deliberate stone-sword evolution attempts after the third elite win.
+    internal static bool CanAwaken(RelicModel relic) => relic is SwordOfJade ||
+        relic is SwordOfStone { ElitesDefeated: <= 2 };
 
     protected override IReadOnlyList<EventOption> GenerateInitialOptions()
     {
         var result = new List<EventOption>();
-        foreach (var sword in Owner.Relics.Where(r => r is SwordOfStone or SwordOfJade).ToList())
+        foreach (var sword in Owner.Relics.Where(CanAwaken).ToList())
         {
             RelicModel reward = sword is SwordOfJade ? ModelDb.Relic<TrueExcalibur>().ToMutable() : ModelDb.Relic<Excalibur>().ToMutable();
             reward.Owner = Owner;

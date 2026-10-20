@@ -4,6 +4,19 @@
 
 <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_SCP294.webp" width="800" alt="SCP-294：咖啡机">
 
+## 出现条件
+
+| 项目 | 规则 |
+| --- | --- |
+| 出现层数 | 第一、第二、第三幕均可 |
+| 出现位置 | 普通问号事件，无固定的小楼层或房间序号。 |
+| 前置条件 | 本幕尚未遇见本事件，随机药水设置中的「常态模式」关闭，且通过本幕的入池判定；不要求先持有50金币，遇过「旧忆收藏家」后仍可出现。 |
+| 重复限制 | 每幕最多一次，跨幕可以再次遇见。未遇过时正常入池；已遇过1次时保留50%的入池机会，已遇过2次时保留25%。这是候选资格概率，不代表每个问号房间有对应概率触发。 |
+
+**选项可用条件：**付费调制需要50金币；「常态模式」开启时禁用咖啡机事件，改为将局内新获得的药水转换成随机调合药水。
+
+层数按第一、第二、第三幕计算；满足条件表示可以进入候选，不保证本幕一定遇见。
+
 一台咖啡机静静地立在这里。投币口旁的标签写着：饮料只需**50金币**。
 
 ## 使用方式
@@ -40,6 +53,8 @@
 | --- | --- |
 | 领取饮料 | 领取已经做好的饮料。 |
 | 离开 | 离开咖啡机。 |
+
+**条件来源：**[SCP_294.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Events/SCP_294.cs) · [SCP294Settings.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Potions/SCP294Settings.cs) · [Scp294EncounterRules.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Events/Scp294EncounterRules.cs)
 
 ## 调制选择说明
 

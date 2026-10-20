@@ -4,6 +4,19 @@
 
 <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_GOLDEN_AXE.webp" width="800" alt="樵夫之泉">
 
+## 出现条件
+
+| 项目 | 规则 |
+| --- | --- |
+| 出现层数 | 第二、第三幕 |
+| 出现位置 | 普通问号事件，无固定的小楼层或房间序号。 |
+| 前置条件 | 本局尚未遇见本事件，且队伍至少一名玩家拥有可金银强化的遗物，或拥有一张可移除的基础／普通攻击牌、技能牌或能力牌；遇过「旧忆收藏家」后仍可出现。 |
+| 重复限制 | 本局至多遇见一次。 |
+
+**选项可用条件：**金银强化要求遗物尚未镀金或镀银、未熔化、未蜡化、未耗尽且支持对应强化；投入对象由本次事件随机决定。
+
+层数按第一、第二、第三幕计算；满足条件表示可以进入候选，不保证本幕一定遇见。
+
 你没有回答，转身离去。<br>
 <br>
 女神愣了一下，随后消失在湖水中。
@@ -28,6 +41,8 @@
 | 诚实 | 「破旧的那件才是我的。」获得银色遗物。 |
 | 说谎 | 「银色的那件是我的！」取回原遗物，获得【愧疚】。 |
 | 离开 | 放弃原遗物。 |
+
+**条件来源：**[OtherworldEvent.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Events/OtherworldEvent.cs) · [GoldenAxe.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Events/GoldenAxe.cs) · [GoldenRelics.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Events/GoldenRelics.cs) · [SilverRelics.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Events/SilverRelics.cs)
 
 ---
 

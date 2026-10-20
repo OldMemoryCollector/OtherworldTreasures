@@ -4,6 +4,19 @@
 
 <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_TERRARIA_REUNION.webp" width="800" alt="久别重逢">
 
+## 出现条件
+
+| 项目 | 规则 |
+| --- | --- |
+| 出现层数 | 仅第二幕 |
+| 出现位置 | 普通问号事件，无固定的小楼层或房间序号。 |
+| 前置条件 | 本局尚未遇见本事件及「旧忆收藏家」，并且队伍至少一名玩家仍有尚未持有的候选饰品。 |
+| 重复限制 | 本局至多遇见一次。 |
+
+**选项可用条件：**实际奖励按当前玩家未持有的饰品抽取，候选不足3件时只展示剩余候选。单人也能遇见；圣骑士护盾仅在多人局进入候选，十字章护身符为低概率隐藏候选。
+
+层数按第一、第二、第三幕计算；满足条件表示可以进入候选，不保证本幕一定遇见。
+
 你遇见了一位熟悉的身影。<br>
 <br>
 「嘿！终于又见到你了，我的朋友！」<br>
@@ -31,6 +44,8 @@
 | 圣骑士护盾 | 取回**圣骑士护盾**。 |
 | 十字项链 | 取回**十字项链**。 |
 | 甜蜜倒刺 | 取回**甜蜜倒刺**。 |
+
+**条件来源：**[OtherworldEvent.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Events/OtherworldEvent.cs) · [TerrariaReunion.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Events/TerrariaReunion.cs)
 
 ---
 

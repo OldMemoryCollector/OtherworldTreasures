@@ -41,7 +41,19 @@ public sealed partial class Scp294 : OtherworldEvent
 
     protected override bool AncientExempt => true;
 
-    public override bool IsAllowed(IRunState runState) => !Scp294Settings.EverywhereMode && !Visited(runState, Id);
+    public override bool IsAllowed(IRunState runState) => !Scp294Settings.EverywhereMode &&
+        Scp294EncounterRules.IsAllowed(runState, Id);
+
+    protected override Task BeforeEventStarted(bool isPreFinished)
+    {
+        // Preserve the original first-visit stream, including unfinished saves from earlier versions.
+        if (Scp294EncounterRules.PriorVisits(Owner.RunState, Id) == 0)
+            return base.BeforeEventStarted(isPreFinished);
+        // Later visits vary by act and rebuild deterministically after a load.
+        Rng.LoadFromSerializable(new MegaCrit.Sts2.Core.Random.Rng(Owner, Id,
+            (ulong)Owner.RunState.CurrentActIndex * 294UL).ToSerializable());
+        return base.BeforeEventStarted(isPreFinished);
+    }
 
     protected override IReadOnlyList<EventOption> GenerateInitialOptions() =>
     [

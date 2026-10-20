@@ -1,11 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {formatResourceIcons} from './format-text.mjs';
 
 export async function buildWiki({input,repoRoot,sharp}) {
  const out=path.join(repoRoot,'docs/wiki');await fs.mkdir(path.join(out,'images'),{recursive:true});
  const data=JSON.parse(await fs.readFile(path.join(input,'catalog.json'),'utf8'));
  if(data.errors.length)throw Error('Resolve exporter errors before publishing: '+data.errors.join('; '));
+ const eventRules=JSON.parse(await fs.readFile(path.join(repoRoot,'tools/wiki/event-requirements.json'),'utf8'));
  const localeDir=path.join(repoRoot,'OtherworldTreasures/localization/zhs');
  const locales={};for(const table of ['relics','cards','events','powers','potions','enchantments'])locales[table]=JSON.parse(await fs.readFile(path.join(localeDir,table+'.json'),'utf8'));
  for(const e of data.entries){if(e.class==='SCP294Potion')e.description='由本次调制配方决定，可包含多个正面或负面效果；可主动使用、作用于敌人，或带有致命伤害时触发的保命效果。';if(e.class==='EnchantingTable')e.description=e.description.replace(/^当前经验等级：[\s\S]*?。/,'');if(e.class==='FourSoulsPower')e.description='标记该敌人携带的四魂之玉碎片种类：荒魂、和魂、幸魂或奇魂。具体种类随敌人变化。';}
@@ -14,7 +16,7 @@ export async function buildWiki({input,repoRoot,sharp}) {
  const labels={Common:'普通',Uncommon:'罕见',Rare:'稀有',Starter:'初始',Shop:'商店',Event:'事件',Ancient:'先古',Token:'衍生',Basic:'基础',None:'无',Attack:'攻击',Skill:'技能',Power:'能力',Status:'状态',Curse:'诅咒',Self:'自身',AnyEnemy:'单个敌人',AllEnemies:'所有敌人',AnyAlly:'一名队友',AllAllies:'所有队友',AnyPlayer:'任意玩家'};
  const substitutions={Item:'本次物品',Relic:'所选遗物',Card:'所选卡牌',Skill:'本次传授的招式',Potion:'调制结果',Option:'本次选项',Details:'实际效果预览',Gold:'实际金币数',Cost:'所需金币',Amount:'X',Description:'效果',Title:'物品名',Status:'',Remaining:'剩余次数',Turn:'对应回合',Cards:'对应牌数',TurnBonus:'回合增益',Energy:'能量',Block:'格挡值'};
  function plain(text=''){
-  return String(text).replace(/\[img\][\s\S]*?\[\/img\]/g,s=>/star/i.test(s)?'星星':'能量').replace(/\[gold\]([\s\S]*?)\[\/gold\]/g,'**$1**').replace(/\[(?:\/?[a-zA-Z][^\]]*)\]/g,'').replace(/res:\/\/[^\s]+/g,'能量').replace(/\{([^}:]+)(?::[^}]*)?\}/g,(_,k)=>substitutions[k]??'对应数值').replace(/\r\n/g,'\n').trim();
+  return formatResourceIcons(String(text).replace(/\[gold\]([\s\S]*?)\[\/gold\]/g,'**$1**').replace(/\[(?!\/?img\b)(?:\/?[a-zA-Z][^\]]*)\]/g,'')).replace(/res:\/\/[^\s]+/g,'资源图标').replace(/\{([^}:]+)(?::[^}]*)?\}/g,(_,k)=>substitutions[k]??'对应数值').replace(/\r\n/g,'\n').trim();
  }
  const paragraph=t=>plain(t).replace(/\n/g,'<br>\n');
  const cell=t=>plain(t).replace(/\|/g,'&#124;').replace(/\n/g,'<br>');
@@ -50,6 +52,11 @@ export async function buildWiki({input,repoRoot,sharp}) {
   const props=[];if(e.rarity)props.push('**稀有度：**'+(labels[e.rarity]??e.rarity));if(e.type)props.push('**类型：**'+(labels[e.type]??e.type));if(e.cost!=null)props.push('**基础费用：**'+(e.cost==='-1'?'X':e.cost));if(e.target)props.push('**目标：**'+(labels[e.target]??e.target));if(props.length)text+=props.join('　')+'\n\n';
   if(e.baseDescription)text+='## 强化前\n\n'+paragraph(e.baseDescription)+'\n\n## 强化后\n\n';
   if(e.kind==='events'){
+   const rules=eventRules[e.class];if(!rules)throw Error('Missing event requirements: '+e.class);
+   text+='## 出现条件\n\n| 项目 | 规则 |\n| --- | --- |\n| 出现层数 | '+cell(rules.acts)+' |\n| 出现位置 | '+cell(rules.location)+' |\n| 前置条件 | '+cell(rules.requirements)+' |\n| 重复限制 | '+cell(rules.repeat)+' |\n\n';
+   text+='**选项可用条件：**'+paragraph(rules.options)+'\n\n';
+   text+='层数按第一、第二、第三幕计算；满足条件表示可以进入候选，不保证本幕一定遇见。\n\n';
+
    const initial=locales.events[e.id+'.pages.INITIAL.description']??locales.events[e.id+'.pages.PREVIEW.description'];if(initial)text+=paragraph(initial)+'\n\n';
    if(e.class==='Scp294'){
     text+='## 使用方式\n\n- **随机调制 · 50金币**：依次选择口味、感觉和浓度，最终选项直接预览可能获得的产物。\n- **自由输入 · 50金币**：根据输入的内容进行识别，调制一杯饮品。确认后付费，取消输入不扣金币。\n- **离开**：继续前行。\n\n输入框每5秒轮换一条饮品建议；玩家输入时不会改动已写的文字。可以输入普通饮料，也可以输入药水图鉴中的名字。\n\n指定图鉴药水时，保留原药水效果，再加入1～2项可好可坏的额外效果。指定复活效果时，额外加入两条负面效果。未识别药效的饮品仍会调制，倾向对自己不利或强化敌人的效果，也可能混入正面收益。\n\n偶尔会发生掉血、获得诅咒或赠送一次免费重做的事故。药水栏已满时会保留已经调好的同一杯，腾出位置后可领取。\n\n[16杯调制实例](Brew-Examples.md) · [饮品建议池](Drink-Suggestions.md)\n\n';
@@ -71,11 +78,17 @@ export async function buildWiki({input,repoRoot,sharp}) {
    if(e.flavor)text+='## 轶闻\n\n> '+plain(e.flavor).replace(/\n/g,'\n> ')+'\n\n';
   }
   const src=source(e)??(e.kind==='golden_relics'?'Scripts/Events/GoldenRelics.cs':e.kind==='silver_relics'?'Scripts/Events/SilverRelics.cs':undefined);
+  if(e.kind==='events')text+='**条件来源：**'+eventRules[e.class].sources.map(p=>'['+path.basename(p)+'](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/'+p+')').join(' · ')+'\n\n';
   text+='---\n\n';if(src)text+='[实现来源](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/'+src+') · ';text+='[返回'+names[e.kind]+']('+roots[e.kind]+'.md)\n';
   await fs.writeFile(path.join(out,page(e)+'.md'),text,'utf8');written++;
  }
  for(const[k,list]of Object.entries(sections)){
   let text='# '+names[k]+'\n\n[返回首页](Home.md)\n\n共 **'+list.length+'** 项。点击名称查看完整效果与说明。\n\n';
+  if(k==='events'){
+   text+='层数按幕计算，普通问号事件没有固定的小楼层；满足前置表示进入候选，不保证出现。各条目另列选项可用条件。\n\n| 事件 | 出现层数 | 前置条件 | 重复限制 |\n| --- | --- | --- | --- |\n';
+   for(const e of list){const rules=eventRules[e.class];if(!rules)throw Error('Missing event requirements: '+e.class);text+='| ['+plain(e.title)+']('+page(e)+'.md) | '+cell(rules.acts)+' | '+cell(rules.requirements)+' | '+cell(rules.repeat)+' |\n';}
+   await fs.writeFile(path.join(out,roots[k]+'.md'),text,'utf8');continue;
+  }
   if(k==='cards')text+='含修行招式、植物召唤、惊奇卡牌以及其他衍生牌。\n\n';
   if(k==='golden_relics'||k==='silver_relics')text+='以下列出当前版本可以强化的原版遗物，并提供强化前后效果对照。\n\n';
   text+='| 图片 | 名称 | '+(k==='cards'?'费用 / 类型':'类别')+' | 效果 |\n| --- | --- | --- | --- |\n';

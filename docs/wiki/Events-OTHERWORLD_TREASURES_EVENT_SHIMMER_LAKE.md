@@ -4,6 +4,19 @@
 
 <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_SHIMMER_LAKE.webp" width="800" alt="微光湖">
 
+## 出现条件
+
+| 项目 | 规则 |
+| --- | --- |
+| 出现层数 | 第二、第三幕；第二幕未遇见时第三幕仍可出现 |
+| 出现位置 | 普通问号事件，无固定的小楼层或房间序号。 |
+| 前置条件 | 本局尚未遇见本事件；无需先持有生命水晶或生命果，遇过「旧忆收藏家」后仍可出现。 |
+| 重复限制 | 本局至多遇见一次，第二幕遇过后第三幕不再出现。 |
+
+**选项可用条件：**生命水晶或生命果会分别提供一次5%的额外事件替换判定，已选中的微光湖和先古之民不会被替换。嬗变水晶需要至少一颗生命水晶且生命上限大于10；嬗变生命果需要至少一颗生命果。转变需要可同品质变化的卡牌；拆解需要具有升级或附魔的供体，以及能够完整接收其升级与附魔的适配目标。
+
+层数按第一、第二、第三幕计算；满足条件表示可以进入候选，不保证本幕一定遇见。
+
 幽暗的洞穴里，一片微光如湖水般荡漾。投入湖中的事物，似乎都将以另一种形态归来。
 
 ## 出现与玩法
@@ -28,6 +41,8 @@
 | 投入生命水晶 | 失去1颗**生命水晶**和10点生命上限，获得**活力水晶**。 |
 | 投入生命果 | 失去1颗**生命果**，获得**神盾果**。 |
 | 返回 | 重新考虑湖边的选择。 |
+
+**条件来源：**[ShimmerLake.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Events/ShimmerLake.cs) · [ShimmerCardActions.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Events/ShimmerCardActions.cs) · [ShimmerRelics.cs](https://github.com/OldMemoryCollector/OtherworldTreasures/blob/main/Scripts/Relics/ShimmerRelics.cs)
 
 ---
 

@@ -4,13 +4,15 @@
 
 共 **8** 项。点击名称查看完整效果与说明。
 
-| 图片 | 名称 | 类别 | 效果 |
+层数按幕计算，普通问号事件没有固定的小楼层；满足前置表示进入候选，不保证出现。各条目另列选项可用条件。
+
+| 事件 | 出现层数 | 前置条件 | 重复限制 |
 | --- | --- | --- | --- |
-| <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_DRAGON_BALL_TRAINING.webp" width="48" alt="异世界的武道修行"> | [异世界的武道修行](Events-OTHERWORLD_TREASURES_EVENT_DRAGON_BALL_TRAINING.md) | 事件 | 你来到一片陌生的修行场。三位散发着强大气息的身影注意到了你。<br><br>其中一人开口说道：<br><br>「虽然不知道你为什么来到这里，但看你好像需要帮助。我们可以教授你我们的【绝学】。」 |
-| <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_GOLDEN_AXE.webp" width="48" alt="樵夫之泉"> | [樵夫之泉](Events-OTHERWORLD_TREASURES_EVENT_GOLDEN_AXE.md) | 事件 | 你没有回答，转身离去。<br><br>女神愣了一下，随后消失在湖水中。 |
-|  | [旧忆收藏家](Events-OTHERWORLD_TREASURES_EVENT_MEMORY_KEEPER.md) | 事件 | 点击查看 |
-| <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_SCP294.webp" width="48" alt="SCP-294：咖啡机"> | [SCP-294：咖啡机](Events-OTHERWORLD_TREASURES_EVENT_SCP294.md) | 事件 | 一台咖啡机静静地立在这里。投币口旁的标签写着：饮料只需**50金币**。 |
-| <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_SCP914.webp" width="48" alt="SCP-914：万能精炼机"> | [SCP-914：万能精炼机](Events-OTHERWORLD_TREASURES_EVENT_SCP914.md) | 事件 | SCP-914静静伫立在眼前：数吨重的发条装置，八百万个铜与锡的零件在机壳深处嗡嗡转动。标注着「输入」与「输出」的两个大隔间由一根铜管连到机身，中间的旋钮上，箭头正对着「1:1」。 |
-| <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_SHIMMER_LAKE.webp" width="48" alt="微光湖"> | [微光湖](Events-OTHERWORLD_TREASURES_EVENT_SHIMMER_LAKE.md) | 事件 | 幽暗的洞穴里，一片微光如湖水般荡漾。投入湖中的事物，似乎都将以另一种形态归来。 |
-| <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_SWORD_IN_THE_LAKE.webp" width="48" alt="湖中剑"> | [湖中剑](Events-OTHERWORLD_TREASURES_EVENT_SWORD_IN_THE_LAKE.md) | 事件 | 你来到一片宁静的湖泊。腰间的剑忽然发出微弱的光芒。<br><br>湖面泛起涟漪，一位神秘的女子缓缓浮现。<br><br>「你手中的剑，似乎还隐藏着真正的力量。你愿意唤醒它吗？」 |
-| <img src="https://raw.githubusercontent.com/OldMemoryCollector/OtherworldTreasures/main/docs/wiki/images/OTHERWORLD_TREASURES_EVENT_TERRARIA_REUNION.webp" width="48" alt="久别重逢"> | [久别重逢](Events-OTHERWORLD_TREASURES_EVENT_TERRARIA_REUNION.md) | 事件 | 你遇见了一位熟悉的身影。<br><br>「嘿！终于又见到你了，我的朋友！」<br><br>**向导**高兴地走了过来。<br><br>「没想到你去了另一个世界！我这里还留着你以前的几件饰品，虽然只能带走一件，但应该能帮上你的忙。」 |
+| [异世界的武道修行](Events-OTHERWORLD_TREASURES_EVENT_DRAGON_BALL_TRAINING.md) | 仅第二幕 | 本局尚未遇见本事件，且本局尚未遇见先古之民「旧忆收藏家」；无需特定遗物或卡牌。 | 本局至多遇见一次。 |
+| [樵夫之泉](Events-OTHERWORLD_TREASURES_EVENT_GOLDEN_AXE.md) | 第二、第三幕 | 本局尚未遇见本事件，且队伍至少一名玩家拥有可金银强化的遗物，或拥有一张可移除的基础／普通攻击牌、技能牌或能力牌；遇过「旧忆收藏家」后仍可出现。 | 本局至多遇见一次。 |
+| [旧忆收藏家](Events-OTHERWORLD_TREASURES_EVENT_MEMORY_KEEPER.md) | 第二幕（Hive）的先古之民节点 | 没有额外的遗物、牌组或金币要求。 | 由本幕先古之民抽选决定，并非每局必定出现。 |
+| [SCP-294：咖啡机](Events-OTHERWORLD_TREASURES_EVENT_SCP294.md) | 第一、第二、第三幕均可 | 本幕尚未遇见本事件，随机药水设置中的「常态模式」关闭，且通过本幕的入池判定；不要求先持有50金币，遇过「旧忆收藏家」后仍可出现。 | 每幕最多一次，跨幕可以再次遇见。未遇过时正常入池；已遇过1次时保留50%的入池机会，已遇过2次时保留25%。这是候选资格概率，不代表每个问号房间有对应概率触发。 |
+| [SCP-914：万能精炼机](Events-OTHERWORLD_TREASURES_EVENT_SCP914.md) | 仅第二幕 | 本局尚未遇见本事件，且队伍至少一名玩家拥有可加工卡牌或可安全移除的遗物；遇过「旧忆收藏家」后仍可出现。 | 本局至多遇见一次。 |
+| [微光湖](Events-OTHERWORLD_TREASURES_EVENT_SHIMMER_LAKE.md) | 第二、第三幕；第二幕未遇见时第三幕仍可出现 | 本局尚未遇见本事件；无需先持有生命水晶或生命果，遇过「旧忆收藏家」后仍可出现。 | 本局至多遇见一次，第二幕遇过后第三幕不再出现。 |
+| [湖中剑](Events-OTHERWORLD_TREASURES_EVENT_SWORD_IN_THE_LAKE.md) | 仅第二幕 | 本局尚未遇见本事件，且队伍至少一名玩家持有玉之剑，或精英胜利进度为0～2次的石之剑。进度达到3次及以上、尚未进化的石之剑不满足条件，避免提前截断原版进化路线。遇过「旧忆收藏家」后仍可出现。 | 本局至多遇见一次。 |
+| [久别重逢](Events-OTHERWORLD_TREASURES_EVENT_TERRARIA_REUNION.md) | 仅第二幕 | 本局尚未遇见本事件及「旧忆收藏家」，并且队伍至少一名玩家仍有尚未持有的候选饰品。 | 本局至多遇见一次。 |

@@ -36,7 +36,8 @@ public sealed class GoldenAxe : OtherworldEvent
     private static IEnumerable<CardModel> Cards(Player player) => player.Deck.Cards.Where(c =>
         c.IsRemovable && c.Rarity is CardRarity.Basic or CardRarity.Common &&
         c.Type is CardType.Attack or CardType.Skill or CardType.Power);
-    public override bool IsAllowed(IRunState run) => base.IsAllowed(run) &&
+    protected override bool AncientExempt => true;
+    public override bool IsAllowed(IRunState run) => run.CurrentActIndex is 1 or 2 && !Visited(run, Id) &&
         run.Players.Any(p => Cards(p).Any() || EligibleRelics(p.Relics).Count > 0);
 
     protected override IReadOnlyList<EventOption> GenerateInitialOptions()
