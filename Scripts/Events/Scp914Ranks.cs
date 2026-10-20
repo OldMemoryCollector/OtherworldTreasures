@@ -51,7 +51,8 @@ internal static class Scp914Ranks
         // 商店遗物可以投入也可以产出，与稀有同档
         RelicRarity.Rare or RelicRarity.Shop => 2,
         RelicRarity.Ancient => MaxRank,
-        _ => Destroyed
+        // Preserve input eligibility for third-party or legacy rarity values.
+        _ => 0
     };
 
     /// <summary>

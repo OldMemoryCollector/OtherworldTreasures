@@ -64,7 +64,7 @@ public sealed class Scp914 : OtherworldEvent
         player.Deck.Cards.Any(IsProcessableCard);
 
     private static bool HasRelics(MegaCrit.Sts2.Core.Entities.Players.Player player) =>
-        player.Relics.Any(IsSafelyRemovableRelic);
+        player.Relics.Any();
 
     // 2026-10-18：带【永恒】的诅咒原本不可移除，允许投入精炼机并据此移出牌组。
     private static bool IsEternalCurse(CardModel card) =>
@@ -73,15 +73,6 @@ public sealed class Scp914 : OtherworldEvent
     private static bool IsProcessableCard(CardModel card) =>
         (card.IsRemovable || IsEternalCurse(card)) &&
         Scp914Ranks.RankOf(card.Rarity) != Scp914Ranks.Destroyed;
-
-    // IsTradable excludes all Ancient relics. SCP-914 explicitly accepts them,
-    // while retaining the safety exclusions that prevent loss of one-shot effects,
-    // pets, waxed or exhausted relics.
-    // 2026-10-17：稀有度不再是过滤条件——先古、商店、事件、起始遗物都能投入，
-    // 旧实现把 Shop/Event/Starter/None 排除在外，玩家反馈"部分遗物无法选中"。
-    private static bool IsSafelyRemovableRelic(RelicModel relic) =>
-        !relic.IsUsedUp && !relic.HasUponPickupEffect && !relic.IsMelted && !relic.IsWax &&
-        !relic.SpawnsPets && Scp914Ranks.RankOf(relic.Rarity) != Scp914Ranks.Destroyed;
 
     private async Task SelectCard()
     {
@@ -120,7 +111,7 @@ public sealed class Scp914 : OtherworldEvent
     {
         if (_finished) return;
         Scp914Pickup.Disarm();
-        if (!IsSafelyRemovableRelic(relic) || !Owner.Relics.Contains(relic))
+        if (!Owner.Relics.Contains(relic))
         {
             SetEventState(PageDescription("INPUT_UNAVAILABLE"), new[]
             {
@@ -162,7 +153,7 @@ public sealed class Scp914 : OtherworldEvent
     {
         if (_finished) return;
         if (_selectedCard != null && (!Owner.Deck.Cards.Contains(_selectedCard) || !IsProcessableCard(_selectedCard)) ||
-            _selectedRelic != null && (!Owner.Relics.Contains(_selectedRelic) || !IsSafelyRemovableRelic(_selectedRelic)))
+            _selectedRelic != null && !Owner.Relics.Contains(_selectedRelic))
         {
             SetEventState(PageDescription("INPUT_UNAVAILABLE"), new[]
             {
