@@ -1,4 +1,6 @@
 {
     "OPTION_ASHEN_FLASK_KINDLE.name": "注火",
-    "OPTION_ASHEN_FLASK_KINDLE.description": "提升[blue]1[/blue]点使用上限，并补充所有次数。"
+    "OPTION_ASHEN_FLASK_KINDLE.description": "提升[blue]1[/blue]点使用上限，并补充所有次数。",
+    "OPTION_ENCHANTING_TABLE.name": "附魔",
+    "OPTION_ENCHANTING_TABLE.description": "消耗[blue]5[/blue]级经验，为一张牌随机附魔并升级。不会占用休息处的其他选择。"
 }

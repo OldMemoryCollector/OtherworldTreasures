@@ -41,9 +41,11 @@ public class Entry
     // 自定义牌堆：小破表变身的暂存堆（Headless 永不显示，只用来放变身前暂存的原始牌堆）
     public static PileType OmnitrixStashPile;
 
-    // 自定义奖励：生命水晶（战后奖励小概率出现，领取后生命上限 +10）
+    // 战后生命水晶与生命果奖励：领取对应的可计数遗物。
     public static RewardType LifeCrystalRewardType;
+    public static RewardType LifeFruitRewardType;
     public static RewardType EnchantedAppleRewardType;
+    public static RewardType IsaacBatteryRewardType;
 
     public static void Init()
     {
@@ -51,10 +53,20 @@ public class Entry
         RitsuLibFramework.EnsureGodotScriptsRegistered(assembly, Logger);
         ModTypeDiscoveryHub.RegisterModAssembly(ModId, assembly);
         Events.TrainingProgress.Initialize();
+        Events.MustDieRunData.Initialize();
+        ShimmerDropData.Initialize();
+        Potions.Scp294Settings.Initialize();
+        Potions.SCP294Potion.InitializeVisuals();
         AppleChestDrops.Initialize();
         System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Events.GoldenRelics).TypeHandle);
         System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Events.SilverRelics).TypeHandle);
         ModRightClickRegistry.Register(ScouterDisplayRightClick.Instance);
+        // SCP-914 投料期间吞掉遗物右键：防止模组遗物的右键效果在事件里被误触发
+        ModRightClickRegistry.Register(Events.Scp914PickupRightClick.Instance);
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<MegaCrit.Sts2.Core.Nodes.Events.NEventOptionButton, Scp294BrewPreviewIcon>(
+            "scp294_brew_preview", static _ => new Scp294BrewPreviewIcon());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NCreature, TerrariaSporeGarden>(
+            "terraria_spores", static _ => new TerrariaSporeGarden());
         ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NCreature, ScouterReadout>(
             "scouter_readout", static _ => new ScouterReadout());
         ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NHealthBar, TemporaryHealthReadout>(
@@ -63,6 +75,10 @@ public class Entry
             "golden_relic_border", static _ => new GoldenRelicBorder());
         ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<MegaCrit.Sts2.Core.Nodes.Relics.NRelic, TrueExcaliburGlow>(
             "true_excalibur_glow", static _ => new TrueExcaliburGlow());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<MegaCrit.Sts2.Core.Nodes.Relics.NRelic, EnchantingTableSpin>(
+            "enchanting_table_spin", static _ => new EnchantingTableSpin());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<MegaCrit.Sts2.Core.Nodes.Relics.NRelic, ActiveChargeMeter>(
+            "active_charge_meter", static _ => new ActiveChargeMeter());
         ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NIntent, GhostIntentSeal>(
             "ghostfreak_intent_seal", static _ => new GhostIntentSeal(), new NodeAttachmentOptions
             {
@@ -77,9 +93,17 @@ public class Entry
                 (save, player, json) => new LifeCrystalReward(player))
             .RewardType;
 
+        LifeFruitRewardType = ModRewardRegistry.For(ModId)
+            .RegisterOwned("life_fruit", (save, player, json) => new LifeFruitReward(player))
+            .RewardType;
+
         EnchantedAppleRewardType = ModRewardRegistry.For(ModId)
             .RegisterOwned("enchanted_apple_chest", (save, player, json) =>
                 new EnchantedAppleChestReward(player, System.Text.Json.JsonSerializer.Deserialize<string>(json!)!))
+            .RewardType;
+
+        IsaacBatteryRewardType = ModRewardRegistry.For(ModId)
+            .RegisterOwned("isaac_battery", (save, player, json) => new IsaacBatteryReward(player))
             .RewardType;
 
         // Harmony patches

@@ -1,4 +1,5 @@
 using Godot;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Relics;
 using OtherworldTreasures.Scripts.Events;
 
@@ -19,7 +20,8 @@ public partial class GoldenRelicBorder : Node
     public override void _Ready()
     {
         SetProcess(true);
-        RefreshCoating();
+        // NRelic attachments become ready before NRelicInventoryHolder assigns Model.
+        // The first refresh runs on the next process tick, after the holder is initialized.
     }
 
     public override void _Process(double delta)
@@ -33,8 +35,11 @@ public partial class GoldenRelicBorder : Node
     private void RefreshCoating()
     {
         if (GetParent() is not NRelic node) return;
-        bool golden = GoldenRelics.IsGolden(node.Model);
-        bool silver = SilverRelics.IsSilver(node.Model);
+        RelicModel model;
+        try { model = node.Model; }
+        catch (InvalidOperationException) { return; }
+        bool golden = GoldenRelics.IsGolden(model);
+        bool silver = SilverRelics.IsSilver(model);
         if ((!golden && !silver) || node.Icon?.Texture == null)
         {
             if (GodotObject.IsInstanceValid(_coating)) _coating!.Visible = false;

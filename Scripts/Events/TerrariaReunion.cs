@@ -11,33 +11,56 @@ namespace OtherworldTreasures.Scripts.Events;
 [RegisterSharedEvent]
 public sealed class TerrariaReunion : OtherworldEvent
 {
+    internal const float HiddenCharmChance = .10f;
+    private List<(RelicModel Relic, string Key)>? _offers;
     public override EventAssetProfile AssetProfile => new(
         InitialPortraitPath: "res://OtherworldTreasures/images/events/terraria_reunion.png");
-
-    private static readonly Type[] Gifts = [typeof(MythicCharm), typeof(SporeSac), typeof(CrossNecklace)];
-    public override bool IsAllowed(IRunState runState) => base.IsAllowed(runState) &&
-        runState.Players.Any(p => Gifts.Any(t => p.Relics.All(r => r.GetType() != t)));
-
-    protected override IReadOnlyList<EventOption> GenerateInitialOptions()
+    private static List<(RelicModel Relic, string Key)> Pool(IRunState run)
     {
-        var gifts = new (RelicModel Relic, string Key)[]
+        var pool = new List<(RelicModel, string)>
         {
             (ModelDb.Relic<MythicCharm>(), "CHARM_OF_MYTHS"),
             (ModelDb.Relic<SporeSac>(), "SPORE_SAC"),
+            (ModelDb.Relic<TerrariaCrossNecklace>(), "CROSS_NECKLACE"),
+            (ModelDb.Relic<HoneyThorns>(), "HONEY_THORNS"),
             (ModelDb.Relic<CrossNecklace>(), "ANKH_CHARM")
         };
-        // A shared multiplayer event can include a player who already has all
-        // three. Only that unavailable-reward case needs a safe way to leave.
-        if (gifts.All(g => Owner.Relics.Any(r => r.Id == g.Relic.Id))) return [Leave()];
-        var result = new List<EventOption>();
-        foreach (var (canonical, key) in gifts)
+        if (run.Players.Count > 1) pool.Add((ModelDb.Relic<PaladinShield>(), "PALADIN_SHIELD"));
+        return pool;
+    }
+    public override bool IsAllowed(IRunState run) => base.IsAllowed(run) &&
+        run.Players.Any(player => Pool(run).Any(gift => player.Relics.All(owned => owned.Id != gift.Relic.Id)));
+    protected override void DeepCloneFields() { base.DeepCloneFields(); _offers = null; }
+    private List<(RelicModel Relic, string Key)> RollOffers()
+    {
+        var pool = Pool(Owner.RunState).Where(gift => Owner.Relics.All(owned => owned.Id != gift.Relic.Id)).ToList();
+        var hidden = pool.FirstOrDefault(gift => gift.Relic is CrossNecklace);
+        pool.RemoveAll(gift => gift.Relic is CrossNecklace);
+        var offers = new List<(RelicModel Relic, string Key)>();
+        if (hidden.Relic != null && Rng.NextFloat() < HiddenCharmChance) offers.Add(hidden);
+        while (offers.Count < 3 && pool.Count > 0)
         {
-            var relic = canonical.ToMutable();
-            relic.Owner = Owner;
-            result.Add(new EventOption(this, Owner.Relics.Any(r => r.Id == relic.Id) ? null :
-                () => Resolve(async () => { if (Owner.Relics.All(r => r.Id != relic.Id)) await RelicCmd.Obtain(relic, Owner); }, "CHOSEN"),
-                InitialOptionKey(key), relic.HoverTips));
+            int index = Rng.NextInt(pool.Count);
+            offers.Add(pool[index]); pool.RemoveAt(index);
         }
-        return result;
+        for (int i = offers.Count - 1; i > 0; i--)
+        {
+            int index = Rng.NextInt(i + 1);
+            (offers[i], offers[index]) = (offers[index], offers[i]);
+        }
+        return offers;
+    }
+    protected override IReadOnlyList<EventOption> GenerateInitialOptions()
+    {
+        _offers ??= RollOffers();
+        if (_offers.Count == 0) return [Leave()];
+        return _offers.Select(gift =>
+        {
+            var relic = gift.Relic.ToMutable(); relic.Owner = Owner;
+            return new EventOption(this, () => Resolve(async () =>
+            {
+                if (Owner.Relics.All(owned => owned.Id != relic.Id)) await RelicCmd.Obtain(relic, Owner);
+            }, "CHOSEN"), InitialOptionKey(gift.Key), relic.HoverTips);
+        }).ToArray();
     }
 }

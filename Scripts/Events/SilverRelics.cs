@@ -22,14 +22,16 @@ public static class SilverRelics
 
     public static bool IsSilver(RelicModel relic) => relic.IsMutable && Turns.TryGetValue(relic, out var value) && value.Length > 0;
     public static bool CanEnhance(RelicModel relic) => GoldenRelics.IsEligibleUncoated(relic) &&
-        (Variables(relic).Count > 0 || SilverNativeTurns.OriginalTurn(relic) > 1);
+        (Variables(relic).Count > 0 || SilverNativeTurns.OriginalTurn(relic) > 1 || SilverNativeCardTriggers.OriginalRequirement(relic) > 1);
 
     private static IReadOnlyCollection<string> Variables(RelicModel relic)
     {
         IReadOnlyCollection<string> keys = relic is ISilverRelicAdapter adapter ? adapter.SilverTurnVariables : relic switch
         {
-            HappyFlower or FakeHappyFlower or Pendulum or PollinousCore => ["Turns"],
+            HappyFlower or FakeHappyFlower or Pendulum or PollinousCore or PaelsLegion => ["Turns"],
             StoneCalendar => ["DamageTurn"],
+            BrilliantScarf or IronClub or Nunchaku or TuningFork => ["Cards"],
+            JossPaper => ["ExhaustAmount"],
             _ => [],
         };
         return keys.Count > 0 && keys.All(k => relic.DynamicVars.TryGetValue(k, out var v) && v.BaseValue > 1 && decimal.Truncate(v.BaseValue) == v.BaseValue)
@@ -41,6 +43,7 @@ public static class SilverRelics
         if (!CanEnhance(relic)) return false;
         var originals = Variables(relic).ToDictionary(k => k, k => relic.DynamicVars[k].BaseValue);
         if (SilverNativeTurns.OriginalTurn(relic) > 1) originals["$nativeTurn"] = SilverNativeTurns.OriginalTurn(relic);
+        if (SilverNativeCardTriggers.OriginalRequirement(relic) > 1) originals["$nativeCards"] = SilverNativeCardTriggers.OriginalRequirement(relic);
         Turns[relic] = JsonSerializer.Serialize(originals);
         Apply(relic, relic.DynamicVars);
         // Native modulo counters must not skip the next activation when a saved

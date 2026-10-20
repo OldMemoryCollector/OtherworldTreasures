@@ -115,15 +115,7 @@ internal static class TemporaryHealthLossAdapter
     {
         int loss = (int)Math.Clamp(amount, 0m, 999999999m);
         int spent = creature.IsAlive ? TemporaryHealthPower.Spend(creature, loss) : 0;
-        var result = creature.LoseHpInternal(loss - spent, props);
-        if (spent == 0) return result;
-        // Temporary HP is real health: hits and life-loss triggers see the full
-        // paid amount, while lethality/overkill use only the remaining loss.
-        return new DamageResult(creature, props)
-        {
-            UnblockedDamage = result.UnblockedDamage + spent,
-            WasTargetKilled = result.WasTargetKilled,
-            OverkillDamage = result.OverkillDamage
-        };
+        // Split only the damage left after temporary-health absorption.
+        return OtherworldTreasures.Scripts.Relics.PaladinShieldProtection.ApplySharedHpLoss(creature, loss - spent, props, spent);
     }
 }

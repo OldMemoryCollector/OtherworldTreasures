@@ -1,4 +1,5 @@
 using Godot;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Relics;
 using OtherworldTreasures.Scripts.Relics;
 
@@ -14,7 +15,8 @@ public partial class TrueExcaliburGlow : Node
     public override void _Ready()
     {
         SetProcess(true);
-        RefreshGlow();
+        // NRelic attachments become ready before NRelicInventoryHolder assigns Model.
+        // The first refresh runs on the next process tick, after the holder is initialized.
     }
 
     public override void _Process(double delta)
@@ -28,7 +30,10 @@ public partial class TrueExcaliburGlow : Node
     private void RefreshGlow()
     {
         if (GetParent() is not NRelic node) return;
-        if (node.Model is not TrueExcalibur || node.Icon?.Texture == null)
+        RelicModel model;
+        try { model = node.Model; }
+        catch (InvalidOperationException) { return; }
+        if (model is not TrueExcalibur || node.Icon?.Texture == null)
         {
             if (GodotObject.IsInstanceValid(_glow)) _glow!.Visible = false;
             return;

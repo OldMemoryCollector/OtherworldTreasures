@@ -68,21 +68,27 @@ internal static class NativeGoldenBenefits
         UndyingSigil => ["DamageDecrease"],
         BowlerHat => ["GoldIncrease"],
         TheCourier or MembershipCard => ["Discount"],
+        // These use untyped dynamic values but both quantities are positive
+        // reward counts: potion slots and the potions granted on pickup.
+        AlchemicalCoffer or PotionBelt => ["PotionSlots"],
+        PhialHolster => ["PotionSlots", "Potions"],
+        BoundPhylactery => ["Summon"],
 
         _ => null,
     };
 
     internal static decimal Transform(RelicModel relic, string key, decimal original) => (relic, key) switch
     {
-        (TheCourier, "Discount") => Math.Min(100m, original * 2m),
+        (TheCourier, "Discount") => Math.Max(original, Math.Min(80m, original * 1.5m)),
         // MembershipCard stores the percentage of the price still paid.
-        (MembershipCard, "Discount") => Math.Max(0m, original * 2m - 100m),
-        // GoldIncrease is a multiplier with a baseline of 1. Double only the
-        // bonus above baseline: 1.25x becomes 1.5x.
-        (BowlerHat, "GoldIncrease") => 1m + (original - 1m) * 2m,
-        // DamageDecrease is the remaining damage multiplier, so double the
-        // reduction rather than the multiplier itself: 0.5x becomes 0x.
-        (UndyingSigil, "DamageDecrease") => Math.Max(0m, original * 2m - 1m),
+        // Strengthen the discount by half its original magnitude, capped at 80%.
+        (MembershipCard, "Discount") => 100m - Math.Max(100m - original, Math.Min(80m, (100m - original) * 1.5m)),
+        // GoldIncrease is a multiplier with a baseline of 1. Add half the
+        // original bonus above baseline: 1.25x becomes 1.375x.
+        (BowlerHat, "GoldIncrease") => 1m + Math.Max(original - 1m, Math.Min(0.8m, (original - 1m) * 1.5m)),
+        // DamageDecrease stores the remaining damage multiplier. Strengthen
+        // the reduction by half, with damage reduction allowed up to 100%.
+        (UndyingSigil, "DamageDecrease") => Math.Min(original, 1m - Math.Min(1m, (1m - original) * 1.5m)),
         _ => original * 2m,
     };
 }

@@ -1,0 +1,20 @@
+{
+  "OTHERWORLD_TREASURES_ENCHANTMENT_KNOCKBACK_I.title": "Knockback Ⅰ",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_KNOCKBACK_I.description": "When this Attack deals damage, deal half that damage as [gold]knockback damage[/gold] to the next enemy behind the target. If there is no enemy behind it, the target takes the damage.\n[gold]Knockback damage[/gold] ignores all modifiers.\nIf an enemy takes more than half its Max HP as knockback damage during one card resolution, [gold]Stun[/gold] it.\nGiant enemies cannot be pushed or trigger collisions.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_KNOCKBACK_II.title": "Knockback Ⅱ",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_KNOCKBACK_II.description": "When this Attack deals damage, deal half that damage as [gold]knockback damage[/gold] to the next enemy behind the target. If there is no enemy behind it, the target takes the damage. The struck enemy then collides with the next enemy behind it, dealing half as much [gold]knockback damage[/gold]. If there is no enemy behind it, it takes that damage itself.\n[gold]Knockback damage[/gold] ignores all modifiers.\nIf an enemy takes more than half its Max HP as knockback damage during one card resolution, [gold]Stun[/gold] it.\nGiant enemies cannot be pushed or trigger collisions.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_HUMANOID_SLAYER.title": "Humanoid Slayer", "OTHERWORLD_TREASURES_ENCHANTMENT_HUMANOID_SLAYER.description": "Deal [blue]50%[/blue] more damage to humanoid enemies.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_MECHANICAL_SLAYER.title": "Mechanical Slayer", "OTHERWORLD_TREASURES_ENCHANTMENT_MECHANICAL_SLAYER.description": "Deal [blue]50%[/blue] more damage to mechanical enemies.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_INSECT_SLAYER.title": "Insect Slayer", "OTHERWORLD_TREASURES_ENCHANTMENT_INSECT_SLAYER.description": "Deal [blue]50%[/blue] more damage to insect enemies.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_BEAST_SLAYER.title": "Beast Slayer", "OTHERWORLD_TREASURES_ENCHANTMENT_BEAST_SLAYER.description": "Deal [blue]50%[/blue] more damage to beast enemies.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_SEA_MONSTER_SLAYER.title": "Sea Monster Slayer", "OTHERWORLD_TREASURES_ENCHANTMENT_SEA_MONSTER_SLAYER.description": "Deal [blue]50%[/blue] more damage to sea monsters.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_PLANT_SLAYER.title": "Plant Slayer", "OTHERWORLD_TREASURES_ENCHANTMENT_PLANT_SLAYER.description": "Deal [blue]50%[/blue] more damage to plant enemies.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_SLIME_SLAYER.title": "Slime Slayer", "OTHERWORLD_TREASURES_ENCHANTMENT_SLIME_SLAYER.description": "Deal [blue]50%[/blue] more damage to slime enemies.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_OTHER_SLAYER.title": "Other Slayer", "OTHERWORLD_TREASURES_ENCHANTMENT_OTHER_SLAYER.description": "Deal [blue]50%[/blue] more damage to other enemies.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_FIRE_ASPECT.title": "Fire Aspect", "OTHERWORLD_TREASURES_ENCHANTMENT_FIRE_ASPECT.description": "When this Attack deals damage, apply [blue]2[/blue] [gold]Burn[/gold] to each enemy hit.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_SWEEPING_EDGE.title": "Sweeping Edge", "OTHERWORLD_TREASURES_ENCHANTMENT_SWEEPING_EDGE.description": "After playing, deal [blue]40%[/blue] of this card's total damage to each other enemy.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_LOOTING.title": "Looting", "OTHERWORLD_TREASURES_ENCHANTMENT_LOOTING.description": "When this card kills an enemy, gain [blue]12[/blue] Gold.",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_EFFICIENCY.title": "Efficiency", "OTHERWORLD_TREASURES_ENCHANTMENT_EFFICIENCY.description": "Costs [blue]1[/blue] less, to a minimum of [blue]0[/blue].",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_PROTECTION.title": "Protection", "OTHERWORLD_TREASURES_ENCHANTMENT_PROTECTION.description": "Gain [blue]6[/blue] additional [gold]Block[/gold].",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.title": "Thorns", "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.description": "When played, gain [blue]5[/blue] [gold]Thorns[/gold] this turn."
+}

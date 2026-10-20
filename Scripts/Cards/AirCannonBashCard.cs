@@ -6,12 +6,13 @@ using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.CardPools;
 using MegaCrit.Sts2.Core.ValueProps;
+using OtherworldTreasures.Scripts.Enchantments;
 using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace OtherworldTreasures.Scripts.Cards;
 
-// 碰（衍生卡，哆啦A梦空气炮发射）：1 费攻击牌，对一名敌人造成 20 点伤害，抽 1 张牌。
+// 碰（衍生卡，哆啦A梦空气炮发射）：1 费攻击牌，造成 10 点伤害并附带击退Ⅱ，抽 1 张牌。
 [RegisterCard(typeof(TokenCardPool))]
 public class AirCannonBashCard : ModCardTemplate, IDerivedCard
 {
@@ -33,7 +34,14 @@ public class AirCannonBashCard : ModCardTemplate, IDerivedCard
         new DamageVar(DamageAmount, ValueProp.Move)
     };
 
-    private const decimal DamageAmount = 20m;
+    private const decimal DamageAmount = 10m;
+
+    public override void AfterCreated()
+    {
+        base.AfterCreated();
+        if (Enchantment == null)
+            CardCmd.Enchant<KnockbackII>(this, 2m);
+    }
 
     protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {

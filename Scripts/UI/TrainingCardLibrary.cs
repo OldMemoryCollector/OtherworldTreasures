@@ -17,9 +17,10 @@ internal static class TrainingCardLibrary
     {
         var misc = ____poolFilters[____miscPoolFilter];
         var ancients = ____poolFilters[____ancientsFilter];
-        ____poolFilters[____miscPoolFilter] = card => IsTraining(card) || misc(card);
-        ____poolFilters[____ancientsFilter] = card => !IsTraining(card) && ancients(card);
+        ____poolFilters[____miscPoolFilter] = card => IsDisplayedAsDerived(card) || misc(card);
+        ____poolFilters[____ancientsFilter] = card => !IsDisplayedAsDerived(card) && ancients(card);
     }
 
-    private static bool IsTraining(CardModel card) => card is MartialTrainingCard or DonateEnergy;
+    private static bool IsDisplayedAsDerived(CardModel card) =>
+        card is MartialTrainingCard or DonateEnergy or MustDieCardBase;
 }

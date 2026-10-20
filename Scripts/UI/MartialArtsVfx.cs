@@ -161,9 +161,9 @@ internal static partial class MartialArtsVfx
         if (!Available || Instant) return;
         var node = CreatureNode(owner);
         if (node == null || node.GetNodeOrNull("OtherworldKaiokenAura") != null) return;
-        var aura = new KaiokenAura(owner) { Name = "OtherworldKaiokenAura", ZIndex = 12 };
+        var aura = new KaiokenAura(owner) { Name = "OtherworldKaiokenAura", ZIndex = 0 };
         node.AddChild(aura);
-        aura.GlobalPosition = node.VfxSpawnPosition;
+        node.MoveChild(aura, node.Visuals.GetIndex());
         Track(aura);
     }
 
@@ -342,9 +342,19 @@ internal static partial class MartialArtsVfx
         public KaiokenAura(Creature owner) => _owner = owner;
         public override void _Ready()
         {
-            _sprite = new Sprite2D { Texture = Texture("kaioken_aura"), TextureFilter = TextureFilterEnum.Linear,
+            var texture = Texture("kaioken_aura");
+            var used = texture.GetImage().GetUsedRect();
+            _sprite = new Sprite2D { Texture = texture, Centered = false,
+                Offset = new Vector2(-used.GetCenter().X, -used.End.Y), TextureFilter = TextureFilterEnum.Linear,
                 Material = new ShaderMaterial { Shader = GD.Load<Shader>("res://OtherworldTreasures/shaders/kaioken_aura_flow.gdshader") } };
             AddChild(_sprite);
+            AlignToActorFeet();
+        }
+        private void AlignToActorFeet()
+        {
+            if (GetParent() is not NCreature actor) return;
+            var bounds = actor.Visuals.Bounds.GetGlobalRect();
+            Position = actor.GetGlobalTransform().AffineInverse() * new Vector2(bounds.GetCenter().X, bounds.End.Y);
         }
         public override void _Process(double delta)
         {
@@ -363,7 +373,9 @@ internal static partial class MartialArtsVfx
             float surge = 1f + .12f * Mathf.Exp(-_activation * 7f);
             _sprite.Scale = new Vector2(height * (2f / 3f) / _sprite.Texture.GetWidth() * pulse * surge,
                 height / _sprite.Texture.GetHeight() * (1f + .025f * Mathf.Sin((float)_t * 2.6f)) * surge);
-            _sprite.Position = new Vector2(0, -height * .045f);
+            // The opaque texture bottom stays planted at the actor feet as the aura pulses.
+            _sprite.Position = Vector2.Zero;
+            AlignToActorFeet();
             bool doom = _owner.GetPower<KaiokenDoomPower>() != null;
             _sprite.Modulate = doom ? new Color(.78f, .38f, .48f, .82f) : new Color(1, 1, 1, .78f + tier * .07f);
         }

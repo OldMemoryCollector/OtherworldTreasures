@@ -22,7 +22,11 @@ internal static class RunLifecycle
 {
     internal static void Initialize()
     {
-        RunManager.Instance.RunStarted += _ => ResetCombatScopedState();
+        RunManager.Instance.RunStarted += run =>
+        {
+            ResetCombatScopedState();
+            foreach (var player in run.Players) EnchantingTable.RepairInvalidEnchantments(player);
+        };
     }
 
     // 把所有"本场战斗"级别的静态状态清回默认值

@@ -5,6 +5,7 @@ using System.Text.Json;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
@@ -30,7 +31,7 @@ public static class GoldenRelics
     public static bool IsGolden(RelicModel relic) => relic.IsMutable && Benefits.TryGetValue(relic, out var value) && value.Length > 0;
 
     internal static bool IsEligibleUncoated(RelicModel relic) => relic.IsMutable && !IsGolden(relic) && !SilverRelics.IsSilver(relic) && !relic.IsMelted &&
-        !relic.IsWax && relic.Rarity is not (RelicRarity.Ancient or RelicRarity.None) &&
+        !relic.IsWax && relic.Rarity != RelicRarity.None &&
         !relic.IsUsedUp;
 
     public static bool CanEnhance(RelicModel relic) => IsEligibleUncoated(relic) &&
@@ -43,7 +44,7 @@ public static class GoldenRelics
         return keys.All(k => relic.DynamicVars.TryGetValue(k, out var v) && v.BaseValue > 0) ? keys : Array.Empty<string>();
     }
 
-    private enum Benefit { Block, Strength, Dexterity, Gold, Energy, Heal, Draw, MaxHp }
+    private enum Benefit { Block, Strength, Dexterity, Gold, Energy, Heal, Draw, MaxHp, Stars, OrbSlots, Summon, Power }
 
     // Inspect each value separately. A relic can have both a yield and a trigger
     // counter; only values whose every read goes directly into a positive command
@@ -67,20 +68,25 @@ public static class GoldenRelics
 
     private static bool IsDirectBenefit(DynamicVar value, List<List<CodeInstruction>> bodies)
     {
-        (string Key, string Accessor, Benefit Kind)? shape = value switch
+        Type? genericPower = BeneficialPowerType(value);
+        (string Key, string? Accessor, Benefit Kind, Type? PowerType)? shape = value switch
         {
-            BlockVar => ("Block", "get_Block", Benefit.Block),
-            PowerVar<StrengthPower> => (nameof(StrengthPower), "get_Strength", Benefit.Strength),
-            PowerVar<DexterityPower> => (nameof(DexterityPower), "get_Dexterity", Benefit.Dexterity),
-            GoldVar => ("Gold", "get_Gold", Benefit.Gold),
-            EnergyVar => ("Energy", "get_Energy", Benefit.Energy),
-            HealVar => ("Heal", "get_Heal", Benefit.Heal),
-            CardsVar => ("Cards", "get_Cards", Benefit.Draw),
-            MaxHpVar => ("MaxHp", "get_MaxHp", Benefit.MaxHp),
+            BlockVar => ("Block", "get_Block", Benefit.Block, null),
+            PowerVar<StrengthPower> => (nameof(StrengthPower), "get_Strength", Benefit.Strength, typeof(StrengthPower)),
+            PowerVar<DexterityPower> => (nameof(DexterityPower), "get_Dexterity", Benefit.Dexterity, typeof(DexterityPower)),
+            GoldVar => ("Gold", "get_Gold", Benefit.Gold, null),
+            EnergyVar => ("Energy", "get_Energy", Benefit.Energy, null),
+            HealVar => ("Heal", "get_Heal", Benefit.Heal, null),
+            CardsVar => ("Cards", "get_Cards", Benefit.Draw, null),
+            MaxHpVar => ("MaxHp", "get_MaxHp", Benefit.MaxHp, null),
+            StarsVar => ("Stars", "get_Stars", Benefit.Stars, null),
+            RepeatVar => ("Repeat", "get_Repeat", Benefit.OrbSlots, null),
+            SummonVar => (value.Name, value.Name == "Summon" ? "get_Summon" : null, Benefit.Summon, null),
+            _ when genericPower != null => (value.Name, null, Benefit.Power, genericPower),
             _ => null,
         };
         if (shape == null || value.Name != shape.Value.Key) return false;
-        var (_, accessor, kind) = shape.Value;
+        var (_, accessor, kind, powerType) = shape.Value;
         int reads = 0;
         foreach (var il in bodies)
         {
@@ -89,7 +95,7 @@ public static class GoldenRelics
                 if (il[i].operand is not MethodInfo getter || getter.Name != "get_DynamicVars") continue;
                 int end = i + 1;
                 if (end >= il.Count) return false;
-                bool readsValue = il[end].operand is MethodInfo next && next.Name == accessor;
+                bool readsValue = accessor != null && il[end].operand is MethodInfo next && next.Name == accessor;
                 if (il[end].opcode == OpCodes.Ldstr)
                 {
                     if ((string)il[end].operand != value.Name) continue;
@@ -102,12 +108,17 @@ public static class GoldenRelics
                 reads++;
                 var tail = il.Skip(end + 1).Take(24).ToList();
                 int consumerIndex = tail.FindIndex(x => x.operand is MethodInfo m && m.DeclaringType?.Namespace == typeof(CreatureCmd).Namespace);
-                if (consumerIndex < 0 || tail[consumerIndex].operand is not MethodInfo consumer || !MatchesConsumer(consumer, kind)) return false;
+                if (consumerIndex < 0 || tail[consumerIndex].operand is not MethodInfo consumer || !MatchesConsumer(consumer, kind, powerType)) return false;
                 var between = tail.Take(consumerIndex).ToArray();
                 if (between.Any(x => !IsArgumentLoad(x))) return false;
-                bool playerTarget = kind is Benefit.Gold or Benefit.Energy or Benefit.Draw;
+                bool playerTarget = kind is Benefit.Gold or Benefit.Energy or Benefit.Draw or Benefit.Stars or Benefit.OrbSlots or Benefit.Summon;
                 var getters = (playerTarget ? between : il.Take(i)).Select(x => x.operand).OfType<MethodInfo>().ToArray();
-                if (playerTarget)
+                if (kind is Benefit.OrbSlots or Benefit.Summon)
+                {
+                    var targetGetters = il.Take(i).Select(x => x.operand).OfType<MethodInfo>().ToArray();
+                    if (targetGetters.LastOrDefault()?.Name != "get_Owner" || targetGetters[^1].DeclaringType != typeof(RelicModel)) return false;
+                }
+                else if (playerTarget)
                 {
                     if (getters.LastOrDefault()?.Name != "get_Owner" || getters[^1].DeclaringType != typeof(RelicModel)) return false;
                 }
@@ -115,6 +126,18 @@ public static class GoldenRelics
             }
         }
         return reads > 0;
+    }
+
+    private static Type? BeneficialPowerType(DynamicVar value)
+    {
+        for (Type? type = value.GetType(); type != null; type = type.BaseType)
+        {
+            if (!type.IsGenericType || type.GetGenericTypeDefinition() != typeof(PowerVar<>)) continue;
+            Type powerType = type.GetGenericArguments()[0];
+            if (!ModelDb.Contains(powerType)) return null;
+            return ModelDb.GetByIdOrNull<PowerModel>(ModelDb.GetId(powerType))?.Type == PowerType.Buff ? powerType : null;
+        }
+        return null;
     }
 
     private static bool IsArgumentLoad(CodeInstruction instruction)
@@ -127,7 +150,7 @@ public static class GoldenRelics
             instruction.opcode == OpCodes.Ldfld || instruction.opcode == OpCodes.Ldnull || instruction.opcode == OpCodes.Nop;
     }
 
-    private static bool MatchesConsumer(MethodInfo method, Benefit kind) => kind switch
+    private static bool MatchesConsumer(MethodInfo method, Benefit kind, Type? powerType) => kind switch
     {
         Benefit.Gold => method.DeclaringType == typeof(PlayerCmd) && method.Name == nameof(PlayerCmd.GainGold),
         Benefit.Energy => method.DeclaringType == typeof(PlayerCmd) && method.Name == nameof(PlayerCmd.GainEnergy),
@@ -135,6 +158,11 @@ public static class GoldenRelics
         Benefit.Block => method.DeclaringType == typeof(CreatureCmd) && method.Name == nameof(CreatureCmd.GainBlock),
         Benefit.Heal => method.DeclaringType == typeof(CreatureCmd) && method.Name == nameof(CreatureCmd.Heal),
         Benefit.MaxHp => method.DeclaringType == typeof(CreatureCmd) && method.Name == nameof(CreatureCmd.GainMaxHp),
+        Benefit.Stars => method.DeclaringType == typeof(PlayerCmd) && method.Name == nameof(PlayerCmd.GainStars),
+        Benefit.OrbSlots => method.DeclaringType == typeof(OrbCmd) && method.Name == nameof(OrbCmd.AddSlots),
+        Benefit.Summon => method.DeclaringType == typeof(OstyCmd) && method.Name == nameof(OstyCmd.Summon),
+        Benefit.Power => method.DeclaringType == typeof(PowerCmd) && method.Name == nameof(PowerCmd.Apply) &&
+            method.IsGenericMethod && method.GetGenericArguments()[0] == powerType,
         _ => method.DeclaringType == typeof(PowerCmd) && method.Name == nameof(PowerCmd.Apply) && method.IsGenericMethod &&
             method.GetGenericArguments()[0] == (kind == Benefit.Strength ? typeof(StrengthPower) : typeof(DexterityPower)),
     };

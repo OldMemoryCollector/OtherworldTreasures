@@ -18,7 +18,7 @@ public abstract class OtherworldEvent : ModEventTemplate
     public override EventAssetProfile AssetProfile => new(
         InitialPortraitPath: "res://OtherworldTreasures/images/placeholders/beta.png");
     protected override PackedScene? TryCreateLayoutPackedScene() =>
-        this is GoldenAxe or SwordInTheLake or DragonBallTraining or TerrariaReunion
+        this is GoldenAxe or SwordInTheLake or DragonBallTraining or TerrariaReunion or Scp914 or Scp294 or ShimmerLake
             ? FullArtEventLayout.Scene : base.TryCreateLayoutPackedScene();
     private bool _resolved;
     protected virtual bool AncientExempt => false;

@@ -1,4 +1,6 @@
 {
     "OPTION_ASHEN_FLASK_KINDLE.name": "Kindle",
-    "OPTION_ASHEN_FLASK_KINDLE.description": "Raise its maximum uses by 1 and refill all uses."
+    "OPTION_ASHEN_FLASK_KINDLE.description": "Raise its maximum uses by 1 and refill all uses.",
+    "OPTION_ENCHANTING_TABLE.name": "Enchant",
+    "OPTION_ENCHANTING_TABLE.description": "Spend [blue]5[/blue] experience levels to randomly enchant and upgrade a card. This does not use your rest site's other choice."
 }

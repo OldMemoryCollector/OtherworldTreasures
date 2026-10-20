@@ -1,0 +1,20 @@
+{
+  "OTHERWORLD_TREASURES_ENCHANTMENT_KNOCKBACK_I.title": "ノックバックⅠ",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_KNOCKBACK_I.description": "この攻撃でダメージを与えた時、対象の後ろにいる次の敵に、その半分の[gold]ノックバックダメージ[/gold]を与える。後ろに敵がいない場合、対象がダメージを受ける。\n[gold]ノックバックダメージ[/gold]はあらゆる補正を受けない。\n1回のカード解決中に最大HPの半分を超えるノックバックダメージを受けた敵を[gold]スタン[/gold]させる。\n巨体の敵は押し飛ばされず、連鎖衝突も起こさない。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_KNOCKBACK_II.title": "ノックバックⅡ",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_KNOCKBACK_II.description": "この攻撃でダメージを与えた時、対象の後ろにいる次の敵に、その半分の[gold]ノックバックダメージ[/gold]を与える。後ろに敵がいない場合、対象がダメージを受ける。命中した敵はさらに後ろの敵に衝突し、その半分の[gold]ノックバックダメージ[/gold]を与える。後ろに敵がいない場合、自身がダメージを受ける。\n[gold]ノックバックダメージ[/gold]はあらゆる補正を受けない。\n1回のカード解決中に最大HPの半分を超えるノックバックダメージを受けた敵を[gold]スタン[/gold]させる。\n巨体の敵は押し飛ばされず、連鎖衝突も起こさない。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_HUMANOID_SLAYER.title": "人型スレイヤー", "OTHERWORLD_TREASURES_ENCHANTMENT_HUMANOID_SLAYER.description": "人型の敵に[blue]50%[/blue]追加ダメージを与える。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_MECHANICAL_SLAYER.title": "機械スレイヤー", "OTHERWORLD_TREASURES_ENCHANTMENT_MECHANICAL_SLAYER.description": "機械の敵に[blue]50%[/blue]追加ダメージを与える。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_INSECT_SLAYER.title": "虫スレイヤー", "OTHERWORLD_TREASURES_ENCHANTMENT_INSECT_SLAYER.description": "虫の敵に[blue]50%[/blue]追加ダメージを与える。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_BEAST_SLAYER.title": "獣スレイヤー", "OTHERWORLD_TREASURES_ENCHANTMENT_BEAST_SLAYER.description": "獣の敵に[blue]50%[/blue]追加ダメージを与える。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_SEA_MONSTER_SLAYER.title": "海の怪物スレイヤー", "OTHERWORLD_TREASURES_ENCHANTMENT_SEA_MONSTER_SLAYER.description": "海の怪物に[blue]50%[/blue]追加ダメージを与える。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_PLANT_SLAYER.title": "植物スレイヤー", "OTHERWORLD_TREASURES_ENCHANTMENT_PLANT_SLAYER.description": "植物の敵に[blue]50%[/blue]追加ダメージを与える。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_SLIME_SLAYER.title": "スライムスレイヤー", "OTHERWORLD_TREASURES_ENCHANTMENT_SLIME_SLAYER.description": "スライムの敵に[blue]50%[/blue]追加ダメージを与える。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_OTHER_SLAYER.title": "異形スレイヤー", "OTHERWORLD_TREASURES_ENCHANTMENT_OTHER_SLAYER.description": "その他の敵に[blue]50%[/blue]追加ダメージを与える。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_FIRE_ASPECT.title": "火属性付与", "OTHERWORLD_TREASURES_ENCHANTMENT_FIRE_ASPECT.description": "攻撃がダメージを与えると、命中した敵に[blue]2[/blue]の[gold]火傷[/gold]を与える。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_SWEEPING_EDGE.title": "範囲斬り", "OTHERWORLD_TREASURES_ENCHANTMENT_SWEEPING_EDGE.description": "使用後、他の敵にこのカードの合計ダメージの[blue]40%[/blue]を与える。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_LOOTING.title": "ドロップ増加", "OTHERWORLD_TREASURES_ENCHANTMENT_LOOTING.description": "このカードで敵を倒すと、[blue]12[/blue]ゴールドを得る。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_EFFICIENCY.title": "効率化", "OTHERWORLD_TREASURES_ENCHANTMENT_EFFICIENCY.description": "コストが[blue]1[/blue]減少する。最低[blue]0[/blue]。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_PROTECTION.title": "保護", "OTHERWORLD_TREASURES_ENCHANTMENT_PROTECTION.description": "[gold]ブロック[/gold]を追加で[blue]6[/blue]得る。",
+  "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.title": "トゲ", "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.description": "使用時、このターン[blue]5[/blue]の[gold]トゲ[/gold]を得る。"
+}

@@ -122,7 +122,7 @@ public sealed class SpiritBomb : MartialTrainingCard
 public sealed class DonateEnergy : ModCardTemplate, IDerivedCard
 {
     public DonateEnergy() : base(0, CardType.Skill, CardRarity.Token, TargetType.Self, true) { }
-    public override CardAssetProfile AssetProfile => new(PortraitPath: "res://OtherworldTreasures/images/placeholders/beta.png");
+    public override CardAssetProfile AssetProfile => new(PortraitPath: "res://OtherworldTreasures/images/cards/training/donate_energy.png");
     [MegaCrit.Sts2.Core.Saves.Runs.SavedProperty]
     public string CasterKey { get; set; } = "0";
     public ulong CasterId

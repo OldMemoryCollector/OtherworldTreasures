@@ -34,9 +34,17 @@ public partial class ScouterReadout : Node2D
     public override void _Ready()
     {
         Visible = false;
-        ZIndex = 8;
+        ZIndex = 0;
+        Callable.From(PlaceBelowCreatureUi).CallDeferred();
         CombatManager.Instance.CombatWon += OnCombatEnded;
         CombatManager.Instance.CombatEnded += OnCombatEnded;
+    }
+
+    private void PlaceBelowCreatureUi()
+    {
+        if (GetParent() is not NCreature creature || creature.Visuals == null) return;
+        // Keep the readout above the body but below native intents, health bars and menus.
+        creature.MoveChild(this, creature.Visuals.GetIndex() + 1);
     }
 
     public override void _ExitTree()

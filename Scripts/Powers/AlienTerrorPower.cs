@@ -41,7 +41,7 @@ public class AlienTerrorPower : ModPowerTemplate
             return description;
         }
     }
-    public bool IsBoss => (Owner.CombatState?.Encounter?.RoomType == RoomType.Boss
+    public bool IsBoss => IsMutable && (Owner.CombatState?.Encounter?.RoomType == RoomType.Boss
         || Owner.CombatState?.RunState.CurrentRoom?.RoomType == RoomType.Boss) && Owner.IsPrimaryEnemy;
     public int PanicThreshold => SoulFrightThreshold * (IsBoss ? 2 : 1);
     public int EscapeThreshold => DisperseThreshold * (IsBoss ? 2 : 1);
