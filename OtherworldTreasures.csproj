@@ -12,7 +12,9 @@
     <Sts2DataDir>$(Sts2Dir)\data_sts2_windows_x86_64</Sts2DataDir>
 
     <!-- Godot 4.5.1 编辑器路径（与游戏版本一致） -->
-    <GodotExe>F:\文件\工具\Godot_v4.5.1-stable_mono_win64\Godot_v4.5.1-stable_mono_win64.exe</GodotExe>
+    <GodotExe>F:\文件\工具\Godot_v4.5.1-stable_mono_win64\Godot_v4.5.1-stable_mono_win64_console.exe</GodotExe>
+    <ModPackScript Condition="'$(ModPackScript)' == ''">$(MSBuildProjectDirectory)\..\塔2模组附属内容\07_工程配套\工具\PackRuntime.gd</ModPackScript>
+    <ModBuildOutput Condition="'$(ModBuildOutput)' == ''">$(MSBuildProjectDirectory)\..\塔2模组附属内容\05_测试导出\异次元乱入\artifacts\OtherworldTreasures</ModBuildOutput>
 
     <!-- RitsuLib自动部署目录 -->
     <RitsuLibDeployDir>$(Sts2Dir)\mods\STS2-RitsuLib\</RitsuLibDeployDir>
@@ -57,9 +59,10 @@
     <Copy SourceFiles="$(MSBuildProjectName).json" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\" />
   </Target>
 
-  <!-- 导出PCK（需先在Godot编辑器中添加Windows导出预设，名称为"Windows Desktop"） -->
   <Target Name="ExportPck">
-    <Message Text="Exporting PCK to Slay the Spire 2 mods folder..." Importance="high" />
-    <Exec Command="&quot;$(GodotExe)&quot; --headless --export-pack &quot;Windows Desktop&quot; &quot;$(Sts2Dir)\mods\$(MSBuildProjectName)\$(MSBuildProjectName).pck&quot;" EnvironmentVariables="IsInnerGodotExport=true;MSBUILDDISABLENODEREUSE=1" ContinueOnError="WarnAndContinue" />
+    <Error Condition="!Exists('$(ModPackScript)')" Text="External runtime pack tool is missing: $(ModPackScript)" />
+    <MakeDir Directories="$(ModBuildOutput)" />
+    <Exec Command="&quot;$(GodotExe)&quot; --headless --path &quot;$(MSBuildProjectDirectory)&quot; --script &quot;$(ModPackScript)&quot; -- OtherworldTreasures &quot;$(ModBuildOutput)\$(MSBuildProjectName).pck&quot;" EnvironmentVariables="IsInnerGodotExport=true;MSBUILDDISABLENODEREUSE=1" />
+    <Copy SourceFiles="$(ModBuildOutput)\$(MSBuildProjectName).pck" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\" Condition="'$(SkipModDeploy)' != 'true'" />
   </Target>
 </Project>

@@ -14,3 +14,13 @@ obj/
 
 # IDE
 .vscode/
+
+# Non-runtime material belongs in the external companion workspace.
+/docs/
+/tools/
+/Tools/
+/Workshop/
+/artifacts/
+*.md
+*.log
+*.zip
