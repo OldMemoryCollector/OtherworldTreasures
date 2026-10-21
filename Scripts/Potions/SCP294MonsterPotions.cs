@@ -4,19 +4,15 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
-using MegaCrit.Sts2.Core.Entities.Cards;
-using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Models.Potions;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Random;
-using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.Core.ValueProps;
 using OtherworldTreasures.Scripts.Alien;
@@ -33,6 +29,7 @@ internal sealed class MonsterBrewPlan
     internal required MonsterBrewEffect[] Effects;
     internal Creature? PlayerTarget;
     internal bool Replaces;
+    internal bool IsCombatStart;
     internal int Round;
     private SCP294Potion? _displayPotion;
     private MonsterBrewEffect[]? _displayEffects;
@@ -69,13 +66,6 @@ internal static class Scp294MonsterPotions
 
     internal static void Reset() { _plans = new(); _started = new(); }
     internal static bool TryGet(MoveState move, out MonsterBrewPlan plan) => _plans.TryGetValue(move, out plan!);
-    internal static int StatusStrength(int actIndex, RoomType room) => Math.Clamp(actIndex, 0, 2) switch
-    {
-        0 => room == RoomType.Boss ? 6 : room == RoomType.Elite ? 4 : 2,
-        1 => room == RoomType.Boss ? 16 : room == RoomType.Elite ? 8 : 4,
-        _ => room == RoomType.Boss ? 32 : room == RoomType.Elite ? 16 : 8
-    };
-
     internal static Rng RecipeRng(MonsterModel monster, MoveState move, bool combatStart = false)
     {
         var combat = monster.CombatState;
@@ -97,40 +87,20 @@ internal static class Scp294MonsterPotions
         var rng = RecipeRng(monster, move);
         var targets = monster.CombatState.PlayerCreatures.Where(c => c.IsAlive).OrderBy(c => c.Player!.NetId).ToArray();
         var target = targets.Length > 0 ? targets[rng.NextInt(targets.Length)] : null;
-        int damage = OriginalDamage(monster, originals, target);
-        int block = originals.Any(i => i.IntentType == IntentType.Defend)
-            ? Math.Max(0, (int)Hook.ModifyBlock(monster.CombatState, monster.Creature, OriginalBlock(monster, move), ValueProp.Move, null, null, out _)) : 0;
-        var room = monster.CombatState.Encounter?.RoomType ?? monster.CombatState.RunState.CurrentRoom?.RoomType ?? RoomType.Monster;
+        bool replaces = rng.NextBool();
         var plan = new MonsterBrewPlan
         {
             Monster = monster, Move = move, OriginalIntents = originals, PlayerTarget = target,
-            Replaces = true, Round = monster.CombatState.RoundNumber,
-            Effects = Brew(rng, true, originals.Length * 2,
-                damage, block, StatusStrength(monster.CombatState.RunState.CurrentActIndex, room))
+            Replaces = replaces, Round = monster.CombatState.RoundNumber,
+            Effects = Brew(rng, allowPlayerDamage: true, rng.NextInt(0, 7))
         };
         _plans.Remove(move);
         _plans.Add(move, plan);
         if (plan.Replaces) SetIntents.Invoke(move, [new AbstractIntent[] { new Scp294MonsterPotionIntent(plan) }]);
-        else if (plan.Effects.Length > 0) SetIntents.Invoke(move, [originals.Append(new Scp294MonsterPotionIntent(plan)).ToArray()]);
-        else SetIntents.Invoke(move, [originals]);
+        else SetIntents.Invoke(move, [originals.Append(new Scp294MonsterPotionIntent(plan)).ToArray()]);
     }
 
-    internal static int OriginalDamage(MonsterModel monster, IEnumerable<AbstractIntent> intents, Creature? target)
-    {
-        // Native AttackIntent previews use LocalContext, which can differ between peers.
-        // Use the recipe's shared chosen target to calculate the same cap on every peer.
-        int total = 0;
-        foreach (var attack in intents.OfType<AttackIntent>())
-        {
-            decimal single = Hook.ModifyDamage(monster.CombatState.RunState, monster.CombatState, target,
-                monster.Creature, attack.DamageCalc?.Invoke() ?? 0m, ValueProp.Move, null, null,
-                ModifyDamageHookType.All, CardPreviewMode.None, out _);
-            total += Math.Max(0, (int)single) * Math.Max(1, attack.Repeats);
-        }
-        return total;
-    }
-
-    internal static MonsterBrewEffect[] Brew(Rng rng, bool replaces, int count, int damage, int block, int status)
+    internal static MonsterBrewEffect[] Brew(Rng rng, bool allowPlayerDamage, int count)
     {
         var pool = EffectPool.ToList();
         var result = new List<MonsterBrewEffect>();
@@ -141,15 +111,11 @@ internal static class Scp294MonsterPotions
             var effect = pool[index];
             pool.RemoveAt(index);
             // Doom is a lethal threshold, so monster brews never scale it from the native 33-layer potion.
-            int amount = effect == BrewEffect.Doom ? rng.NextInt(1, 11) : replaces ? effect switch
-            {
-                BrewEffect.Damage => rng.NextInt(0, Math.Max(0, damage) + 1),
-                BrewEffect.Block => rng.NextInt(0, Math.Max(0, block) + 1),
-                _ => status
-            } : SCP294Potion.VanillaBaseline(effect) * rng.NextInt(1, 4);
+            int amount = effect == BrewEffect.Doom ? rng.NextInt(1, 11)
+                : SCP294Potion.VanillaBaseline(effect) * rng.NextInt(1, 4);
             // Each effect chooses its recipient independently, regardless of whether it helps or harms.
             // Opening cocktails retain the explicit restriction against direct player damage.
-            bool player = (replaces || effect != BrewEffect.Damage) && rng.NextBool();
+            bool player = (allowPlayerDamage || effect != BrewEffect.Damage) && rng.NextBool();
             result.Add(new MonsterBrewEffect(effect, amount, player));
         }
         return result.ToArray();
@@ -167,8 +133,8 @@ internal static class Scp294MonsterPotions
         {
             Monster = monster, Move = monster.NextMove, OriginalIntents = monster.NextMove.Intents.ToArray(),
             PlayerTarget = players.Length > 0 ? players[rng.NextInt(players.Length)] : null,
-            Effects = Brew(rng, false, rng.NextInt(0, 7), 0, 0, 0),
-            Replaces = false, Round = monster.CombatState.RoundNumber
+            Effects = Brew(rng, allowPlayerDamage: false, rng.NextInt(0, 7)),
+            Replaces = false, IsCombatStart = true, Round = monster.CombatState.RoundNumber
         };
         _started.Add(monster.Creature, plan);
         await Use(plan);
@@ -258,32 +224,7 @@ internal static class Scp294MonsterPotions
         }
     }
 
-    // DefendIntent has no numeric value. Read the block expression used by each native move,
-    // including its live ascension-dependent property, rather than inventing a block cap.
-    private static readonly Dictionary<(string Monster, string Move), string> BlockExpressions = new()
-    {
-        [("Aeonglass", "EbbMove")] = "EbbBlock", [("Axebot", "BootUpMove")] = "BootUpBlock",
-        [("AxeRubyRaider", "SwingMove")] = "SwingBlock", [("BowlbugEgg", "BiteMove")] = "ProtectBlock",
-        [("CrossbowRubyRaider", "ReloadMove")] = "3", [("Crusher", "GuardedStrikeMove")] = "18",
-        [("Guardbot", "GuardMove")] = "15", [("InfestedPrism", "RadiateMove")] = "RadiateBlock",
-        [("InfestedPrism", "PulsateMove")] = "PulsateBlock", [("LagavulinMatriarch", "Slash2Move")] = "Slash2Block",
-        [("LouseProgenitor", "CurlAndGrowMove")] = "CurlBlock", [("MagiKnight", "PowerShieldMove")] = "PowerShieldBlock",
-        [("MagiKnight", "PrepMove")] = "PowerShieldBlock", [("MechaKnight", "WindupMove")] = "15",
-        [("Nibbit", "SliceMove")] = "SliceBlock", [("PunchConstruct", "ReadyMove")] = "10",
-        [("Queen", "BurnBrightForMeMove")] = "20", [("Seapunk", "BubbleBurpMove")] = "BubbleBlock",
-        [("SlitheringStrangler", "ThwackMove")] = "5", [("TheForgotten", "MiasmaMove")] = "8",
-        [("TheObscura", "HardeningStrikeMove")] = "HardeningStrikeBlock", [("Tunneler", "BurrowMove")] = "BlockGain"
-    };
-    internal static int OriginalBlock(MonsterModel monster, MoveState move)
-    {
-        var action = (Delegate)OnPerform.GetValue(move)!;
-        if (BlockExpressions.TryGetValue((monster.GetType().Name, action.Method.Name), out var expression))
-            return int.TryParse(expression, out var constant) ? constant : Convert.ToInt32(AccessTools.Property(monster.GetType(), expression).GetValue(monster));
-        // Compatibility for modded monsters exposing a single conventional block property.
-        var properties = monster.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(p => p.Name.Contains("Block", StringComparison.OrdinalIgnoreCase) && p.PropertyType == typeof(int) && p.GetIndexParameters().Length == 0).ToArray();
-        return properties.Length == 1 ? Math.Max(0, (int)properties[0].GetValue(monster)!) : 0;
-    }
+
 }
 
 [HarmonyPatch(typeof(MonsterModel), nameof(MonsterModel.RollMove))]
