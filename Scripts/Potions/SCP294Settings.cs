@@ -8,7 +8,7 @@ using STS2RitsuLib.Settings;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace OtherworldTreasures.Scripts.Potions;
-public sealed class Scp294Config
+public sealed partial class Scp294Config
 {
     public bool CrazyMode { get; set; }
     public bool EverywhereMode { get; set; }
@@ -19,7 +19,7 @@ public sealed class Scp294Config
     public bool ShowChoiceDetails { get; set; } = true;
 }
 
-internal static class Scp294Settings
+internal static partial class Scp294Settings
 {
     private const string Key = "scp294_options";
     private static ModDataStore? _store;
@@ -70,6 +70,7 @@ internal static class Scp294Settings
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.CrazyPotionIntents, (d, v) => d.CrazyPotionIntents = v),
                         Text("随机替代原意图，或附加一个随机药水意图。", "Randomly replace the original intents or add a random potion intent.", "元の行動予告をランダムに置き換えるか、ランダムなポーションの予告を追加する。"));
                 });
+            RegisterStatusPurge(page);
         }, "scp294");
     }
 
