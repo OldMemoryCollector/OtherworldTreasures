@@ -2,5 +2,5 @@
   "OTHERWORLD_TREASURES_SOUL_DISPERSE.title": "魄散",
   "OTHERWORLD_TREASURES_SOUL_DISPERSE.description": "该敌人将在行动时魄散，视为被击杀，正常获得奖励。",
   "OTHERWORLD_TREASURES_MONSTER_POTION.title": "药水",
-  "OTHERWORLD_TREASURES_MONSTER_POTION.description": "使用药水，产生{Count}种药效。\n{Effects}"
+  "OTHERWORLD_TREASURES_MONSTER_POTION.description": "{Effects}"
 }

@@ -149,12 +149,10 @@ public sealed partial class SCP294Potion : ModPotionTemplate
     internal static SCP294Potion Brew(Scp294 eventModel, Taste taste, Feeling feeling, Concentration concentration) =>
         BrewWithRng(eventModel.Rng, taste, feeling, concentration);
 
-    internal static SCP294Potion BrewForPlayer(Player player)
-    {
-        Rng rng = player.RunState.Rng.CombatPotionGeneration;
-        return BrewWithRng(rng, rng.NextItem(Enum.GetValues<Taste>()),
-            rng.NextItem(Enum.GetValues<Feeling>()), rng.NextItem(Enum.GetValues<Concentration>()));
-    }
+    internal static SCP294Potion BrewForPlayer(Player player) => BrewRandomWithRng(player.RunState.Rng.CombatPotionGeneration);
+
+    internal static SCP294Potion BrewRandomWithRng(Rng rng) => BrewWithRng(rng,
+        rng.NextItem(Enum.GetValues<Taste>()), rng.NextItem(Enum.GetValues<Feeling>()), rng.NextItem(Enum.GetValues<Concentration>()));
 
     internal static SCP294Potion BrewWithRng(Rng rng, Taste taste, Feeling feeling, Concentration concentration)
     {

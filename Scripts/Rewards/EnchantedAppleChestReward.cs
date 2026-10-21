@@ -59,7 +59,12 @@ public sealed class EnchantedAppleChestReward : PotionReward, IModSerializableRe
     public RewardType ModRewardType => Entry.EnchantedAppleRewardType;
     protected override RewardType RewardType => ModRewardType;
     public string? ToModRewardJson() => JsonSerializer.Serialize(ChestKey);
-    public override SerializableReward ToSerializable() => ModRewardSerialization.CreateSerializable(this);
+    public override SerializableReward ToSerializable()
+    {
+        var save = ModRewardSerialization.CreateSerializable(this);
+        Scp294PotionRewardPreview.Save(this, save);
+        return save;
+    }
     protected override async Task<bool> OnSelect()
     {
         if (!AppleChestDrops.IsAvailable(Player, ChestKey)) return true;

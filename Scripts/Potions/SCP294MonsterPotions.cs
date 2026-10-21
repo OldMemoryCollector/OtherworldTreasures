@@ -34,6 +34,20 @@ internal sealed class MonsterBrewPlan
     internal Creature? PlayerTarget;
     internal bool Replaces;
     internal int Round;
+    private SCP294Potion? _displayPotion;
+    private MonsterBrewEffect[]? _displayEffects;
+    internal SCP294Potion DisplayPotion
+    {
+        get
+        {
+            if (_displayPotion == null || !ReferenceEquals(_displayEffects, Effects))
+            {
+                _displayPotion = SCP294Potion.MonsterDisplay(this);
+                _displayEffects = Effects;
+            }
+            return _displayPotion;
+        }
+    }
 }
 
 internal static class Scp294MonsterPotions
@@ -183,7 +197,7 @@ internal static class Scp294MonsterPotions
             var to = room.GetCreatureNode(animationTarget);
             if (from != null && to != null)
             {
-                var image = animationTarget != source ? ModelDb.Potion<FirePotion>().Image : ModelDb.Potion<BlockPotion>().Image;
+                var image = plan.DisplayPotion.Image;
                 var vfx = NItemThrowVfx.Create(from.VfxSpawnPosition, to.VfxSpawnPosition, image);
                 if (vfx != null)
                 {

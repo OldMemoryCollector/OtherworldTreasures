@@ -222,7 +222,7 @@ public sealed partial class SCP294Potion
 
     private static readonly Dictionary<string, Regex> GoldPatterns = new()
     {
-        ["zhs"] = new Regex(@"生命比例恢复|生命恢复|生命回复|最大生命值|最大生命|百分比回复|伤害吸收|人工制品|黑暗充能球|充能球栏位|充能球|抽牌堆|弃牌堆|小刀\+|无色牌|手牌|消耗(?!能量)|保留|覆甲|格挡|力量|敏捷|虚弱|易伤|脆弱|中毒|灾厄|荆棘|再生|缓冲|无实体|集中|仪式|星星|金币|商人|闪电|冰霜|等离子|治疗|回血|保命|生命|伤害|抽牌|能量|耗能|打击|灵魂|升级|生成|弃置|复制|缩小|亡灭|衰亡|巨大化|削弱|迟钝|额外回合|清晰|光辉|清明|辉光|攻击牌|技能牌|能力牌", RegexOptions.CultureInvariant),
+        ["zhs"] = new Regex(@"生命比例恢复|生命恢复|生命回复|最大生命值|最大生命|百分比回复|伤害吸收|人工制品|黑暗充能球|充能球栏位|充能球|抽牌堆|弃牌堆|小刀\+|无色牌|手牌|消耗(?!能量)|保留|覆甲|格挡|力量|敏捷|虚弱|易伤|脆弱|中毒|灾厄|荆棘|再生|缓冲|无实体|集中|仪式|星星|金币|商人|闪电|冰霜|等离子|治疗|回血|保命|生命|伤害|抽牌|能量|(?<!消)耗能|打击|灵魂|升级|生成|弃置|复制|缩小|亡灭|衰亡|巨大化|削弱|迟钝|额外回合|清晰|光辉|清明|辉光|攻击牌|技能牌|能力牌", RegexOptions.CultureInvariant),
         ["eng"] = new Regex(@"\b(Max HP|healing|Heal|HP|damage|Energy|Upgrade|Channel|Soul|Strike|Shrinking|Absorption|Artifact|Dark Orbs?|Orbs?|draw pile|discard pile|draw|Shivs?|Colorless|hand|Exhaust|Retain|Plating|Block|Strength|Dexterity|Weak|Vulnerable|Frail|Poison|Doom|Thorns|Regen|Buffer|Intangible|Focus|Ritual|Stars?|Gold|merchant|Lightning|Frost|Plasma)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         ["jpn"] = new Regex("最大HP|回復|ダメージ吸収|ダメージ|エナジー|ドロー|アップグレード|生成|ソウル|アーティファクト|オーブ|山札|捨て札|ナイフ|無色|手札|廃棄|保持|プレート|ブロック|筋力|敏捷|脱力|弱体|脆弱|毒|破滅|トゲ|再生|バッファー|霊体|集中力|儀式|スター|ゴールド|商人|ライトニング|フロスト|プラズマ|ダーク", RegexOptions.CultureInvariant)
     };
