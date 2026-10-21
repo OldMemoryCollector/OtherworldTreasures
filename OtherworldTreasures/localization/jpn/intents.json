@@ -1,4 +1,6 @@
 {
   "OTHERWORLD_TREASURES_SOUL_DISPERSE.title": "魄散",
-  "OTHERWORLD_TREASURES_SOUL_DISPERSE.description": "次の行動時に消滅する。撃破として扱い、通常の報酬を獲得する。"
+  "OTHERWORLD_TREASURES_SOUL_DISPERSE.description": "次の行動時に消滅する。撃破として扱い、通常の報酬を獲得する。",
+  "OTHERWORLD_TREASURES_MONSTER_POTION.title": "ポーション",
+  "OTHERWORLD_TREASURES_MONSTER_POTION.description": "{Count}種類の効果を持つポーションを使用する。\n{Effects}"
 }

@@ -56,6 +56,7 @@ public class Entry
         Events.MustDieRunData.Initialize();
         ShimmerDropData.Initialize();
         Potions.Scp294Settings.Initialize();
+        Potions.Scp294ChaosRules.Initialize();
         Potions.SCP294Potion.InitializeVisuals();
         AppleChestDrops.Initialize();
         System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Events.GoldenRelics).TypeHandle);

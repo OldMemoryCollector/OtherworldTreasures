@@ -40,7 +40,7 @@ public sealed partial class SCP294Potion
         {
             int density = Math.Clamp(value, 0, 5);
             if (Scp294Settings.CrazyMode)
-                result = Text("强度在0～原版对应数值的10倍之间等概率随机，包含两端。", "Potency is uniformly random from 0 to 10× the vanilla value, inclusive.", "強度は原作の0～10倍の整数から等確率で抽選し、両端を含みます。");
+                result = Text("强度在0～原版对应数值的10倍之间等概率随机，包含两端；灾厄为1～10层。", "Potency is uniformly random from 0 to 10× the vanilla value, inclusive; Doom is 1–10.", "強度は原作の0～10倍の整数から等確率で抽選し、両端を含みます。破滅は1～10。");
             else
             {
                 string Range(BrewEffect effect)

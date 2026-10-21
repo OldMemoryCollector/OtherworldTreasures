@@ -1,4 +1,6 @@
 {
   "OTHERWORLD_TREASURES_SOUL_DISPERSE.title": "Soul Dissolution",
-  "OTHERWORLD_TREASURES_SOUL_DISPERSE.description": "This enemy will dissolve on its next action. This counts as a kill and grants normal rewards."
+  "OTHERWORLD_TREASURES_SOUL_DISPERSE.description": "This enemy will dissolve on its next action. This counts as a kill and grants normal rewards.",
+  "OTHERWORLD_TREASURES_MONSTER_POTION.title": "Potion",
+  "OTHERWORLD_TREASURES_MONSTER_POTION.description": "Use potions with {Count} effects.\n{Effects}"
 }

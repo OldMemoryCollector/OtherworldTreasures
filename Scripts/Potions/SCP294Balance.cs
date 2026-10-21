@@ -106,12 +106,11 @@ public sealed partial class SCP294Potion
 
     private static int RollAmount(Rng rng, BrewEffect effect, int density, BrewRecipient recipient = BrewRecipient.Self)
     {
+        if (effect == BrewEffect.Doom) return rng.NextInt(1, 11);
         if (!HasAdjustableAmount(effect)) return 1;
         if (Scp294Settings.CrazyMode)
             return rng.NextInt(0, VanillaBaseline(effect) * 10 + 1);
         density = RollDensity(rng, effect, density);
-        if (effect == BrewEffect.Doom && recipient is BrewRecipient.SelectedEnemy or BrewRecipient.AllEnemies or BrewRecipient.BothSides or BrewRecipient.SelfAndEnemy)
-            return RollBiased(rng, 20, 50, density);
         var (min, max) = NormalRange(effect, density);
         return rng.NextInt(min, max + 1);
     }

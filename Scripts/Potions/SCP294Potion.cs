@@ -1392,7 +1392,27 @@ internal enum BrewVisualStyle { Waves, Gradient, Marble, SoftTint }
 
 internal sealed record BrewRecipe(string Name, IReadOnlyList<BrewIngredient> Ingredients, string IconEntry,
     string? LiquidEntry = null, IReadOnlyList<string>? LiquidEntries = null,
-    BrewVisualStyle VisualStyle = BrewVisualStyle.Waves, int? VisualSeed = null, string? NativePotionEntry = null);
+    BrewVisualStyle VisualStyle = BrewVisualStyle.Waves, int? VisualSeed = null, string? NativePotionEntry = null)
+{
+    public IReadOnlyList<BrewIngredient> Ingredients { get; init; } = LimitDoom(Ingredients);
+    private static IReadOnlyList<BrewIngredient> LimitDoom(IReadOnlyList<BrewIngredient> ingredients)
+    {
+        bool seen = false;
+        var result = new List<BrewIngredient>(ingredients.Count);
+        foreach (var ingredient in ingredients)
+        {
+            if (ingredient.Effect != BrewEffect.Doom) { result.Add(ingredient); continue; }
+            if (seen) continue;
+            seen = true;
+            result.Add(ingredient with
+            {
+                Amount = Math.Clamp(ingredient.Amount, 1, 10),
+                SecondaryAmount = ingredient.SecondaryAmount is { } secondary ? Math.Clamp(secondary, 1, 10) : null
+            });
+        }
+        return result;
+    }
+}
 internal sealed record BrewPreset(string NameKey, int ChancePercent, string IconEntry, IReadOnlyList<BrewIngredient> Ingredients);
 
 [HarmonyPatch(typeof(PotionModel), nameof(PotionModel.ToSerializable))]

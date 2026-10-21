@@ -12,6 +12,9 @@ public sealed class Scp294Config
 {
     public bool CrazyMode { get; set; }
     public bool EverywhereMode { get; set; }
+    public bool CrazyNeowRelics { get; set; }
+    public bool CrazyMonsterPotions { get; set; }
+    public bool CrazyPotionIntents { get; set; }
     public bool RainbowValues { get; set; } = true;
     public bool ShowChoiceDetails { get; set; } = true;
 }
@@ -42,7 +45,7 @@ internal static class Scp294Settings
                     section.WithTitle(Text("药水模式", "Potion modes", "薬のモード"));
                     section.AddToggle("crazy", Text("疯狂模式", "Crazy mode", "クレイジーモード"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.CrazyMode, (d, v) => d.CrazyMode = v),
-                        Text("可变强度在0～原版对应数值的10倍之间等概率随机，包含两端；无原版对应的自定义项按常规上限计算。", "Variable potency is uniformly random from zero to ten times vanilla, inclusive. Custom effects without a vanilla counterpart use their normal maximum.", "可変効果は原作の0～10倍の整数から等確率で抽選し、両端を含みます。対応する原作効果がなければ通常上限を基準にします。"));
+                        Text("可变强度在0～原版对应数值的10倍之间等概率随机，包含两端；无原版对应的自定义项按常规上限计算；灾厄统一为1～10层。", "Variable potency is uniformly random from zero to ten times vanilla, inclusive. Custom effects without a vanilla counterpart use their normal maximum. Doom is always 1–10.", "可変効果は原作の0～10倍の整数から等確率で抽選し、両端を含みます。対応する原作効果がなければ通常上限を基準にします。破滅は常に1～10。"));
                     section.AddToggle("everywhere", Text("常态模式", "Everywhere mode", "常態モード"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.EverywhereMode, (d, v) => d.EverywhereMode = v),
                         Text("禁用咖啡机事件，局内新获得的所有药水变为随机调合药水；可与疯狂模式同时开启。", "Disables the coffee-machine event and randomizes every new potion acquired during a run. Can combine with Crazy mode.", "コーヒーマシンのイベントを無効化し、ラン中の新しい薬をすべてランダム化。クレイジーモードと併用できます。"));
@@ -52,6 +55,20 @@ internal static class Scp294Settings
                     section.AddToggle("details", Text("事件选项详情", "Event choice details", "イベント選択肢の詳細"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.ShowChoiceDetails, (d, v) => d.ShowChoiceDetails = v),
                         Text("显示口味、感觉的简要说明；浓度可预览产物。", "Show brief taste and feeling details; concentration choices preview their brew.", "味と感情の短い説明を表示。濃度では完成品を確認できます。"));
+                })
+                .AddSection("crazy_extras", section =>
+                {
+                    section.WithTitle(Text("疯狂模式附属选项", "Crazy mode extras", "クレイジーモード追加設定"))
+                        .WithEnabledWhen(() => CrazyMode);
+                    section.AddToggle("neow_relics", Text("本地酿造厂", "Local Brewery", "地元の醸造所"),
+                        ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.CrazyNeowRelics, (d, v) => d.CrazyNeowRelics = v),
+                        Text("涅奥遗物被替换为白兽雕像、药水腰带、药瓶皮套。", "New runs offer one Neow option granting White Beast Statue, Potion Belt and Phial Holster together.", "新しいランのネオーに、ホワイトビーストの像・ポーションベルト・小瓶ホルスターをすべて獲得する選択肢を1つ表示。"));
+                    section.AddToggle("monster_potions", Text("狂乱鸡尾酒", "Frenzied Cocktail", "狂乱のカクテル"),
+                        ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.CrazyMonsterPotions, (d, v) => d.CrazyMonsterPotions = v),
+                        Text("战斗开始时，怪物会使用一瓶随机药水。", "At the start of combat, monsters use a random potion.", "戦闘開始時、モンスターがランダムなポーションを1本使用する。"));
+                    section.AddToggle("potion_intents", Text("为什么会变成这样呢？", "Why did it turn out like this?", "どうしてこうなった？"),
+                        ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.CrazyPotionIntents, (d, v) => d.CrazyPotionIntents = v),
+                        Text("怪物的意图会被替换成：使用一瓶随机药水。", "Monster intents are replaced with: use a random potion.", "モンスターの行動予告を「ランダムなポーションを1本使用する」に置き換える。"));
                 });
         }, "scp294");
     }
