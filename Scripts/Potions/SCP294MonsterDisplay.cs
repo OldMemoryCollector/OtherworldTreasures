@@ -7,7 +7,7 @@ public sealed partial class SCP294Potion
 {
     internal static SCP294Potion MonsterDisplay(MonsterBrewPlan plan)
     {
-        var rng = Scp294MonsterPotions.RecipeRng(plan.Monster, plan.Move);
+        var rng = Scp294MonsterPotions.RecipeRng(plan.Monster, plan.Move, combatStart: !plan.Replaces);
         var ingredients = plan.Effects.Select(e => new BrewIngredient(e.Effect, e.Amount,
             e.TargetsPlayer ? BrewRecipient.SelectedEnemy : BrewRecipient.Self)).ToArray();
         string name = ingredients.Length == 0 ? LocText("defaultName") : MakeName(rng, ingredients);

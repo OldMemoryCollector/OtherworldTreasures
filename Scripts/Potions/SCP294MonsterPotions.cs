@@ -62,7 +62,7 @@ internal static class Scp294MonsterPotions
         BrewEffect.Demise, BrewEffect.MaxHp
     ];
     private static ConditionalWeakTable<MoveState, MonsterBrewPlan> _plans = new();
-    private static ConditionalWeakTable<Creature, object> _started = new();
+    private static ConditionalWeakTable<Creature, MonsterBrewPlan> _started = new();
     private static readonly FieldInfo OnPerform = AccessTools.Field(typeof(MoveState), "_onPerform");
     private static readonly FieldInfo Performed = AccessTools.Field(typeof(MoveState), "_performedAtLeastOnce");
     private static readonly MethodInfo SetIntents = AccessTools.PropertySetter(typeof(MoveState), nameof(MoveState.Intents));
@@ -76,11 +76,12 @@ internal static class Scp294MonsterPotions
         _ => room == RoomType.Boss ? 32 : room == RoomType.Elite ? 16 : 8
     };
 
-    internal static Rng RecipeRng(MonsterModel monster, MoveState move)
+    internal static Rng RecipeRng(MonsterModel monster, MoveState move, bool combatStart = false)
     {
         var combat = monster.CombatState;
         var run = combat.RunState;
         string key = $"scp294-monster:{run.CurrentActIndex}:{run.CurrentMapCoord}:{monster.Creature.CombatId}:{combat.RoundNumber}:{move.Id}";
+        if (combatStart) key += ":combat-start";
         return new Rng((ulong)run.Rng.Seed, key);
     }
 
@@ -146,24 +147,21 @@ internal static class Scp294MonsterPotions
                 BrewEffect.Block => rng.NextInt(0, Math.Max(0, block) + 1),
                 _ => status
             } : SCP294Potion.VanillaBaseline(effect) * rng.NextInt(1, 4);
-            bool player = IsHarmful(effect) && (replaces || effect != BrewEffect.Damage);
+            // Each effect chooses its recipient independently, regardless of whether it helps or harms.
+            // Opening cocktails retain the explicit restriction against direct player damage.
+            bool player = (replaces || effect != BrewEffect.Damage) && rng.NextBool();
             result.Add(new MonsterBrewEffect(effect, amount, player));
         }
         return result.ToArray();
     }
 
-    private static bool IsHarmful(BrewEffect effect) => effect is BrewEffect.Damage or BrewEffect.StrengthDown or
-        BrewEffect.DexterityDown or BrewEffect.Weak or BrewEffect.Vulnerable or BrewEffect.Frail or
-        BrewEffect.Poison or BrewEffect.Doom or BrewEffect.Shrink or BrewEffect.Demise;
-
     internal static async Task CombatStart(MonsterModel monster)
     {
         await Scp294ChaosRules.WaitReady();
-        if (monster.Creature.Side != CombatSide.Enemy || monster.Creature.CombatState == null || _started.TryGetValue(monster.Creature, out _)) return;
+        if (monster.Creature.Side != CombatSide.Enemy || !monster.Creature.IsAlive || monster.Creature.CombatState == null || _started.TryGetValue(monster.Creature, out _)) return;
         var rules = Scp294ChaosRules.For(monster.CombatState.RunState);
-        if (!rules.MonsterPotions || rules.PotionIntents) return;
-        _started.Add(monster.Creature, new object());
-        var rng = RecipeRng(monster, monster.NextMove);
+        if (!rules.MonsterPotions) return;
+        var rng = RecipeRng(monster, monster.NextMove, combatStart: true);
         var players = monster.CombatState.PlayerCreatures.Where(c => c.IsAlive).OrderBy(c => c.Player!.NetId).ToArray();
         var plan = new MonsterBrewPlan
         {
@@ -172,6 +170,7 @@ internal static class Scp294MonsterPotions
             Effects = Brew(rng, false, rng.NextInt(0, 7), 0, 0, 0),
             Replaces = false, Round = monster.CombatState.RoundNumber
         };
+        _started.Add(monster.Creature, plan);
         await Use(plan);
     }
 
