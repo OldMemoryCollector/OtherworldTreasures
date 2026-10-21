@@ -466,6 +466,9 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         }
     }
 
+    private static LocString BrewSelectionPrompt(BrewEffect effect) =>
+        new("potions", $"OTHERWORLD_TREASURES_POTION_SCP294.selection.{effect}");
+
     private async Task Apply(PlayerChoiceContext context, BrewIngredient ingredient, Creature creature)
     {
         int amount = ingredient.Amount;
@@ -615,12 +618,12 @@ public sealed partial class SCP294Potion : ModPotionTemplate
                 break;
             case BrewEffect.DrawPileChoice when creature.Player is { } drawPilePlayer:
                 var selectedDraw = (await CardSelectCmd.FromCombatPile(context, PileType.Draw.GetPile(drawPilePlayer), drawPilePlayer,
-                    new CardSelectorPrefs(SelectionScreenPrompt, 1))).FirstOrDefault();
+                    new CardSelectorPrefs(BrewSelectionPrompt(BrewEffect.DrawPileChoice), 1))).FirstOrDefault();
                 if (selectedDraw != null) await CardPileCmd.Add(selectedDraw, PileType.Hand);
                 break;
             case BrewEffect.FreeHandCard when creature.Player is { } freeCardPlayer:
                 (await CardSelectCmd.FromHand(context, freeCardPlayer,
-                    new CardSelectorPrefs(SelectionScreenPrompt, 1),
+                    new CardSelectorPrefs(BrewSelectionPrompt(BrewEffect.FreeHandCard), 1),
                     card => card.CostsEnergyOrStars(includeGlobalModifiers: false) ||
                         card.CostsEnergyOrStars(includeGlobalModifiers: true), this))
                     .FirstOrDefault()?.SetToFreeThisCombat();
@@ -680,12 +683,12 @@ public sealed partial class SCP294Potion : ModPotionTemplate
                 break;
             case BrewEffect.ExhaustHand when creature.Player is { } exhaustPlayer:
                 foreach (var card in await CardSelectCmd.FromHand(context, exhaustPlayer,
-                    new CardSelectorPrefs(SelectionScreenPrompt, 0, 999999999), null, this))
+                    new CardSelectorPrefs(BrewSelectionPrompt(BrewEffect.ExhaustHand), 0, 999999999), null, this))
                     await CardCmd.Exhaust(context, card);
                 break;
             case BrewEffect.RetrieveDiscard when creature.Player is { } discardPlayer:
                 var recovered = (await CardSelectCmd.FromCombatPile(context, PileType.Discard.GetPile(discardPlayer), discardPlayer,
-                    new CardSelectorPrefs(SelectionScreenPrompt, 1))).FirstOrDefault();
+                    new CardSelectorPrefs(BrewSelectionPrompt(BrewEffect.RetrieveDiscard), 1))).FirstOrDefault();
                 if (recovered != null)
                 {
                     recovered.SetToFreeThisTurn();
@@ -694,7 +697,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
                 break;
             case BrewEffect.GambleDiscardDraw when creature.Player is { } gamblePlayer:
                 var selected = (await CardSelectCmd.FromHandForDiscard(context, gamblePlayer,
-                    new CardSelectorPrefs(SelectionScreenPrompt, 0, 999999999), null, this)).ToList();
+                    new CardSelectorPrefs(BrewSelectionPrompt(BrewEffect.GambleDiscardDraw), 0, 999999999), null, this)).ToList();
                 await CardCmd.DiscardAndDraw(context, selected, selected.Count);
                 break;
         }
