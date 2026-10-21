@@ -53,9 +53,9 @@ internal static class Scp294ChaosRules
     private static CrazyPotionRunSave Capture() => new()
     {
         Initialized = true,
-        NeowRelics = Scp294Settings.CrazyMode && Scp294Settings.Data.CrazyNeowRelics,
-        MonsterPotions = Scp294Settings.CrazyMode && Scp294Settings.Data.CrazyMonsterPotions,
-        PotionIntents = Scp294Settings.CrazyMode && Scp294Settings.Data.CrazyPotionIntents
+        NeowRelics = Scp294Settings.EverywhereMode && Scp294Settings.Data.CrazyNeowRelics,
+        MonsterPotions = Scp294Settings.EverywhereMode && Scp294Settings.Data.CrazyMonsterPotions,
+        PotionIntents = Scp294Settings.EverywhereMode && Scp294Settings.Data.CrazyPotionIntents
     };
 
     private static readonly CrazyPotionRunSave Disabled = new();

@@ -46,7 +46,7 @@ internal static class Scp294Settings
                     section.AddToggle("crazy", Text("疯狂模式", "Crazy mode", "クレイジーモード"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.CrazyMode, (d, v) => d.CrazyMode = v),
                         Text("可变强度在0～原版对应数值的10倍之间等概率随机，包含两端；无原版对应的自定义项按常规上限计算；灾厄统一为1～10层。", "Variable potency is uniformly random from zero to ten times vanilla, inclusive. Custom effects without a vanilla counterpart use their normal maximum. Doom is always 1–10.", "可変効果は原作の0～10倍の整数から等確率で抽選し、両端を含みます。対応する原作効果がなければ通常上限を基準にします。破滅は常に1～10。"));
-                    section.AddToggle("everywhere", Text("常态模式", "Everywhere mode", "常態モード"),
+                    section.AddToggle("everywhere", Text("常规模式", "Everywhere mode", "常態モード"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.EverywhereMode, (d, v) => d.EverywhereMode = v),
                         Text("禁用咖啡机事件，局内新获得的所有药水变为随机调合药水；可与疯狂模式同时开启。", "Disables the coffee-machine event and randomizes every new potion acquired during a run. Can combine with Crazy mode.", "コーヒーマシンのイベントを無効化し、ラン中の新しい薬をすべてランダム化。クレイジーモードと併用できます。"));
                     section.AddToggle("rainbow_values", Text("彩虹数值", "Rainbow numbers", "虹色の数値"),
@@ -58,8 +58,8 @@ internal static class Scp294Settings
                 })
                 .AddSection("crazy_extras", section =>
                 {
-                    section.WithTitle(Text("疯狂模式附属选项", "Crazy mode extras", "クレイジーモード追加設定"))
-                        .WithEnabledWhen(() => CrazyMode);
+                    section.WithTitle(Text("常规模式附属选项", "Everywhere mode extras", "常態モード追加設定"))
+                        .WithEnabledWhen(() => EverywhereMode);
                     section.AddToggle("neow_relics", Text("本地酿造厂", "Local Brewery", "地元の醸造所"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.CrazyNeowRelics, (d, v) => d.CrazyNeowRelics = v),
                         Text("涅奥遗物被替换为白兽雕像、药水腰带、药瓶皮套。", "New runs offer one Neow option granting White Beast Statue, Potion Belt and Phial Holster together.", "新しいランのネオーに、ホワイトビーストの像・ポーションベルト・小瓶ホルスターをすべて獲得する選択肢を1つ表示。"));
