@@ -25,18 +25,7 @@ public sealed partial class SCP294Potion
         string language = LocManager.Instance.Language;
         if (plan.Effects.Length == 0) return language switch
         { "eng" => "No effects.", "jpn" => "効果なし。", _ => "无药效。" };
-        return string.Join("\n", plan.Effects.Select(effect =>
-        {
-            var ingredient = new BrewIngredient(effect.Effect, effect.Amount,
-                effect.TargetsPlayer ? BrewRecipient.SelectedEnemy : BrewRecipient.Self);
-            string text = Describe(ingredient);
-            // Only change the actor label; retain the exact player-potion effect text and formatting.
-            return language switch
-            {
-                "eng" => effect.TargetsPlayer ? text.Replace("Target: ", "Player: ") : text.Replace("You: ", "Self: "),
-                "jpn" => effect.TargetsPlayer ? text.Replace("敵：", "プレイヤー：") : text,
-                _ => effect.TargetsPlayer ? text.Replace("敌方目标：", "玩家：") : text
-            };
-        }));
+        return GroupedDescription(plan.Effects.Select(effect => new BrewIngredient(effect.Effect, effect.Amount,
+            effect.TargetsPlayer ? BrewRecipient.SelectedEnemy : BrewRecipient.Self)), monster: true);
     }
 }

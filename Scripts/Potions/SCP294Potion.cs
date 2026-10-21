@@ -1055,7 +1055,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
     {
         var description = new LocString("potions", "OTHERWORLD_TREASURES_POTION_SCP294.description");
         var recipe = RecipeFor(potion);
-        string effects=string.Join("\n",recipe.Ingredients.Select(Describe));
+        string effects=GroupedDescription(recipe.Ingredients);
         if(recipe.NativePotionEntry!=null)
         {
             var original=new LocString("potions",recipe.NativePotionEntry+".description");potion.DynamicVars.AddTo(original);
@@ -1073,12 +1073,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         string number = VariableNumber(ingredient.Amount);
         string? extra = DescribeExtra(ingredient, language);
         if (extra != null) return FormatPotionText(extra, language);
-        string prefix = language switch
-        {
-            "eng" => ingredient.Recipient switch { BrewRecipient.SelectedEnemy => "Target: ", BrewRecipient.AllEnemies => "All enemies: ", BrewRecipient.AllAllies => "All allies: ", BrewRecipient.BothSides => "Both sides: ", BrewRecipient.SelfAndEnemy => "You and target: ", _ => "You: " },
-            "jpn" => ingredient.Recipient switch { BrewRecipient.SelectedEnemy => "敵：", BrewRecipient.AllEnemies => "敵全体：", BrewRecipient.AllAllies => "味方全体：", BrewRecipient.BothSides => "敵味方全体：", BrewRecipient.SelfAndEnemy => "自分と敵1体：", _ => "自分：" },
-            _ => ingredient.Recipient switch { BrewRecipient.SelectedEnemy => "敌方目标：", BrewRecipient.AllEnemies => "敌方全体：", BrewRecipient.AllAllies => "己方全体：", BrewRecipient.BothSides => "敌我双方：", BrewRecipient.SelfAndEnemy => "自身与敌方目标：", _ => "自身：" }
-        };
+        string prefix = DescriptionTargetPrefix(ingredient.Recipient, language);
         string verb = ingredient.Timing != BrewTiming.Immediate
             ? TimedDescription(ingredient.Effect, number, ingredient.Timing, language)
             : language switch
