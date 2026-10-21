@@ -68,7 +68,7 @@ internal static partial class Scp294Settings
                         Text("战斗开始时，怪物会使用一瓶随机药水。", "At the start of combat, monsters use a random potion.", "戦闘開始時、モンスターがランダムなポーションを1本使用する。"));
                     section.AddToggle("potion_intents", Text("为什么会变成这样呢？（测试中，未完善）", "Why did it turn out like this? (Testing, incomplete)", "どうしてこうなった？（テスト中・未完成）"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.CrazyPotionIntents, (d, v) => d.CrazyPotionIntents = v),
-                        Text("随机替代原意图，或附加一个随机药水意图。", "Randomly replace the original intents or add a random potion intent.", "元の行動予告をランダムに置き換えるか、ランダムなポーションの予告を追加する。"));
+                        Text("33%附加药水意图，33%替换，34%保持原意图。", "33% add a potion intent, 33% replace the original intents, 34% keep them unchanged.", "33%でポーション予告追加、33%で置換、34%で元の予告を維持。"));
                 });
             RegisterStatusPurge(page);
         }, "scp294");

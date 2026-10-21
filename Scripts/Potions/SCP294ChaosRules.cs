@@ -19,6 +19,7 @@ public sealed class CrazyPotionRunSave
     public bool MonsterPotions { get; set; }
     public bool PotionIntents { get; set; }
     public StatusPurgeRule StatusPurge { get; set; } = new();
+    public StatusPurgeRule[]? StatusPurges { get; set; }
 }
 
 // Run options are captured once, persisted through RitsuLib, and supplied by the host.
@@ -57,7 +58,7 @@ internal static class Scp294ChaosRules
         NeowRelics = Scp294Settings.EverywhereMode && Scp294Settings.Data.CrazyNeowRelics,
         MonsterPotions = Scp294Settings.EverywhereMode && Scp294Settings.Data.CrazyMonsterPotions,
         PotionIntents = Scp294Settings.EverywhereMode && Scp294Settings.Data.CrazyPotionIntents,
-        StatusPurge = Scp294StatusPurge.Capture(Scp294Settings.Data)
+        StatusPurges = Scp294StatusPurge.CaptureAll(Scp294Settings.Data)
     };
 
     private static readonly CrazyPotionRunSave Disabled = new();
@@ -88,6 +89,7 @@ internal static class Scp294ChaosRules
         data.MonsterPotions = rules.MonsterPotions;
         data.PotionIntents = rules.PotionIntents;
         data.StatusPurge = rules.StatusPurge ?? new StatusPurgeRule();
+        data.StatusPurges = rules.StatusPurges;
     });
 
     private static void Broadcast()

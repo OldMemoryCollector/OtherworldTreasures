@@ -15,7 +15,7 @@ namespace OtherworldTreasures.Scripts.Potions;
 public enum StatusPurgeTarget { Enemies, Allies, Everyone }
 public enum StatusPurgeSelection { Single, All }
 public enum StatusPurgeLayers { One, Two, Three, Half, All }
-public enum StatusPurgePolarity { Positive, Negative }
+public enum StatusPurgePolarity { Positive, Negative, All }
 public sealed record StatusPurgeRule
 {
     public bool Enabled { get; init; }
@@ -28,22 +28,50 @@ public sealed record StatusPurgeRule
 
 internal static class Scp294StatusPurge
 {
-    private sealed class RoundStamp { internal int LastRound; }
+    private sealed class RoundStamp { internal readonly Dictionary<StatusPurgeTarget, int> LastRounds = new(); }
     private static readonly ConditionalWeakTable<CombatState, RoundStamp> Rounds = new();
     internal static bool ValidInterval(string? text) => int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out int n) && n > 0;
-    internal static StatusPurgeRule Capture(Scp294Config data)
+    internal static void Migrate(Scp294Config data)
     {
-        bool valid = ValidInterval(data.StatusPurgeInterval);
-        return new StatusPurgeRule
+        if (data.StatusPurgeGroupsInitialized) return;
+        data.StatusPurgeGroupsInitialized = true;
+        if (!data.StatusPurgeEnabled) return;
+        var target = Enum.IsDefined(data.StatusPurgeTarget) ? data.StatusPurgeTarget : StatusPurgeTarget.Everyone;
+        var group = Options(data, target);
+        group.Enabled = true;
+        group.Interval = data.StatusPurgeInterval;
+        group.Selection = data.StatusPurgeSelection;
+        group.Layers = data.StatusPurgeLayers;
+        group.Polarity = data.StatusPurgePolarity;
+    }
+    internal static StatusPurgeGroupConfig Options(Scp294Config data, StatusPurgeTarget target)
+    {
+        Migrate(data);
+        return target switch
         {
-            Enabled = data.EverywhereMode && data.StatusPurgeEnabled && valid,
-            Interval = valid ? int.Parse(data.StatusPurgeInterval, CultureInfo.InvariantCulture) : 1,
-            Target = Enum.IsDefined(data.StatusPurgeTarget) ? data.StatusPurgeTarget : StatusPurgeTarget.Everyone,
-            Selection = Enum.IsDefined(data.StatusPurgeSelection) ? data.StatusPurgeSelection : StatusPurgeSelection.All,
-            Layers = Enum.IsDefined(data.StatusPurgeLayers) ? data.StatusPurgeLayers : StatusPurgeLayers.One,
-            Polarity = Enum.IsDefined(data.StatusPurgePolarity) ? data.StatusPurgePolarity : StatusPurgePolarity.Negative
+            StatusPurgeTarget.Enemies => data.StatusPurgeEnemies ??= new(),
+            StatusPurgeTarget.Allies => data.StatusPurgeAllies ??= new(),
+            _ => data.StatusPurgeEveryone ??= new()
         };
     }
+    internal static StatusPurgeRule[] CaptureAll(Scp294Config data) => Enum.GetValues<StatusPurgeTarget>()
+        .Select(target => CaptureGroup(data, target)).ToArray();
+    private static StatusPurgeRule CaptureGroup(Scp294Config data, StatusPurgeTarget target)
+    {
+        var group = Options(data, target);
+        bool valid = ValidInterval(group.Interval);
+        return new StatusPurgeRule
+        {
+            Enabled = data.EverywhereMode && group.Enabled && valid,
+            Interval = valid ? int.Parse(group.Interval, CultureInfo.InvariantCulture) : 1,
+            Target = target,
+            Selection = Enum.IsDefined(group.Selection) ? group.Selection : StatusPurgeSelection.All,
+            Layers = Enum.IsDefined(group.Layers) ? group.Layers : StatusPurgeLayers.One,
+            Polarity = Enum.IsDefined(group.Polarity) ? group.Polarity : StatusPurgePolarity.Negative
+        };
+    }
+    internal static IReadOnlyList<StatusPurgeRule> SavedRules(CrazyPotionRunSave saved) =>
+        saved.StatusPurges ?? [saved.StatusPurge ?? new StatusPurgeRule()];
     internal static bool Includes(StatusPurgeTarget target, CombatSide side) => target switch
     {
         StatusPurgeTarget.Enemies => side == CombatSide.Enemy,
@@ -58,17 +86,24 @@ internal static class Scp294StatusPurge
         StatusPurgeLayers.All => layers,
         _ => 1L
     });
-    internal static bool Matches(PowerModel power, StatusPurgePolarity polarity) => power.TypeForCurrentAmount ==
-        (polarity == StatusPurgePolarity.Positive ? PowerType.Buff : PowerType.Debuff);
+    internal static bool Matches(PowerModel power, StatusPurgePolarity polarity) => polarity switch
+    {
+        StatusPurgePolarity.Positive => power.TypeForCurrentAmount == PowerType.Buff,
+        StatusPurgePolarity.Negative => power.TypeForCurrentAmount == PowerType.Debuff,
+        StatusPurgePolarity.All => power.TypeForCurrentAmount is PowerType.Buff or PowerType.Debuff,
+        _ => false
+    };
 
     internal static async Task AfterRound(CombatState combat)
     {
-        var rule = Scp294ChaosRules.For(combat.RunState).StatusPurge ?? new StatusPurgeRule();
-        if (!rule.Enabled || rule.Interval < 1 || combat.RoundNumber < 1 || combat.RoundNumber % rule.Interval != 0) return;
         var stamp = Rounds.GetValue(combat, _ => new RoundStamp());
-        if (stamp.LastRound >= combat.RoundNumber) return;
-        stamp.LastRound = combat.RoundNumber;
-        await Apply(combat, rule);
+        foreach (var rule in SavedRules(Scp294ChaosRules.For(combat.RunState)))
+        {
+            if (!rule.Enabled || rule.Interval < 1 || combat.RoundNumber < 1 || combat.RoundNumber % rule.Interval != 0) continue;
+            if (stamp.LastRounds.TryGetValue(rule.Target, out int last) && last >= combat.RoundNumber) continue;
+            stamp.LastRounds[rule.Target] = combat.RoundNumber;
+            await Apply(combat, rule);
+        }
     }
 
     internal static async Task Apply(CombatState combat, StatusPurgeRule rule)
@@ -81,7 +116,7 @@ internal static class Scp294StatusPurge
                 .OrderBy(p => p.Id.Category, StringComparer.Ordinal).ThenBy(p => p.Id.Entry, StringComparer.Ordinal).ToArray();
             if (rule.Selection == StatusPurgeSelection.Single && powers.Length > 0)
             {
-                string key = $"status-purge:{combat.RunState.CurrentActIndex}:{combat.RunState.CurrentMapCoord}:{combat.RoundNumber}:{creature.CombatId}:{rule.Polarity}";
+                string key = $"status-purge:{combat.RunState.CurrentActIndex}:{combat.RunState.CurrentMapCoord}:{combat.RoundNumber}:{creature.CombatId}:{rule.Target}:{rule.Polarity}";
                 selected.Add(powers[new Rng((ulong)combat.RunState.Rng.Seed, key).NextInt(powers.Length)]);
             }
             else selected.AddRange(powers);

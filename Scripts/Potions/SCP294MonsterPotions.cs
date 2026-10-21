@@ -20,6 +20,7 @@ using OtherworldTreasures.Scripts.Powers;
 
 namespace OtherworldTreasures.Scripts.Potions;
 
+internal enum MonsterPotionMode { Append, Replace, Unchanged }
 internal readonly record struct MonsterBrewEffect(BrewEffect Effect, int Amount, bool TargetsPlayer);
 internal sealed class MonsterBrewPlan
 {
@@ -29,6 +30,7 @@ internal sealed class MonsterBrewPlan
     internal required MonsterBrewEffect[] Effects;
     internal Creature? PlayerTarget;
     internal bool Replaces;
+    internal bool HasPotion = true;
     internal bool IsCombatStart;
     internal int Round;
     private SCP294Potion? _displayPotion;
@@ -65,7 +67,9 @@ internal static class Scp294MonsterPotions
     private static readonly MethodInfo SetIntents = AccessTools.PropertySetter(typeof(MoveState), nameof(MoveState.Intents));
 
     internal static void Reset() { _plans = new(); _started = new(); }
-    internal static bool TryGet(MoveState move, out MonsterBrewPlan plan) => _plans.TryGetValue(move, out plan!);
+    internal static bool TryGet(MoveState move, out MonsterBrewPlan plan) => _plans.TryGetValue(move, out plan!) && plan.HasPotion;
+    internal static MonsterPotionMode IntentModeForRoll(int roll) => roll switch
+    { < 33 => MonsterPotionMode.Append, < 66 => MonsterPotionMode.Replace, _ => MonsterPotionMode.Unchanged };
     internal static Rng RecipeRng(MonsterModel monster, MoveState move, bool combatStart = false)
     {
         var combat = monster.CombatState;
@@ -87,16 +91,17 @@ internal static class Scp294MonsterPotions
         var rng = RecipeRng(monster, move);
         var targets = monster.CombatState.PlayerCreatures.Where(c => c.IsAlive).OrderBy(c => c.Player!.NetId).ToArray();
         var target = targets.Length > 0 ? targets[rng.NextInt(targets.Length)] : null;
-        bool replaces = rng.NextBool();
+        var mode = IntentModeForRoll(rng.NextInt(100));
         var plan = new MonsterBrewPlan
         {
             Monster = monster, Move = move, OriginalIntents = originals, PlayerTarget = target,
-            Replaces = replaces, Round = monster.CombatState.RoundNumber,
-            Effects = Brew(rng, allowPlayerDamage: true, rng.NextInt(0, 7))
+            Replaces = mode == MonsterPotionMode.Replace, HasPotion = mode != MonsterPotionMode.Unchanged, Round = monster.CombatState.RoundNumber,
+            Effects = mode == MonsterPotionMode.Unchanged ? [] : Brew(rng, allowPlayerDamage: true, rng.NextInt(0, 7))
         };
         _plans.Remove(move);
         _plans.Add(move, plan);
-        if (plan.Replaces) SetIntents.Invoke(move, [new AbstractIntent[] { new Scp294MonsterPotionIntent(plan) }]);
+        if (!plan.HasPotion) SetIntents.Invoke(move, [originals]);
+        else if (plan.Replaces) SetIntents.Invoke(move, [new AbstractIntent[] { new Scp294MonsterPotionIntent(plan) }]);
         else SetIntents.Invoke(move, [originals.Append(new Scp294MonsterPotionIntent(plan)).ToArray()]);
     }
 
