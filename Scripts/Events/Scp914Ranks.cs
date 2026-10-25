@@ -66,10 +66,10 @@ internal static class Scp914Ranks
         {
             return Destroyed;
         }
-        int target = index + delta;
+        long target = (long)index + delta;
         // 阶梯上的 -1 档（诅咒）只用于"投入物本身的档位"，从不作为产出档位：
         // 降级只要落到 0 档以下（含 -1）就损毁；+0 不经过这里，所以 -1 + 0 仍然是诅咒（用户 2026-10-17）。
-        if (target < 0 || Ladder[target] < 0)
+        if (target < 0)
         {
             return Destroyed;
         }
@@ -77,7 +77,7 @@ internal static class Scp914Ranks
         {
             return Overflow;
         }
-        return Ladder[target];
+        return Ladder[(int)target] < 0 ? Destroyed : Ladder[(int)target];
     }
 
     internal static bool IsDestroyed(int rank) => rank == Destroyed;
