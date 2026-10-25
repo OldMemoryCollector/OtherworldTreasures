@@ -47,7 +47,7 @@
     </Reference>
 
     <!-- RitsuLib NuGet包 -->
-    <PackageReference Include="STS2.RitsuLib" Version="0.6.7" />
+    <PackageReference Include="STS2.RitsuLib" Version="0.6.10" />
   </ItemGroup>
 
   <!-- 构建后自动复制dll、pdb、json到mods文件夹 -->
