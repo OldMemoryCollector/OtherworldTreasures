@@ -41,8 +41,15 @@ public sealed class EnchantingTable : ModRelicTemplate, IModRightClickableRelic,
     private int _savedTotalExperience;
     private string _temporaryDeckIndexes = "[]";
     private bool _preserveRestSiteChoices;
-    private readonly HashSet<Creature> _awardedThisCombat = new();
-    private readonly Dictionary<Creature, int> _combatOriginalMaxHp = new();
+    private HashSet<Creature> _awardedThisCombat = new();
+    private Dictionary<Creature, int> _combatOriginalMaxHp = new();
+
+    protected override void DeepCloneFields()
+    {
+        base.DeepCloneFields();
+        _awardedThisCombat = new(_awardedThisCombat);
+        _combatOriginalMaxHp = new(_combatOriginalMaxHp);
+    }
 
     [SavedProperty] public int SavedTotalExperience { get => _savedTotalExperience; set { AssertMutable(); _savedTotalExperience = Math.Max(0, value); RefreshUi(); } }
     [SavedProperty] public string TemporaryDeckIndexes { get => _temporaryDeckIndexes; set { AssertMutable(); _temporaryDeckIndexes = string.IsNullOrWhiteSpace(value) ? "[]" : value; } }

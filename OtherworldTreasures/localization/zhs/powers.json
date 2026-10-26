@@ -78,7 +78,7 @@
   "OTHERWORLD_TREASURES_POWER_SCP294_THIS_TURN.title": "本回合的强化",
   "OTHERWORLD_TREASURES_POWER_SCP294_THIS_TURN.description": "对方回合结束时，未消耗的对应强化层数消失。",
   "OTHERWORLD_TREASURES_POWER_ENCHANT_TABLE_THORNS.title": "荆棘",
-  "OTHERWORLD_TREASURES_POWER_ENCHANT_TABLE_THORNS.description": "受到攻击时，对攻击者造成等同于层数的伤害；本回合结束时消失。",
+  "OTHERWORLD_TREASURES_POWER_ENCHANT_TABLE_THORNS.description": "受到攻击时，对攻击者造成等同于层数的伤害；敌方回合结束时消失。",
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.title": "金属化",
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.description": "回合结束时，获得[blue]{Amount}[/blue]点[gold]格挡[/gold]。",
   "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.title": "圣骑士护盾",

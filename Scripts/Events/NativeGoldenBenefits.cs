@@ -14,7 +14,7 @@ internal static class NativeGoldenBenefits
         // apply/remove behavior, so they are kept as explicit model exceptions.
         MeatOnTheBone or EternalFeather or BookRepairKnife or BurningBlood or BlackBlood or
             BloodVial or BookOfFiveRings or FakeBloodVial or LizardTail or
-            MealTicket or Pantograph or Planisphere or RegalPillow or TeaOfDiscourtesy => ["Heal"],
+            MealTicket or Pantograph or Planisphere or RegalPillow => ["Heal"],
         Pendulum or PollinousCore or BagOfPreparation or BigHat or CentennialPuzzle or Fiddle or
             GamePiece or PaelsBlood or Pocketwatch or PowerCell or RingOfTheDrake or RingOfTheSnake or
             SneckoEye or JossPaper or FuneraryMask or OrangeDough => ["Cards"],

@@ -16,5 +16,5 @@
   "OTHERWORLD_TREASURES_ENCHANTMENT_LOOTING.title": "ドロップ増加", "OTHERWORLD_TREASURES_ENCHANTMENT_LOOTING.description": "このカードで敵を倒すと、[blue]12[/blue]ゴールドを得る。",
   "OTHERWORLD_TREASURES_ENCHANTMENT_EFFICIENCY.title": "効率化", "OTHERWORLD_TREASURES_ENCHANTMENT_EFFICIENCY.description": "コストが[blue]1[/blue]減少する。最低[blue]0[/blue]。",
   "OTHERWORLD_TREASURES_ENCHANTMENT_PROTECTION.title": "保護", "OTHERWORLD_TREASURES_ENCHANTMENT_PROTECTION.description": "[gold]ブロック[/gold]を追加で[blue]6[/blue]得る。",
-  "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.title": "トゲ", "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.description": "使用時、このターン[blue]5[/blue]の[gold]トゲ[/gold]を得る。"
+  "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.title": "トゲ", "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.description": "使用時、敵ターン終了時まで[blue]5[/blue]の[gold]トゲ[/gold]を得る。"
 }

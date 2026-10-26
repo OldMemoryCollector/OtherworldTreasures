@@ -264,8 +264,8 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
             s_seedsDescriptor = new RitsuLibManagedNetActionDescriptor<byte>(
                 Entry.ModId,
                 "daves_seeds",
-                static _ => new byte[1],
-                static _ => (byte)0,
+                static phase => new[] { phase },
+                static data => data.Length == 1 && data[0] <= 1 ? data[0] : throw new ArgumentException("Invalid seeds phase"),
                 ExecuteSeedsAsync,
                 GameActionType.CombatPlayPhaseOnly);
             RitsuLibManagedNetActions.Register(s_seedsDescriptor);
@@ -289,6 +289,9 @@ public class DavesSeeds : ModRelicTemplate, IModRightClickableRelic
             }
 
             var phase = context.Message;
+            // Recheck after earlier queued actions finish.
+            if (phase == 0 && relic.AlreadySummoned ||
+                phase == 1 && (!relic.AlreadySummoned || relic.AlreadyGotGrowthCard)) return;
             var index = phase == 0
                 ? await relic.ChooseSummonIndex(context.PlayerChoiceContext)
                 : await relic.ChooseGrowthIndex(context.PlayerChoiceContext);

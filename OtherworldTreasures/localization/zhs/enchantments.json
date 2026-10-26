@@ -30,5 +30,5 @@
   "OTHERWORLD_TREASURES_ENCHANTMENT_PROTECTION.title": "保护",
   "OTHERWORLD_TREASURES_ENCHANTMENT_PROTECTION.description": "额外获得[blue]6[/blue]点[gold]格挡[/gold]。",
   "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.title": "荆棘",
-  "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.description": "打出后，本回合获得[blue]5[/blue]点[gold]荆棘[/gold]。"
+  "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.description": "打出后，获得[blue]5[/blue]点[gold]荆棘[/gold]，持续至敌方回合结束。"
 }

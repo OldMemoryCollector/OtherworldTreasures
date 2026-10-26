@@ -16,5 +16,5 @@
   "OTHERWORLD_TREASURES_ENCHANTMENT_LOOTING.title": "Looting", "OTHERWORLD_TREASURES_ENCHANTMENT_LOOTING.description": "When this card kills an enemy, gain [blue]12[/blue] Gold.",
   "OTHERWORLD_TREASURES_ENCHANTMENT_EFFICIENCY.title": "Efficiency", "OTHERWORLD_TREASURES_ENCHANTMENT_EFFICIENCY.description": "Costs [blue]1[/blue] less, to a minimum of [blue]0[/blue].",
   "OTHERWORLD_TREASURES_ENCHANTMENT_PROTECTION.title": "Protection", "OTHERWORLD_TREASURES_ENCHANTMENT_PROTECTION.description": "Gain [blue]6[/blue] additional [gold]Block[/gold].",
-  "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.title": "Thorns", "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.description": "When played, gain [blue]5[/blue] [gold]Thorns[/gold] this turn."
+  "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.title": "Thorns", "OTHERWORLD_TREASURES_ENCHANTMENT_THORNS.description": "When played, gain [blue]5[/blue] [gold]Thorns[/gold] until the end of the enemy turn."
 }

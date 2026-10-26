@@ -78,7 +78,7 @@
   "OTHERWORLD_TREASURES_POWER_SCP294_THIS_TURN.title": "This-turn Effect",
   "OTHERWORLD_TREASURES_POWER_SCP294_THIS_TURN.description": "Unused charges from this effect expire after the opposing side's turn.",
   "OTHERWORLD_TREASURES_POWER_ENCHANT_TABLE_THORNS.title": "Thorns",
-  "OTHERWORLD_TREASURES_POWER_ENCHANT_TABLE_THORNS.description": "When attacked, damage the attacker for this amount. Expires at the end of this turn.",
+  "OTHERWORLD_TREASURES_POWER_ENCHANT_TABLE_THORNS.description": "When attacked, damage the attacker for this amount. Expires at the end of the enemy turn.",
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.title": "Metallicize",
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.description": "At the end of your turn, gain [blue]{Amount}[/blue] [gold]Block[/gold].",
   "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.title": "Paladin's Shield",

@@ -78,7 +78,7 @@
   "OTHERWORLD_TREASURES_POWER_SCP294_THIS_TURN.title": "このターンの効果",
   "OTHERWORLD_TREASURES_POWER_SCP294_THIS_TURN.description": "相手側のターン終了時に、この効果の未使用分が消える。",
   "OTHERWORLD_TREASURES_POWER_ENCHANT_TABLE_THORNS.title": "トゲ",
-  "OTHERWORLD_TREASURES_POWER_ENCHANT_TABLE_THORNS.description": "攻撃を受けた時、攻撃者にこの数値分のダメージを与える。このターン終了時に消える。",
+  "OTHERWORLD_TREASURES_POWER_ENCHANT_TABLE_THORNS.description": "攻撃を受けた時、攻撃者にこの数値分のダメージを与える。敵ターン終了時に消える。",
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.title": "金属化",
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.description": "ターン終了時、[gold]ブロック[/gold]を[blue]{Amount}[/blue]得る。",
   "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.title": "パラディンのたて",

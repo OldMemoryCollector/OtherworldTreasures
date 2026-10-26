@@ -16,6 +16,9 @@ namespace OtherworldTreasures.Scripts.Powers;
 [RegisterPower]
 public sealed class EnchantTableThornsPower : ModPowerTemplate
 {
+    public override PowerAssetProfile AssetProfile => new(
+        IconPath: "res://images/atlases/power_atlas.sprites/thorns_power.tres",
+        BigIconPath: "res://images/powers/thorns_power.png");
     public override PowerType Type => PowerType.Buff;
     public override PowerStackType StackType => PowerStackType.Counter;
     public override LocString Title => new("powers", "OTHERWORLD_TREASURES_POWER_ENCHANT_TABLE_THORNS.title");
@@ -27,6 +30,6 @@ public sealed class EnchantTableThornsPower : ModPowerTemplate
     }
     public override async Task AfterSideTurnEnd(PlayerChoiceContext context, CombatSide side, IEnumerable<Creature> participants)
     {
-        if (side == CombatSide.Player && Owner.IsPlayer) await PowerCmd.Remove(this);
+        if (side != Owner.Side) await PowerCmd.Remove(this);
     }
 }

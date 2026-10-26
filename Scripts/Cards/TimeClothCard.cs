@@ -130,7 +130,7 @@ public class TimeClothCard : ModCardTemplate, IDerivedCard
         switch (targetNode)
         {
             case NCreature creatureNode when creatureNode.Entity?.CombatId is uint combatId:
-                payload = new ClothPayload(isRewind, combatId, 0, 0);
+                payload = new ClothPayload(isRewind, combatId, 0, -1);
                 break;
             case NRelicInventoryHolder holder:
                 var relic = holder.Relic?.Model;
@@ -209,7 +209,9 @@ public class TimeClothCard : ModCardTemplate, IDerivedCard
             }
             var msg = context.Message;
 
-            if (msg.CombatId != 0)
+            // CombatId zero is valid (including the local player).
+            // A negative relic index explicitly identifies a creature target.
+            if (msg.RelicIndex == -1)
             {
                 var creature = player.Creature?.CombatState?.GetCreature(msg.CombatId);
                 if (creature == null)
