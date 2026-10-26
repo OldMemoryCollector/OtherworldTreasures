@@ -15,6 +15,8 @@ namespace OtherworldTreasures.Scripts.Potions;
 public sealed class CrazyPotionRunSave
 {
     public bool Initialized { get; set; }
+    public bool? EverywhereMode { get; set; }
+    public bool? CrazyMode { get; set; }
     public bool NeowRelics { get; set; }
     public bool MonsterPotions { get; set; }
     public bool PotionIntents { get; set; }
@@ -55,14 +57,28 @@ internal static class Scp294ChaosRules
     private static CrazyPotionRunSave Capture() => new()
     {
         Initialized = true,
-        NeowRelics = Scp294Settings.EverywhereMode && Scp294Settings.Data.CrazyNeowRelics,
-        MonsterPotions = Scp294Settings.EverywhereMode && Scp294Settings.Data.CrazyMonsterPotions,
-        PotionIntents = Scp294Settings.EverywhereMode && Scp294Settings.Data.CrazyPotionIntents,
+        EverywhereMode = Scp294Settings.Data.EverywhereMode,
+        CrazyMode = Scp294Settings.Data.CrazyMode,
+        NeowRelics = Scp294Settings.Data.EverywhereMode && Scp294Settings.Data.CrazyNeowRelics,
+        MonsterPotions = Scp294Settings.Data.EverywhereMode && Scp294Settings.Data.CrazyMonsterPotions,
+        PotionIntents = Scp294Settings.Data.EverywhereMode && Scp294Settings.Data.CrazyPotionIntents,
         StatusPurges = Scp294StatusPurge.CaptureAll(Scp294Settings.Data)
     };
 
     private static readonly CrazyPotionRunSave Disabled = new();
     internal static CrazyPotionRunSave For(IRunState run) => run is RunState state ? _slot.Get(state) : Disabled;
+    internal static CrazyPotionRunSave? NetworkRules
+    {
+        get
+        {
+            if (_slot == null || RunManager.Instance == null || RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
+                return null;
+            var run = RunManager.Instance.DebugOnlyGetState();
+            if (run == null) return null;
+            var saved = For(run);
+            return saved.Initialized ? saved : null;
+        }
+    }
     internal static Task WaitReady() => _ready.Task.WaitAsync(TimeSpan.FromSeconds(15));
 
     private static void Start(RunState run)
@@ -77,6 +93,12 @@ internal static class Scp294ChaosRules
             return;
         }
         if (!For(run).Initialized) Store(run, Capture());
+        else if (For(run).EverywhereMode == null || For(run).CrazyMode == null)
+            _slot.Modify(run, data =>
+            {
+                data.EverywhereMode ??= Scp294Settings.Data.EverywhereMode;
+                data.CrazyMode ??= Scp294Settings.Data.CrazyMode;
+            });
         _ready.TrySetResult(true);
         if (RunManager.Instance.NetService.Type == NetGameType.Host)
             Broadcast();
@@ -85,6 +107,8 @@ internal static class Scp294ChaosRules
     private static void Store(RunState run, CrazyPotionRunSave rules) => _slot.Modify(run, data =>
     {
         data.Initialized = true;
+        data.EverywhereMode = rules.EverywhereMode;
+        data.CrazyMode = rules.CrazyMode;
         data.NeowRelics = rules.NeowRelics;
         data.MonsterPotions = rules.MonsterPotions;
         data.PotionIntents = rules.PotionIntents;

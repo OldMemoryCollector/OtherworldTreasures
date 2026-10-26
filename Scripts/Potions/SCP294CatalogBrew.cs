@@ -20,7 +20,7 @@ public sealed partial class SCP294Potion
     internal static IEnumerable<PotionModel> CatalogDrinks()=>ModelDb.AllPotions.Where(p=>p is not SCP294Potion&&p is not DeprecatedPotion&&p.Rarity!=PotionRarity.None&&p.GetType().Namespace?.Contains(".Mocks")!=true).OrderBy(p=>p.Id.Entry,StringComparer.Ordinal);
     internal static IEnumerable<string> CatalogDrinkNames()=>CatalogDrinks().Select(p=>p.Title.GetFormattedText());
     internal static bool IsCatalogBrew(PotionModel potion)=>TryRecipe(potion,out var recipe)&&recipe.NativePotionEntry!=null;
-    internal static string BrewNameOf(PotionModel potion)=>RecipeFor(potion).Name;
+    internal static string BrewNameOf(PotionModel potion)=>DisplayName(RecipeFor(potion));
     internal static string SummaryOf(PotionModel potion)=>potion is SCP294Potion brew?brew.PreviewSummary:
         Scp294InputText.Text("保留原药效，附带随机效果；悬停查看。","Original effect plus random effects. Hover for details.","元の効果にランダム効果を追加。ホバーで詳細。");
     private static string CatalogNameKey(string name)=>NormalizeDrinkName(Regex.Replace(name,@"\[[^\]]*\]","")).ToLowerInvariant().Trim(' ','.','。','!','！','?','？');
@@ -80,7 +80,7 @@ public sealed partial class SCP294Potion
     {
         if(potion.GetType().Assembly==typeof(PotionModel).Assembly)return;
         var method=AccessTools.Method(potion.GetType(),"OnUse");if(method==null||!ExtraCatalogHooks.Add(method))return;
-        new Harmony(Entry.ModId+".scp294.catalog").Patch(method,postfix:new HarmonyMethod(typeof(SCP294CatalogUsePatch),"Postfix"));
+        new Harmony(Entry.ModId+".scp294.catalog").Patch(method,prefix:new HarmonyMethod(typeof(SCP294CatalogUsePatch),"Prefix"),postfix:new HarmonyMethod(typeof(SCP294CatalogUsePatch),"Postfix"),finalizer:new HarmonyMethod(typeof(SCP294CatalogUsePatch),"Finalizer"));
     }
     internal static async Task ApplyCatalogBonus(PotionModel potion,Task original,PlayerChoiceContext context,Creature? target)
     {
@@ -98,8 +98,12 @@ internal static class SCP294CatalogUsePatch
     private static IEnumerable<MethodBase> TargetMethods()=>typeof(PotionModel).Assembly.GetTypes()
         .Where(t=>typeof(PotionModel).IsAssignableFrom(t)&&!t.IsAbstract)
         .Select(t=>AccessTools.DeclaredMethod(t,"OnUse")).Where(m=>m!=null).Cast<MethodBase>();
-    private static void Postfix(PotionModel __instance,PlayerChoiceContext __0,Creature? __1,ref Task __result)
+    private static void Prefix(PotionModel __instance, out IDisposable? __state) =>
+        __state = SCP294Potion.IsCatalogBrew(__instance) ? Scp294PotionSources.BeginCatalog(__instance.Owner.Creature) : null;
+    private static void Finalizer(IDisposable? __state) => __state?.Dispose();
+    private static void Postfix(PotionModel __instance,PlayerChoiceContext __0,Creature? __1,ref Task __result, IDisposable? __state)
     {
+        __state?.Dispose();
         if(SCP294Potion.IsCatalogBrew(__instance))__result=SCP294Potion.ApplyCatalogBonus(__instance,__result,__0,__1);
     }
 }

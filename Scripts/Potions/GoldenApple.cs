@@ -46,7 +46,7 @@ public class GoldenApple : ModPotionTemplate
     protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
     {
         PotionModel.AssertValidForTargetedPotion(target);
-        await PowerCmd.Apply<TemporaryHealthPower>(choiceContext, target, TemporaryHealthGain, target, null);
-        await PowerCmd.Apply<RegenPower>(choiceContext, target, RegenGain, target, null);
+        await Scp294PotionSources.Apply<TemporaryHealthPower>(choiceContext, target, TemporaryHealthGain, target, null);
+        await Scp294PotionSources.Apply<RegenPower>(choiceContext, target, RegenGain, target, null);
     }
 }

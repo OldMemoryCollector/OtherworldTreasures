@@ -44,9 +44,9 @@ public class EnchantedGoldenApple : ModPotionTemplate
     protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
     {
         PotionModel.AssertValidForTargetedPotion(target);
-        await PowerCmd.Apply<TemporaryHealthPower>(choiceContext, target, TemporaryHealthGain, target, null);
-        await PowerCmd.Apply<RegenPower>(choiceContext, target, RegenGain, target, null);
-        await PowerCmd.Apply<AppleResistancePower>(choiceContext, target, 1, target, null);
-        await PowerCmd.Apply<AppleFireResistancePower>(choiceContext, target, 1, target, null);
+        await Scp294PotionSources.Apply<TemporaryHealthPower>(choiceContext, target, TemporaryHealthGain, target, null);
+        await Scp294PotionSources.Apply<RegenPower>(choiceContext, target, RegenGain, target, null);
+        await Scp294PotionSources.Apply<AppleResistancePower>(choiceContext, target, 1, target, null);
+        await Scp294PotionSources.Apply<AppleFireResistancePower>(choiceContext, target, 1, target, null);
     }
 }

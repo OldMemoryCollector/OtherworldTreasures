@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Rooms;
 using OtherworldTreasures.Scripts.Cards;
 
 namespace OtherworldTreasures.Scripts.Monsters;
@@ -35,7 +36,7 @@ public static class MonsterTypeTags
 
     public static bool IsBossBody(Creature creature) =>
         creature.Monster != null && !creature.IsSecondaryEnemy &&
-        creature.Monster.GetType().Name.EndsWith("Boss", StringComparison.Ordinal);
+        creature.CombatState?.Encounter?.RoomType == RoomType.Boss;
 
     private static HashSet<string> Set(string names) =>
         names.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.Ordinal);

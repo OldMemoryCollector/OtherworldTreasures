@@ -77,6 +77,9 @@ public abstract class MustDieCardBase : ModCardTemplate, IMustDieSeriesCard, IDe
         // The native kill command runs death hooks, loot, and combat bookkeeping,
         // and force bypasses death-prevention / damage-cap powers.
         await CreatureCmd.Kill(target, force: true);
+        // Execution happens after the ordinary damage hook has already completed.
+        if (Enchantment is OtherworldTreasures.Scripts.Enchantments.Looting looting)
+            await looting.RewardCardKill(target);
     }
 }
 

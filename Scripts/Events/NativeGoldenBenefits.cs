@@ -31,7 +31,7 @@ internal static class NativeGoldenBenefits
             SturdyClamp or TheAbacus or ToughBandages or TuningFork => ["Block"],
         // Gold is the payment cost (LoseGold); only Energy is a positive yield.
         SealOfGold => ["Energy"],
-        IntimidatingHelmet => ["Block", "Energy"],
+        IntimidatingHelmet => ["Block"],
         BoomingConch or GremlinHorn => ["Cards", "Energy"],
         ArtOfWar or BlessedAntler or BloodSoakedRose or Candelabra or Chandelier or
             Ectoplasm or FakeHappyFlower or FakeVenerableTeaSet or HappyFlower or

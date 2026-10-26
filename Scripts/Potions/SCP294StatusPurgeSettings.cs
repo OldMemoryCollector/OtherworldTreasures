@@ -43,8 +43,8 @@ internal static partial class Scp294Settings
               StatusPurgeTarget.Allies => Text("我方状态清除", "Ally status removal", "味方の状態解除"),
               _ => Text("全体状态清除", "Everyone status removal", "全体の状態解除") })
                 .WithDescription(target == StatusPurgeTarget.Everyone
-                    ? Text("独立检查回合间隔；与敌方、我方规则重叠时分别执行。开局生效。", "Independent interval; overlaps with the enemy and ally rules apply separately. Applies to new runs.", "間隔は独立。敵側・味方の設定と重なる場合はそれぞれ適用。新しいランに適用。")
-                    : Text("每X个完整回合结束时清除；单项随机一种，一半向上取整。开局生效。", "Remove after every X complete rounds. Single picks one per creature; half rounds up. Applies to new runs.", "Xラウンド終了ごとに解除。単項目はランダムに1種類、半分は切り上げ。新しいランに適用。"))
+                    ? Text("只清除药水给予的状态。与敌方、我方规则重叠时分别执行。开局生效。", "Only potion-granted statuses are removed. Overlapping enemy and ally rules apply separately. Applies to new runs.", "薬による状態だけを解除。敵側・味方の設定と重なる場合はそれぞれ適用。新しいランに適用。")
+                    : Text("每X个完整回合结束时清除药水给予的状态；单项随机一种，一半向上取整。开局生效。", "Remove potion-granted statuses after every X complete rounds. Single picks one per creature; half rounds up. Applies to new runs.", "Xラウンド終了ごとに薬による状態だけを解除。単項目はランダムに1種類、半分は切り上げ。新しいランに適用。"))
                 .WithEnabledWhen(() => EverywhereMode);
             section.AddToggle("enabled", Text("启用状态清除", "Enable status removal", "状態解除を有効化"),
                 ModSettingsBindings.Global<Scp294Config,bool>(Entry.ModId,Key,d=>Scp294StatusPurge.Options(d,target).Enabled,(d,v)=>Scp294StatusPurge.Options(d,target).Enabled=v));

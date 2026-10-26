@@ -179,9 +179,24 @@ public static class GoldenRelics
         return true;
     }
 
+    // Already-owned pickup rewards need only their new, positive difference.
+    // Keep Enhance pure: unowned output relics receive their full enhanced
+    // pickup effect through native AfterObtained, and previews must grant nothing.
+    public static async Task<bool> EnhanceOwned(RelicModel relic)
+    {
+        if (!relic.IsMutable || relic.Owner is not { } owner ||
+            !owner.Relics.Any(owned => ReferenceEquals(owned, relic))) return false;
+        var pickup = GoldenPickupBenefits.Capture(relic);
+        if (!Enhance(relic)) return false;
+        await GoldenPickupBenefits.GrantDifference(relic, pickup);
+        return true;
+    }
+
     internal static void CopyMark(RelicModel original, RelicModel clone)
     {
-        if (IsGolden(original)) Benefits[clone] = Benefits[original];
+        if (!IsGolden(original)) return;
+        Benefits[clone] = Benefits[original];
+        GoldenPickupBenefits.CopyMark(original, clone);
     }
 
     internal static void Apply(RelicModel relic, DynamicVarSet vars)

@@ -25,8 +25,8 @@ internal static partial class Scp294Settings
     private static ModDataStore? _store;
     private static readonly Scp294Config Defaults = new();
     internal static Scp294Config Data => _store?.IsGlobalInitialized == true ? _store.Get<Scp294Config>(Key) : Defaults;
-    internal static bool CrazyMode => Data.CrazyMode;
-    internal static bool EverywhereMode => Data.EverywhereMode;
+    internal static bool CrazyMode => Scp294ChaosRules.NetworkRules?.CrazyMode ?? Data.CrazyMode;
+    internal static bool EverywhereMode => Scp294ChaosRules.NetworkRules?.EverywhereMode ?? Data.EverywhereMode;
     internal static bool RainbowValues => Data.RainbowValues;
     internal static bool ShowChoiceDetails => Data.ShowChoiceDetails;
 

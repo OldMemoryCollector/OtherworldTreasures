@@ -8,6 +8,8 @@ using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.Models;
 using OtherworldTreasures.Scripts.Cards.Alien;
 using OtherworldTreasures.Scripts.Powers;
+using OtherworldTreasures.Scripts.Potions;
+using MegaCrit.Sts2.Core.Combat;
 using STS2RitsuLib.CardPiles;
 
 namespace OtherworldTreasures.Scripts.Alien;
@@ -26,6 +28,10 @@ internal sealed class TransformSnapshot
 
     // 自身能力快照：能力实例 + 记录时的层数
     private readonly List<(PowerModel Power, int Amount)> _selfPowers = new();
+    private Scp294PotionSources.SourcesSnapshot? _potionSources;
+    private ICombatState? _capturedCombat;
+    private static bool IncludesSnapshotPower(PowerModel power) => power is not (
+        OmnitrixTransformPower or KaiokenPower or KaiokenDoomPower or SpiritBombPower or GoldenApplePower or SCP294ThisTurnAbsorptionPower);
 
     // 玩家战斗内的牌堆（主牌组不在其中）。
     // 注意：变身时"挪进暂存堆"会跳过消耗堆（见 Capture），但还原时仍要连消耗堆一起扫，才能把英雄牌清干净。
@@ -47,6 +53,8 @@ internal sealed class TransformSnapshot
         {
             return snapshot;
         }
+
+        snapshot._capturedCombat = player.Creature.CombatState;
 
         // 1) 牌堆：手牌 / 抽牌 / 弃牌 / 出牌。
         //    **消耗堆不参与**：变身之前就已消耗掉的牌应当一直留在消耗堆里，
@@ -71,9 +79,10 @@ internal sealed class TransformSnapshot
         // 2) 自身能力（正面负面都记；变身后新增的会被移回/移除）
         foreach (var power in player.Creature.Powers.ToList())
         {
-            if (power is KaiokenPower or KaiokenDoomPower or SpiritBombPower or GoldenApplePower) continue;
+            if (!IncludesSnapshotPower(power)) continue;
             snapshot._selfPowers.Add((power, power.Amount));
         }
+        snapshot._potionSources = Scp294PotionSources.CaptureSnapshot(player.Creature, IncludesSnapshotPower);
         Entry.Logger.Info($"[Omnitrix] 快照：牌堆 {snapshot._originalCards.Count} 张，自身能力 {snapshot._selfPowers.Count} 个");
         return snapshot;
     }
@@ -87,7 +96,7 @@ internal sealed class TransformSnapshot
         try
         {
             var combatState = player.PlayerCombatState;
-            if (combatState == null)
+            if (combatState == null || !ReferenceEquals(_capturedCombat, player.Creature.CombatState))
             {
                 return;
             }
@@ -107,7 +116,14 @@ internal sealed class TransformSnapshot
             }
 
             // 3) 自身能力回滚：快照里有的恢复层数，快照里没有的（alien 造成的）移除
-            await RestoreSnapshotPowers(player.Creature, _selfPowers);
+            using (Scp294PotionSources.Suspend())
+            {
+                try { await RestoreSnapshotPowers(player.Creature, _selfPowers); }
+                finally
+                {
+                    if (_potionSources != null) Scp294PotionSources.RestoreSnapshot(player.Creature, _potionSources);
+                }
+            }
 
             Entry.Logger.Info(
                 $"[Omnitrix] 还原：移出英雄牌 {removedAlienCards} 张、残留状态牌 {removedStatusCards} 张，原始牌堆 {originals.Count} 张塞回抽牌堆");
@@ -121,6 +137,7 @@ internal sealed class TransformSnapshot
         {
             _originalCards.Clear();
             _selfPowers.Clear();
+            _potionSources = null; _capturedCombat = null;
         }
     }
 
@@ -133,7 +150,7 @@ internal sealed class TransformSnapshot
         foreach (var power in creature.Powers.ToList())
         {
             // 变身计时器需要留到下一回合结算冷却，不能被快照还原提前移除。
-            if (power is OmnitrixTransformPower or KaiokenPower or KaiokenDoomPower or SpiritBombPower or GoldenApplePower) continue;
+            if (!IncludesSnapshotPower(power)) continue;
             if (snapshotAmounts.TryGetValue(power, out int amount))
             {
                 if (power.Amount != amount) power.SetAmount(amount, silent: true);

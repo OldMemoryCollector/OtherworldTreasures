@@ -10,11 +10,12 @@ public sealed partial class SCP294Potion
         var rng = Scp294MonsterPotions.RecipeRng(plan.Monster, plan.Move, combatStart: plan.IsCombatStart);
         var ingredients = plan.Effects.Select(e => new BrewIngredient(e.Effect, e.Amount,
             e.TargetsPlayer ? BrewRecipient.SelectedEnemy : BrewRecipient.Self)).ToArray();
-        string name = ingredients.Length == 0 ? LocText("defaultName") : MakeName(rng, ingredients);
+        string name = ingredients.Length == 0 ? CanonicalNameText("defaultName") : MakeName(rng, ingredients);
         string bottle = ChooseNativeEntry(rng, NativeBottleEntries);
         var recipe = new BrewRecipe(name, ingredients, bottle,
             LiquidEntries: ChooseLiquidEntries(rng, bottle, ingredients.Length),
-            VisualStyle: RollVisualStyle(rng), VisualSeed: rng.NextInt(int.MaxValue));
+            VisualStyle: RollVisualStyle(rng), VisualSeed: rng.NextInt(int.MaxValue),
+            NameKey: ingredients.Length == 0 ? "defaultName" : RandomBrewNameKey);
         var potion = (SCP294Potion)ModelDb.Potion<SCP294Potion>().ToMutable();
         AttachRecipe(potion, recipe);
         return potion;

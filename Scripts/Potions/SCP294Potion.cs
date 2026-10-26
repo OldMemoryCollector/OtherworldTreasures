@@ -127,7 +127,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
             potion => potion is SCP294Potion ? NativeIcon(potion)?.OutlinePath : null);
     }
 
-    internal string BrewName => RecipeFor(this).Name;
+    internal string BrewName => DisplayName(RecipeFor(this));
 
     internal string PreviewSummary
     {
@@ -159,11 +159,11 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         var special = RollSpecialPreset(rng);
         if (special is not null)
         {
-            var specialRecipe = new BrewRecipe(LocText("special." + special.NameKey),
+            var specialRecipe = new BrewRecipe(CanonicalNameText("special." + special.NameKey),
                 special.Ingredients.Select(i => Scp294Settings.CrazyMode || i.Effect == BrewEffect.Doom
                     ? i with { Amount = RollAmount(rng, i.Effect, (int)concentration, i.Recipient) } : i).ToArray(), special.IconEntry,
                 LiquidEntries: ChooseLiquidEntries(rng, special.IconEntry, special.Ingredients.Count),
-                VisualStyle: RollVisualStyle(rng), VisualSeed: rng.NextInt(int.MaxValue));
+                VisualStyle: RollVisualStyle(rng), VisualSeed: rng.NextInt(int.MaxValue), NameKey: "special." + special.NameKey);
             var specialPotion = (SCP294Potion)ModelDb.Potion<SCP294Potion>().ToMutable();
             Recipes.Add(specialPotion, specialRecipe);
             return specialPotion;
@@ -191,7 +191,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         var bottleEntry = ChooseNativeEntry(rng, NativeBottleEntries);
         var recipe = new BrewRecipe(name, ingredients, bottleEntry,
             LiquidEntries: ChooseLiquidEntries(rng, bottleEntry, ingredients.Count),
-            VisualStyle: RollVisualStyle(rng), VisualSeed: rng.NextInt(int.MaxValue));
+            VisualStyle: RollVisualStyle(rng), VisualSeed: rng.NextInt(int.MaxValue), NameKey: RandomBrewNameKey);
         var potion = (SCP294Potion)ModelDb.Potion<SCP294Potion>().ToMutable();
         Recipes.Add(potion, recipe);
         return potion;
@@ -295,23 +295,11 @@ public sealed partial class SCP294Potion : ModPotionTemplate
     private static BrewRecipe RecipeFor(PotionModel potion) =>
         Recipes.TryGetValue(potion, out var recipe)
             ? recipe
-            : new BrewRecipe(LocText("defaultName"),
-                [new BrewIngredient(BrewEffect.Strength, 1, BrewRecipient.Self)], "strength_potion");
+            : new BrewRecipe(CanonicalNameText("defaultName"),
+                [new BrewIngredient(BrewEffect.Strength, 1, BrewRecipient.Self)], "strength_potion", NameKey: "defaultName");
 
     private static string MakeName(Rng rng, IReadOnlyList<BrewIngredient> ingredients)
     {
-        if (LocManager.Instance.Language is "eng" or "jpn")
-        {
-            string[] words = ingredients.Select(item => EffectName(item.Effect)).ToArray();
-            for (int i = words.Length - 1; i > 0; --i)
-            {
-                int j = rng.NextInt(i + 1);
-                (words[i], words[j]) = (words[j], words[i]);
-            }
-            string stem = string.Concat(words.Select(word => word[..1])).ToUpperInvariant();
-            return stem + (LocManager.Instance.Language == "jpn" ? "調合薬" : " Brew");
-        }
-
         string[] chars = ingredients.Select(item => EffectGlyph(item.Effect)
             [rng.NextInt(EffectGlyph(item.Effect).Length)].ToString()).ToArray();
         for (int i = chars.Length - 1; i > 0; --i)
@@ -490,7 +478,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
                     ValueProp.Unpowered, Owner.Creature, null, null);
                 break;
             case BrewEffect.Regen:
-                await PowerCmd.Apply<RegenPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<RegenPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Strength:
                 await ApplyTimedStrength(context, creature, amount, ingredient.Timing);
@@ -520,7 +508,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
                 await CreatureCmd.GainBlock(creature, amount, ValueProp.Unpowered, null);
                 break;
             case BrewEffect.NextTurnBlock:
-                await PowerCmd.Apply<BlockNextTurnPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<BlockNextTurnPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.TripleBlock:
                 await CreatureCmd.GainBlock(creature, creature.Block * 2, ValueProp.Unpowered, null);
@@ -529,55 +517,55 @@ public sealed partial class SCP294Potion : ModPotionTemplate
                 await CreatureCmd.GainMaxHp(creature, amount);
                 break;
             case BrewEffect.Thorns:
-                await PowerCmd.Apply<ThornsPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<ThornsPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Plating:
-                await PowerCmd.Apply<PlatingPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<PlatingPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Ritual:
-                await PowerCmd.Apply<RitualPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<RitualPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Focus:
-                await PowerCmd.Apply<FocusPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<FocusPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Doom:
-                await PowerCmd.Apply<DoomPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<DoomPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Shrink:
-                await PowerCmd.Apply<ShrinkPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<ShrinkPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Demise:
-                await PowerCmd.Apply<DemisePower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<DemisePower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.DuplicateNextCard:
-                await PowerCmd.Apply<DuplicationPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<DuplicationPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.TripleNextAttack:
-                await PowerCmd.Apply<GigantificationPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<GigantificationPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.ExtraTurn:
-                await PowerCmd.Apply<AmbergrisPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<AmbergrisPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Weak:
-                await PowerCmd.Apply<WeakPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<WeakPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Vulnerable:
-                await PowerCmd.Apply<VulnerablePower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<VulnerablePower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Frail:
-                await PowerCmd.Apply<FrailPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<FrailPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Poison:
-                await PowerCmd.Apply<PoisonPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<PoisonPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.DrawCards when creature.Player is { } player:
                 await CardPileCmd.Draw(context, amount, player);
                 break;
             case BrewEffect.NextTurnDraw:
-                await PowerCmd.Apply<DrawCardsNextTurnPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<DrawCardsNextTurnPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Clarity:
-                await PowerCmd.Apply<ClarityPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<ClarityPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.GainEnergy when creature.Player is { } player:
                 await PlayerCmd.GainEnergy(amount, player);
@@ -594,10 +582,10 @@ public sealed partial class SCP294Potion : ModPotionTemplate
                 for (int index = 0; index < orbCount; index++) await OrbCmd.Channel<DarkOrb>(context, darkPlayer);
                 break;
             case BrewEffect.NextTurnEnergy:
-                await PowerCmd.Apply<EnergyNextTurnPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<EnergyNextTurnPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Radiance:
-                await PowerCmd.Apply<RadiancePower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<RadiancePower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.ShuffleHandIntoDraw when creature.Player is { } shufflePlayer:
                 await CardPileCmd.Add(PileType.Hand.GetPile(shufflePlayer).Cards.ToArray(), PileType.Draw);
@@ -629,7 +617,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
                     .FirstOrDefault()?.SetToFreeThisCombat();
                 break;
             case BrewEffect.RetainHand:
-                await PowerCmd.Apply<RetainHandPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<RetainHandPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.RandomizeHandCosts when creature.Player is { } randomCostPlayer:
                 foreach (var card in PileType.Hand.GetPile(randomCostPlayer).Cards.ToArray())
@@ -708,16 +696,16 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         switch (timing)
         {
             case BrewTiming.NextTurn:
-                await PowerCmd.Apply<SCP294NextTurnStrengthPower>(context, creature, signedAmount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<SCP294NextTurnStrengthPower>(context, creature, signedAmount, Owner.Creature, null);
                 break;
             case BrewTiming.ThisTurn when signedAmount > 0:
-                await PowerCmd.Apply<SCP294ThisTurnStrengthPower>(context, creature, signedAmount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<SCP294ThisTurnStrengthPower>(context, creature, signedAmount, Owner.Creature, null);
                 break;
             case BrewTiming.ThisTurn:
-                await PowerCmd.Apply<SCP294ThisTurnStrengthDownPower>(context, creature, -signedAmount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<SCP294ThisTurnStrengthDownPower>(context, creature, -signedAmount, Owner.Creature, null);
                 break;
             default:
-                await PowerCmd.Apply<StrengthPower>(context, creature, signedAmount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<StrengthPower>(context, creature, signedAmount, Owner.Creature, null);
                 break;
         }
     }
@@ -727,16 +715,16 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         switch (timing)
         {
             case BrewTiming.NextTurn:
-                await PowerCmd.Apply<SCP294NextTurnDexterityPower>(context, creature, signedAmount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<SCP294NextTurnDexterityPower>(context, creature, signedAmount, Owner.Creature, null);
                 break;
             case BrewTiming.ThisTurn when signedAmount > 0:
-                await PowerCmd.Apply<SCP294ThisTurnDexterityPower>(context, creature, signedAmount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<SCP294ThisTurnDexterityPower>(context, creature, signedAmount, Owner.Creature, null);
                 break;
             case BrewTiming.ThisTurn:
-                await PowerCmd.Apply<SCP294ThisTurnDexterityDownPower>(context, creature, -signedAmount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<SCP294ThisTurnDexterityDownPower>(context, creature, -signedAmount, Owner.Creature, null);
                 break;
             default:
-                await PowerCmd.Apply<DexterityPower>(context, creature, signedAmount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<DexterityPower>(context, creature, signedAmount, Owner.Creature, null);
                 break;
         }
     }
@@ -749,15 +737,14 @@ public sealed partial class SCP294Potion : ModPotionTemplate
     {
         if (timing == BrewTiming.NextTurn)
         {
-            await PowerCmd.Apply<TNextTurn>(context, creature, amount, Owner.Creature, null);
+            await Scp294PotionSources.Apply<TNextTurn>(context, creature, amount, Owner.Creature, null);
             return;
         }
 
-        int before = creature.GetPower<TNative>()?.Amount ?? 0;
-        await PowerCmd.Apply<TNative>(context, creature, amount, Owner.Creature, null);
-        int granted = Math.Max(0, (creature.GetPower<TNative>()?.Amount ?? 0) - before);
-        if (timing == BrewTiming.ThisTurn && granted > 0)
-            await PowerCmd.Apply<TThisTurn>(context, creature, granted, Owner.Creature, null);
+        if (timing == BrewTiming.ThisTurn)
+            await Scp294PotionSources.ApplyCharge<TNative, TThisTurn>(context, creature, amount, Owner.Creature, null);
+        else
+            await Scp294PotionSources.Apply<TNative>(context, creature, amount, Owner.Creature, null);
     }
 
     private async Task AddChosenGeneratedCard(PlayerChoiceContext context, Player player, CardType type)
@@ -1047,7 +1034,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
     internal static LocString MakeTitle(PotionModel potion)
     {
         var title = new LocString("potions", "OTHERWORLD_TREASURES_POTION_SCP294.title");
-        title.Add("Name", RecipeFor(potion).Name);
+        title.Add("Name", DisplayName(RecipeFor(potion)));
         return title;
     }
 
@@ -1388,7 +1375,8 @@ internal enum BrewVisualStyle { Waves, Gradient, Marble, SoftTint }
 
 internal sealed record BrewRecipe(string Name, IReadOnlyList<BrewIngredient> Ingredients, string IconEntry,
     string? LiquidEntry = null, IReadOnlyList<string>? LiquidEntries = null,
-    BrewVisualStyle VisualStyle = BrewVisualStyle.Waves, int? VisualSeed = null, string? NativePotionEntry = null)
+    BrewVisualStyle VisualStyle = BrewVisualStyle.Waves, int? VisualSeed = null, string? NativePotionEntry = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? NameKey = null)
 {
     public IReadOnlyList<BrewIngredient> Ingredients { get; init; } = LimitDoom(Ingredients);
     private static IReadOnlyList<BrewIngredient> LimitDoom(IReadOnlyList<BrewIngredient> ingredients)

@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Models.Potions;
 using STS2RitsuLib.Interop.AutoRegistration;
+using OtherworldTreasures.Scripts.Potions;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace OtherworldTreasures.Scripts.Powers;
@@ -44,7 +45,7 @@ public sealed class SCP294NextTurnStrengthPower : SCP294NextTurnPower
 {
     protected override string IconName => "strength";
     protected override Task ApplyStoredAmount(PlayerChoiceContext context, Creature target, decimal amount) =>
-        PowerCmd.Apply<StrengthPower>(context, target, amount, target, null);
+        Scp294PotionSources.Apply<StrengthPower>(context, target, amount, target, null);
 }
 
 [RegisterPower]
@@ -52,7 +53,7 @@ public sealed class SCP294NextTurnDexterityPower : SCP294NextTurnPower
 {
     protected override string IconName => "dexterity";
     protected override Task ApplyStoredAmount(PlayerChoiceContext context, Creature target, decimal amount) =>
-        PowerCmd.Apply<DexterityPower>(context, target, amount, target, null);
+        Scp294PotionSources.Apply<DexterityPower>(context, target, amount, target, null);
 }
 
 [RegisterPower]
@@ -60,7 +61,7 @@ public sealed class SCP294NextTurnBufferPower : SCP294NextTurnPower
 {
     protected override string IconName => "buffer";
     protected override Task ApplyStoredAmount(PlayerChoiceContext context, Creature target, decimal amount) =>
-        PowerCmd.Apply<BufferPower>(context, target, amount, target, null);
+        Scp294PotionSources.Apply<BufferPower>(context, target, amount, target, null);
 }
 
 [RegisterPower]
@@ -68,7 +69,7 @@ public sealed class SCP294NextTurnArtifactPower : SCP294NextTurnPower
 {
     protected override string IconName => "artifact";
     protected override Task ApplyStoredAmount(PlayerChoiceContext context, Creature target, decimal amount) =>
-        PowerCmd.Apply<ArtifactPower>(context, target, amount, target, null);
+        Scp294PotionSources.Apply<ArtifactPower>(context, target, amount, target, null);
 }
 
 [RegisterPower]
@@ -76,7 +77,7 @@ public sealed class SCP294NextTurnIntangiblePower : SCP294NextTurnPower
 {
     protected override string IconName => "intangible";
     protected override Task ApplyStoredAmount(PlayerChoiceContext context, Creature target, decimal amount) =>
-        PowerCmd.Apply<IntangiblePower>(context, target, amount, target, null);
+        Scp294PotionSources.Apply<IntangiblePower>(context, target, amount, target, null);
 }
 
 [RegisterPower]
@@ -87,7 +88,7 @@ public sealed class SCP294NextTurnAbsorptionPower : SCP294NextTurnPower
         IconPath: "res://OtherworldTreasures/images/powers/temporary_health.png",
         BigIconPath: "res://OtherworldTreasures/images/powers/temporary_health.png");
     protected override Task ApplyStoredAmount(PlayerChoiceContext context, Creature target, decimal amount) =>
-        PowerCmd.Apply<TemporaryHealthPower>(context, target, amount, target, null);
+        Scp294PotionSources.Apply<TemporaryHealthPower>(context, target, amount, target, null);
 }
 
 public abstract class SCP294TemporaryStrengthPower : TemporaryStrengthPower
@@ -138,8 +139,8 @@ public abstract class SCP294ThisTurnChargePower : ModPowerTemplate
         // Defensive charges must remain through the opposing side's action.
         if (_expired || side == Owner.Side) return;
         _expired = true;
-        await Expire(context, Owner, Amount);
-        await PowerCmd.Remove(this);
+        if (Scp294PotionSources.IsTrackedCharge(this)) await Scp294PotionSources.ExpireCharge(this);
+        else { await Expire(context, Owner, Amount); await PowerCmd.Remove(this); }
     }
 }
 

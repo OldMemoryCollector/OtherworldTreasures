@@ -117,7 +117,7 @@ public sealed partial class SCP294Potion
             case BrewEffect.HealExtraTurn:
                 await CreatureCmd.Heal(creature, creature.MaxHp * amount / 100m);
                 if (CombatManager.Instance.IsInProgress)
-                    await PowerCmd.Apply<AmbergrisPower>(context, creature, 1, Owner.Creature, null);
+                    await Scp294PotionSources.Apply<AmbergrisPower>(context, creature, 1, Owner.Creature, null);
                 return true;
             case BrewEffect.ExhaustHandDraw:
                 if (creature.Player is not { } glowPlayer) return true;

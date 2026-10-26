@@ -101,7 +101,7 @@ public sealed class GoldenAxe : OtherworldEvent
     {
         if (_relic != null && Owner.Relics.Contains(_relic))
         {
-            if (choice == "HONEST" && (_silver ? SilverRelics.Enhance(_relic) : GoldenRelics.Enhance(_relic)))
+            if (choice == "HONEST" && (_silver ? SilverRelics.Enhance(_relic) : await GoldenRelics.EnhanceOwned(_relic)))
             {
                 _relic.Flash();
                 Entry.Logger.Info($"[GoldenAxe] Enhanced owned relic {_relic.Id}");

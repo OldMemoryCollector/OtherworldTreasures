@@ -41,7 +41,12 @@ public abstract class SlayerEnchantmentBase : OtherworldEnchantmentBase
 [RegisterEnchantment]
 public sealed class FireAspect : OtherworldEnchantmentBase
 {
-    private readonly HashSet<Creature> _affectedThisPlay = new();
+    private HashSet<Creature> _affectedThisPlay = new();
+    protected override void DeepCloneFields()
+    {
+        base.DeepCloneFields();
+        _affectedThisPlay = new();
+    }
     public override bool CanEnchant(CardModel card) => base.CanEnchant(card) && card.Type == CardType.Attack;
     public override async Task AfterDamageGiven(PlayerChoiceContext context, Creature? dealer, DamageResult result, ValueProp props, Creature target, CardModel? cardSource)
     {
@@ -59,7 +64,13 @@ public sealed class FireAspect : OtherworldEnchantmentBase
 public sealed class SweepingEdge : OtherworldEnchantmentBase
 {
     private decimal _totalDamage;
-    private readonly HashSet<Creature> _primaryTargets = new();
+    private HashSet<Creature> _primaryTargets = new();
+    protected override void DeepCloneFields()
+    {
+        base.DeepCloneFields();
+        _totalDamage = 0;
+        _primaryTargets = new();
+    }
     public override bool CanEnchant(CardModel card) => base.CanEnchant(card) && card.Type == CardType.Attack && card.TargetType.IsSingleTarget();
     public override async Task AfterDamageGiven(PlayerChoiceContext context, Creature? dealer, DamageResult result, ValueProp props, Creature target, CardModel? cardSource)
     {
@@ -88,13 +99,20 @@ public sealed class SweepingEdge : OtherworldEnchantmentBase
 [RegisterEnchantment]
 public sealed class Looting : OtherworldEnchantmentBase
 {
-    private readonly HashSet<Creature> _paidKills = new();
-    public override bool CanEnchant(CardModel card) => base.CanEnchant(card) && card.Type == CardType.Attack;
-    public override Task AfterDamageGiven(PlayerChoiceContext context, Creature? dealer, DamageResult result, ValueProp props, Creature target, CardModel? cardSource)
+    private HashSet<Creature> _paidKills = new();
+    protected override void DeepCloneFields()
     {
-        if (ReferenceEquals(cardSource, Card) && !target.IsAlive && target.Side == CombatSide.Enemy && _paidKills.Add(target))
-            PlayerCmd.GainGold(12, Card!.Owner);
-        return Task.CompletedTask;
+        base.DeepCloneFields();
+        _paidKills = new();
+    }
+    public override bool CanEnchant(CardModel card) => base.CanEnchant(card) && card.Type == CardType.Attack;
+    public override Task AfterDamageGiven(PlayerChoiceContext context, Creature? dealer, DamageResult result, ValueProp props, Creature target, CardModel? cardSource) =>
+        ReferenceEquals(cardSource, Card) ? RewardCardKill(target) : Task.CompletedTask;
+
+    internal async Task RewardCardKill(Creature target)
+    {
+        if (target.IsAlive || target.Side != CombatSide.Enemy || Card == null || !_paidKills.Add(target)) return;
+        await PlayerCmd.GainGold(12, Card.Owner);
     }
     public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay play)
     {

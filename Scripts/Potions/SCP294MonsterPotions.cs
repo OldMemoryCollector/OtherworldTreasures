@@ -130,7 +130,6 @@ internal static class Scp294MonsterPotions
     {
         await Scp294ChaosRules.WaitReady();
         if (monster.Creature.Side != CombatSide.Enemy || !monster.Creature.IsAlive || monster.Creature.CombatState == null || _started.TryGetValue(monster.Creature, out _)) return;
-        Scp294StatusPurge.RememberInnatePowers(monster.Creature);
         var rules = Scp294ChaosRules.For(monster.CombatState.RunState);
         if (!rules.MonsterPotions) return;
         var rng = RecipeRng(monster, monster.NextMove, combatStart: true);
@@ -208,25 +207,25 @@ internal static class Scp294MonsterPotions
             case BrewEffect.Damage: await CreatureCmd.Damage(context, target, n, ValueProp.Unpowered, source, null, null); break;
             case BrewEffect.Block: await CreatureCmd.GainBlock(target, n, ValueProp.Unpowered, null); break;
             case BrewEffect.MaxHp: await CreatureCmd.GainMaxHp(target, n); break;
-            case BrewEffect.Regen: await PowerCmd.Apply<RegenPower>(context, target, n, source, null); break;
-            case BrewEffect.Strength: await PowerCmd.Apply<StrengthPower>(context, target, n, source, null); break;
-            case BrewEffect.StrengthDown: await PowerCmd.Apply<StrengthPower>(context, target, -n, source, null); break;
-            case BrewEffect.Dexterity: await PowerCmd.Apply<DexterityPower>(context, target, n, source, null); break;
-            case BrewEffect.DexterityDown: await PowerCmd.Apply<DexterityPower>(context, target, -n, source, null); break;
-            case BrewEffect.Weak: await PowerCmd.Apply<WeakPower>(context, target, n, source, null); break;
-            case BrewEffect.Vulnerable: await PowerCmd.Apply<VulnerablePower>(context, target, n, source, null); break;
-            case BrewEffect.Frail: await PowerCmd.Apply<FrailPower>(context, target, n, source, null); break;
-            case BrewEffect.Poison: await PowerCmd.Apply<PoisonPower>(context, target, n, source, null); break;
-            case BrewEffect.Absorption: await PowerCmd.Apply<TemporaryHealthPower>(context, target, n, source, null); break;
-            case BrewEffect.Buffer: await PowerCmd.Apply<BufferPower>(context, target, n, source, null); break;
-            case BrewEffect.Artifact: await PowerCmd.Apply<ArtifactPower>(context, target, n, source, null); break;
-            case BrewEffect.Intangible: await PowerCmd.Apply<IntangiblePower>(context, target, n, source, null); break;
-            case BrewEffect.Thorns: await PowerCmd.Apply<ThornsPower>(context, target, n, source, null); break;
-            case BrewEffect.Plating: await PowerCmd.Apply<PlatingPower>(context, target, n, source, null); break;
-            case BrewEffect.Ritual: await PowerCmd.Apply<RitualPower>(context, target, n, source, null); break;
-            case BrewEffect.Doom: await PowerCmd.Apply<DoomPower>(context, target, n, source, null); break;
-            case BrewEffect.Shrink: await PowerCmd.Apply<ShrinkPower>(context, target, n, source, null); break;
-            case BrewEffect.Demise: await PowerCmd.Apply<DemisePower>(context, target, n, source, null); break;
+            case BrewEffect.Regen: await Scp294PotionSources.Apply<RegenPower>(context, target, n, source, null); break;
+            case BrewEffect.Strength: await Scp294PotionSources.Apply<StrengthPower>(context, target, n, source, null); break;
+            case BrewEffect.StrengthDown: await Scp294PotionSources.Apply<StrengthPower>(context, target, -n, source, null); break;
+            case BrewEffect.Dexterity: await Scp294PotionSources.Apply<DexterityPower>(context, target, n, source, null); break;
+            case BrewEffect.DexterityDown: await Scp294PotionSources.Apply<DexterityPower>(context, target, -n, source, null); break;
+            case BrewEffect.Weak: await Scp294PotionSources.Apply<WeakPower>(context, target, n, source, null); break;
+            case BrewEffect.Vulnerable: await Scp294PotionSources.Apply<VulnerablePower>(context, target, n, source, null); break;
+            case BrewEffect.Frail: await Scp294PotionSources.Apply<FrailPower>(context, target, n, source, null); break;
+            case BrewEffect.Poison: await Scp294PotionSources.Apply<PoisonPower>(context, target, n, source, null); break;
+            case BrewEffect.Absorption: await Scp294PotionSources.Apply<TemporaryHealthPower>(context, target, n, source, null); break;
+            case BrewEffect.Buffer: await Scp294PotionSources.Apply<BufferPower>(context, target, n, source, null); break;
+            case BrewEffect.Artifact: await Scp294PotionSources.Apply<ArtifactPower>(context, target, n, source, null); break;
+            case BrewEffect.Intangible: await Scp294PotionSources.Apply<IntangiblePower>(context, target, n, source, null); break;
+            case BrewEffect.Thorns: await Scp294PotionSources.Apply<ThornsPower>(context, target, n, source, null); break;
+            case BrewEffect.Plating: await Scp294PotionSources.Apply<PlatingPower>(context, target, n, source, null); break;
+            case BrewEffect.Ritual: await Scp294PotionSources.Apply<RitualPower>(context, target, n, source, null); break;
+            case BrewEffect.Doom: await Scp294PotionSources.Apply<DoomPower>(context, target, n, source, null); break;
+            case BrewEffect.Shrink: await Scp294PotionSources.Apply<ShrinkPower>(context, target, n, source, null); break;
+            case BrewEffect.Demise: await Scp294PotionSources.Apply<DemisePower>(context, target, n, source, null); break;
         }
     }
 

@@ -88,30 +88,6 @@ internal static class Scp294StatusPurge
         StatusPurgeLayers.All => layers,
         _ => 1L
     });
-    // Shared combat modifiers remain purgeable. Enemy-specific mechanics are protected by default,
-    // including mechanics acquired during a later phase or by a summoned enemy.
-    private static readonly HashSet<Type> SharedStatuses = new()
-    {
-        typeof(StrengthPower), typeof(DexterityPower), typeof(WeakPower), typeof(VulnerablePower),
-        typeof(FrailPower), typeof(PoisonPower), typeof(RegenPower), typeof(TemporaryHealthPower),
-        typeof(BufferPower), typeof(ArtifactPower), typeof(IntangiblePower), typeof(ThornsPower),
-        typeof(PlatingPower), typeof(RitualPower), typeof(DoomPower), typeof(ShrinkPower),
-        typeof(DemisePower), typeof(BarricadePower)
-    };
-    private static readonly ConditionalWeakTable<Creature, HashSet<ModelId>> InnatePowers = new();
-    internal static void RememberInnatePowers(Creature creature)
-    {
-        if (creature.Side != CombatSide.Enemy) return;
-        // Capture once, before opening cocktails. Later calls must not adopt potion buffs as innate.
-        InnatePowers.GetValue(creature, c => c.Powers.Select(p => p.Id).ToHashSet());
-    }
-    internal static bool IsProtectedEnemyPower(PowerModel power)
-    {
-        if (power.Owner.Side != CombatSide.Enemy) return false;
-        if (InnatePowers.TryGetValue(power.Owner, out var innate) && innate.Contains(power.Id)) return true;
-        // Player-applied card debuffs are still removable, including non-shared modifiers.
-        return !SharedStatuses.Contains(power.GetType()) && power.Applier?.Side != CombatSide.Player;
-    }
     internal static bool Matches(PowerModel power, StatusPurgePolarity polarity) => polarity switch
     {
         StatusPurgePolarity.Positive => power.TypeForCurrentAmount == PowerType.Buff,
@@ -135,11 +111,10 @@ internal static class Scp294StatusPurge
     internal static async Task Apply(CombatState combat, StatusPurgeRule rule)
     {
         // Select the same stable snapshot on every peer, before removal hooks can add more powers.
-        var selected = new List<PowerModel>();
+        var selected = new List<Scp294PotionSources.PowerShare>();
         foreach (var creature in combat.Creatures.Where(c => c.IsAlive && Includes(rule.Target, c.Side)).OrderBy(c => c.CombatId))
         {
-            var powers = creature.Powers.Where(p => !IsProtectedEnemyPower(p) && Matches(p, rule.Polarity))
-                .OrderBy(p => p.Id.Category, StringComparer.Ordinal).ThenBy(p => p.Id.Entry, StringComparer.Ordinal).ToArray();
+            var powers = Scp294PotionSources.Candidates(creature, rule.Polarity);
             if (rule.Selection == StatusPurgeSelection.Single && powers.Length > 0)
             {
                 string key = $"status-purge:{combat.RunState.CurrentActIndex}:{combat.RunState.CurrentMapCoord}:{combat.RoundNumber}:{creature.CombatId}:{rule.Target}:{rule.Polarity}";
@@ -150,16 +125,8 @@ internal static class Scp294StatusPurge
         foreach (var power in selected)
         {
             if (CombatManager.Instance.IsEnding) break;
-            if (!power.Owner.IsAlive || !power.Owner.Powers.Contains(power) || IsProtectedEnemyPower(power) || !Matches(power, rule.Polarity)) continue;
-            long layers = power.StackType == PowerStackType.Counter ? Math.Max(1L, Math.Abs((long)power.Amount)) : 1L;
-            long removed = RemovedLayers(layers, rule.Layers);
-            if (removed >= layers) await PowerCmd.Remove(power);
-            else
-            {
-                // This is removal, not an applied debuff: Artifact must not cancel or consume it.
-                int remaining = (int)(layers - removed);
-                power.SetAmount(power.Amount < 0 ? -remaining : remaining);
-            }
+            if (!power.Owner.IsAlive || power.Owned(rule.Polarity) == 0) continue;
+            await Scp294PotionSources.Clear(power, rule.Polarity, rule.Layers);
         }
         if (!CombatManager.Instance.IsEnding && NCombatRoom.Instance is { } room)
             foreach (var creature in selected.Select(p => p.Owner).Distinct().Where(c => c.IsMonster && c.IsAlive))
@@ -179,26 +146,5 @@ internal static class Scp294StatusPurgeAtRoundEnd
     {
         await original;
         if ((bool)IsLive.GetValue(turnState)!) await Scp294StatusPurge.AfterRound((CombatState)State.GetValue(turnState)!);
-    }
-}
-
-// Protect native spawn abilities, including enemies summoned mid-combat.
-[HarmonyPatch]
-internal static class Scp294RememberSpawnPowers
-{
-    private static IEnumerable<MethodBase> TargetMethods() => typeof(MonsterModel).Assembly.GetTypes()
-        .Where(t => typeof(MonsterModel).IsAssignableFrom(t))
-        .Select(t => AccessTools.DeclaredMethod(t, nameof(MonsterModel.AfterAddedToRoom)))
-        .Where(m => m != null).Distinct();
-    private static void Postfix(MonsterModel __instance, MethodBase __originalMethod, ref Task __result)
-    {
-        // A base call completes before an override has applied its own innate powers.
-        if (AccessTools.Method(__instance.GetType(), nameof(MonsterModel.AfterAddedToRoom)) == __originalMethod)
-            __result = Remember(__result, __instance);
-    }
-    private static async Task Remember(Task original, MonsterModel monster)
-    {
-        await original;
-        Scp294StatusPurge.RememberInnatePowers(monster.Creature);
     }
 }

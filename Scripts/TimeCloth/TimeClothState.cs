@@ -17,6 +17,7 @@ using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Relics;
 using OtherworldTreasures.Scripts.Relics;
+using OtherworldTreasures.Scripts.Potions;
 
 namespace OtherworldTreasures.Scripts.TimeCloth;
 
@@ -27,6 +28,8 @@ public sealed class CreatureSnapshot
     public int Block;
     // power 模型 Id.Entry → 层数
     public readonly Dictionary<string, int> PowerAmounts = new();
+    internal readonly Dictionary<string, Creature?> PowerAppliers = new();
+    internal Scp294PotionSources.SourcesSnapshot? PotionSources;
     // 敌人的当前意图（MoveState 的 StateId）
     public string? MoveStateId;
 }
@@ -115,6 +118,8 @@ public static class TimeClothState
             return;
         }
 
+        if (snapshot.PotionSources is { } sources &&
+            (!ReferenceEquals(sources.Owner, target) || !ReferenceEquals(sources.Combat, target.CombatState))) return;
         SetBlock(target, snapshot.Block);
         SetHp(target, snapshot.Hp);
         await RestorePowers(target, snapshot);
@@ -340,12 +345,14 @@ public static class TimeClothState
         var snapshot = new CreatureSnapshot
         {
             Hp = creature.CurrentHp,
-            Block = creature.Block
+            Block = creature.Block,
+            PotionSources = Scp294PotionSources.CaptureSnapshot(creature, IncludesSnapshotPower)
         };
         foreach (var power in creature.Powers)
         {
-            if (power is OtherworldTreasures.Scripts.Powers.KaiokenPower or OtherworldTreasures.Scripts.Powers.KaiokenDoomPower or OtherworldTreasures.Scripts.Powers.SpiritBombPower or OtherworldTreasures.Scripts.Powers.GoldenApplePower) continue;
+            if (!IncludesSnapshotPower(power)) continue;
             snapshot.PowerAmounts[power.Id.Entry] = power.Amount;
+            snapshot.PowerAppliers[power.Id.Entry] = power.Applier;
         }
         if (creature.Monster != null)
         {
@@ -376,35 +383,45 @@ public static class TimeClothState
         return result;
     }
 
+    private static bool IncludesSnapshotPower(PowerModel power) => power is not (
+        OtherworldTreasures.Scripts.Powers.KaiokenPower or OtherworldTreasures.Scripts.Powers.KaiokenDoomPower or
+        OtherworldTreasures.Scripts.Powers.SpiritBombPower or OtherworldTreasures.Scripts.Powers.GoldenApplePower or
+        OtherworldTreasures.Scripts.Powers.SCP294ThisTurnAbsorptionPower);
+
     private static async Task RestorePowers(Creature target, CreatureSnapshot snapshot)
     {
-        // 现存的、快照里没有的 → 移除
-        foreach (var power in target.Powers.ToList())
+        // Exact restoration is not consumption, a new potion grant, or a temporary
+        // marker's expiry. Rebind the copied source graph only after values settle.
+        using (Scp294PotionSources.Suspend())
         {
-            if (power is OtherworldTreasures.Scripts.Powers.KaiokenPower or OtherworldTreasures.Scripts.Powers.KaiokenDoomPower or OtherworldTreasures.Scripts.Powers.SpiritBombPower or OtherworldTreasures.Scripts.Powers.GoldenApplePower) continue;
-            if (!snapshot.PowerAmounts.ContainsKey(power.Id.Entry))
+            try
             {
-                await PowerCmd.Remove(power);
+                foreach (var power in target.Powers.ToList())
+                {
+                    if (!IncludesSnapshotPower(power)) continue;
+                    if (!snapshot.PowerAmounts.ContainsKey(power.Id.Entry)) await PowerCmd.Remove(power);
+                }
+                foreach (var kv in snapshot.PowerAmounts)
+                {
+                    var existing = target.Powers.FirstOrDefault(p => p.Id.Entry == kv.Key);
+                    if (existing != null)
+                    {
+                        if (IncludesSnapshotPower(existing)) existing.SetAmount(kv.Value, silent: true);
+                        continue;
+                    }
+                    var canonical = ModelDb.AllPowers.FirstOrDefault(p => p.Id.Entry == kv.Key);
+                    if (canonical == null || !IncludesSnapshotPower(canonical)) continue;
+                    var restored = canonical.ToMutable();
+                    restored.Applier = snapshot.PowerAppliers.GetValueOrDefault(kv.Key);
+                    // BeforeApplied on a temporary marker grants its base attribute.
+                    // That attribute is already in this snapshot, so restore raw values.
+                    restored.ApplyInternal(target, kv.Value, silent: true);
+                }
             }
-        }
-
-        // 快照里的 → 精确还原层数；已经丢掉的 → 重新施加
-        foreach (var kv in snapshot.PowerAmounts)
-        {
-            var existing = target.Powers.FirstOrDefault(p => p.Id.Entry == kv.Key);
-            if (existing is OtherworldTreasures.Scripts.Powers.KaiokenPower or OtherworldTreasures.Scripts.Powers.KaiokenDoomPower or OtherworldTreasures.Scripts.Powers.SpiritBombPower or OtherworldTreasures.Scripts.Powers.GoldenApplePower) continue;
-            if (existing != null)
+            finally
             {
-                existing.SetAmount(kv.Value, silent: true);
-                continue;
+                if (snapshot.PotionSources != null) Scp294PotionSources.RestoreSnapshot(target, snapshot.PotionSources);
             }
-            var canonical = ModelDb.AllPowers.FirstOrDefault(p => p.Id.Entry == kv.Key);
-            if (canonical == null)
-            {
-                continue;
-            }
-            await PowerCmd.Apply(
-                new ThrowingPlayerChoiceContext(), canonical.ToMutable(), target, kv.Value, null, null, silent: true);
         }
     }
 
