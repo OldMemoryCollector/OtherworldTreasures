@@ -130,6 +130,7 @@ internal static class Scp294MonsterPotions
     {
         await Scp294ChaosRules.WaitReady();
         if (monster.Creature.Side != CombatSide.Enemy || !monster.Creature.IsAlive || monster.Creature.CombatState == null || _started.TryGetValue(monster.Creature, out _)) return;
+        Scp294StatusPurge.RememberInnatePowers(monster.Creature);
         var rules = Scp294ChaosRules.For(monster.CombatState.RunState);
         if (!rules.MonsterPotions) return;
         var rng = RecipeRng(monster, monster.NextMove, combatStart: true);
