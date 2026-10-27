@@ -90,7 +90,7 @@
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.description": "相传能实现持有者的愿望，也会让持有者的力量大涨。取得时会因未知原因破碎，化作[gold]四魂之玉碎片[/gold]，并使地图上除Boss之外的敌人也带上碎片。",
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.flavor": "数百年前，巫女翠子夺走大妖怪的魂魄，与自己的灵魂一同释出，只余下这颗魂的结晶。翠子与妖怪的争斗，至今仍在玉中永无休止。",
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.title": "四魂之玉碎片",
-  "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.description": "右键可开启或关闭（战斗中不可切换）；开启后，你和敌人都会按其四魂获得强化。地图上会出现持有碎片的敌人，击败它们即可夺走其碎片。",
+  "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.description": "右键可开启或关闭（战斗中不可切换）。联机时全员开启才生效，全员关闭才停用，意见不一致时保持原状。生效后，各人按自己的四魂获得强化；地图上会出现持有碎片的敌人，击败它们即可夺走其碎片。",
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.tip.title": "四魂强化",
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.tip.description": "荒魂为敌人带来力量、和魂带来覆甲、幸魂带来再生、奇魂带来生命上限，效果等同于初代的带火精英。每枚碎片只会分配给一名敌人，但一名敌人可以拥有多枚碎片。",
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.flavor": "玉碎之后，碎片散落各地，每一片都寄宿着魂魄。魂有四者——荒魂司勇、和魂司亲、幸魂司爱、奇魂司智。",

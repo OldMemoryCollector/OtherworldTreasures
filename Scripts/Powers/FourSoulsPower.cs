@@ -108,7 +108,7 @@ public class FourSoulsPower : ModPowerTemplate
         var combatState = owner.CombatState;
         var runState = combatState?.RunState;
         var relic = runState == null ? null : FourSoulsSystem.FindRelic(runState);
-        if (combatState == null || relic == null || !relic.Enabled)
+        if (combatState == null || runState == null || relic == null || !FourSoulsSystem.IsActive(runState))
         {
             return empty;
         }

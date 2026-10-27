@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
@@ -45,9 +46,33 @@ internal static class FourSoulsSystem
     internal static FourSoulsFragment? FindRelic(IRunState runState)
         => runState.Players.SelectMany(p => p.Relics).OfType<FourSoulsFragment>().FirstOrDefault();
 
-    /// <summary>四魂系统当前是否生效：持有碎片且已开启。</summary>
+    /// <summary>全员开启才启用，全员关闭才停用；意见不一致时保留上一次共识。</summary>
     internal static bool IsActive(IRunState runState)
-        => FindRelic(runState) is { Enabled: true };
+    {
+        var votes = runState.Players
+            .Select(p => p.Relics.OfType<FourSoulsFragment>().FirstOrDefault()).ToArray();
+        if (votes.Length == 0 || votes.All(f => f == null || !f.Enabled)) return false;
+        if (votes.All(f => f is { Enabled: true })) return true;
+        return votes.OfType<FourSoulsFragment>().Any(f => f.SharedEnabled);
+    }
+
+    // 仅从同步的遗物生命周期或动作中写入共识。地图/悬浮提示读取不会改变存档状态。
+    internal static void RefreshConsensus(IRunState runState)
+    {
+        bool enabled = IsActive(runState);
+        foreach (var fragment in runState.Players.SelectMany(p => p.Relics).OfType<FourSoulsFragment>())
+        {
+            fragment.SharedEnabled = enabled;
+        }
+    }
+
+    private sealed class CombatBuffStamp
+    {
+        internal readonly HashSet<Player> Players = new();
+        internal bool EnemiesApplied;
+    }
+
+    private static readonly ConditionalWeakTable<ICombatState, CombatBuffStamp> CombatBuffs = new();
 
     // === 档位 ===
 
@@ -189,14 +214,21 @@ internal static class FourSoulsSystem
         PlayerChoiceContext ctx, Player player, ICombatState combatState)
     {
         var runState = player.RunState;
-        var relic = FindRelic(runState);
-        if (relic == null || !relic.Enabled || player.Creature == null)
+        var relic = player.Relics.OfType<FourSoulsFragment>().FirstOrDefault();
+        if (relic == null || !IsActive(runState) || player.Creature == null)
         {
             return;
         }
 
-        // 玩家侧：只上实际强化（显示交给遗物栏的四个角标，不挂【四魂】能力）
-        await ApplyToCreature(ctx, player.Creature, relic.Fragments, actFloor: 0, player: true);
+        var stamp = CombatBuffs.GetValue(combatState, _ => new CombatBuffStamp());
+        // 各人的强化来自本人碎片，同一场战斗每人仅获得一次。
+        if (stamp.Players.Add(player))
+        {
+            await ApplyToCreature(ctx, player.Creature, relic.Fragments, actFloor: 0, player: true);
+        }
+        // 多名持有者的 BeforeCombatStart 都会执行，敌方强化必须整场只结算一次。
+        if (stamp.EnemiesApplied) return;
+        stamp.EnemiesApplied = true;
 
         // 怪物侧：本房间的四魂集合分给具体敌人
         var souls = GetCurrentRoomSouls(runState);
@@ -311,7 +343,7 @@ internal static class FourSoulsSystem
 
         var runState = player.RunState;
         var fragments = runState?.Players?.SelectMany(p => p.Relics).OfType<FourSoulsFragment>().ToList();
-        if (runState == null || fragments == null || fragments.Count == 0 || !fragments.Any(f => f.Enabled))
+        if (runState == null || fragments == null || fragments.Count == 0 || !IsActive(runState))
         {
             return;
         }

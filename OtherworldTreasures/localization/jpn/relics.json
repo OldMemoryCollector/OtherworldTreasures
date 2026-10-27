@@ -90,7 +90,7 @@
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.description": "持ち主の願いを叶えるとされ、持ち主の力を高めるとも伝わる。入手時に原因不明の割れで[gold]四魂の玉の欠片[/gold]となり、マップ上のボス以外の敵も欠片を身につけるようになる。",
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_GEM.flavor": "数世紀前、巫女ミドリコは大妖怪の魂を引き裂き、自らの魂と共に放った——残されたのは、この魂の結晶だけだった。ミドリコと妖怪の戦いは、今も玉の中で続いている。",
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.title": "四魂の玉の欠片",
-  "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.description": "右クリックでオン／オフを切り替える（戦闘中は切替不可）。オンのとき、あなたと敵はそれぞれ四魂に応じた強化を得る。欠片を持つ敵がマップに現れ、倒すとその欠片を奪える。",
+  "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.description": "戦闘外で右クリックして切替。マルチプレイでは全員オンで有効、全員オフで無効となり、意見が分かれている間は直前の状態を保つ。有効時、各プレイヤーは自分の四魂に応じた強化を得る。マップに欠片を持つ敵が現れ、倒すと欠片を奪える。",
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.tip.title": "四魂の強化",
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.tip.description": "荒魂は敵に筋力を、和魂はプレートを、幸魂は再生を、奇魂は最大HPを与える。強度は初代の燃えるエリートに相当。欠片は1つにつき1体の敵にのみ割り当てられるが、1体の敵が複数の欠片を持つことはできる。",
   "OTHERWORLD_TREASURES_RELIC_FOUR_SOULS_FRAGMENT.flavor": "玉が割れると、無数の欠片が四方に散った。そこには四つの魂の一つが宿っている——荒魂は勇気を、和魂は親しみを、幸魂は愛を、奇魂は知恵を司る。",

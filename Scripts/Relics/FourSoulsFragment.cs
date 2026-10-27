@@ -54,6 +54,7 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
     private int _fortune;
     private int _wonder;
     private bool _enabled;
+    private bool _sharedEnabled;
     private int _lockedActIndex = -1;
     private int _lockedFragmentCount;
 
@@ -85,12 +86,20 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
         set { AssertMutable(); _wonder = value; }
     }
 
-    /// <summary>四魂之玉是否开启。</summary>
+    /// <summary>本人的开关请求；联机时由全队共识决定实际是否生效。</summary>
     [SavedProperty]
     public bool Enabled
     {
         get => _enabled;
         set { AssertMutable(); _enabled = value; }
+    }
+
+    /// <summary>保存最近一次全队共识，分歧状态读档后仍然保持。</summary>
+    [SavedProperty]
+    public bool SharedEnabled
+    {
+        get => _sharedEnabled;
+        set { AssertMutable(); _sharedEnabled = value; }
     }
 
     // 玩家身上真正的那件遗物（右键派发的可能是克隆实例，直接读写 this 不可靠）
@@ -144,7 +153,7 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
     }
 
     /// <summary>
-    /// 取该层的档位锁定值：该层第一次读取时用当前碎片总数锁定，之后不再变化。
+    /// 取该层的档位锁定值：在获取和进入新幕时锁定，读取本身不改变状态。
     /// 这样同一层内玩家继续收集碎片不会改变已 roll 出的四魂。
     /// </summary>
     internal int GetActLock(int actIndex)
@@ -153,18 +162,16 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
         {
             return _lockedFragmentCount;
         }
-        int count = TotalFragments;
-        if (IsMutable)
-        {
-            LockedActIndex = actIndex;
-            LockedFragmentCount = count;
-        }
-        else
-        {
-            _lockedActIndex = actIndex;
-            _lockedFragmentCount = count;
-        }
-        return count;
+        return TotalFragments;
+    }
+
+    // 从同步生命周期锁定档位，地图的纯读取不写入存档字段。
+    private void LockCurrentAct()
+    {
+        int actIndex = Owner.RunState.CurrentActIndex;
+        if (_lockedActIndex == actIndex) return;
+        LockedActIndex = actIndex;
+        LockedFragmentCount = TotalFragments;
     }
 
     // === 角标 ===
@@ -233,6 +240,7 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
         {
             InitializeAsNew(Owner.RunState.Rng.Shuffle);
         }
+        if (Owner != null) LockCurrentAct();
         Status = Enabled ? RelicStatus.Active : RelicStatus.Disabled;
         RefreshBadge();
         Entry.Logger.Info($"[FourSouls] 碎片获得：荒{_wasteland} 和{_harmony} 幸{_fortune} 奇{_wonder}，开启={Enabled}");
@@ -240,6 +248,7 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
         // 该有光芒的节点补挂一次，否则要退出重进（重建地图）才看得到四魂怪
         if (Owner != null)
         {
+            FourSoulsSystem.RefreshConsensus(Owner.RunState);
             Patch_NNormalMapPoint_FourSoulsGlow.RefreshGlows(Owner.RunState);
         }
         await base.AfterObtained();
@@ -292,6 +301,7 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
         {
             _enabled = next;
         }
+        FourSoulsSystem.RefreshConsensus(live.Owner.RunState);
         // 关闭时把遗物图标变灰（Disabled），开启时恢复"已启用"表现
         live.Status = next ? RelicStatus.Active : RelicStatus.Disabled;
         live.Flash();
@@ -299,6 +309,26 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
         Entry.Logger.Info(
             $"[FourSouls] 四魂之玉{(next ? "开启" : "关闭")}（写回真遗物：{!ReferenceEquals(live, this)}）");
         await Task.CompletedTask;
+    }
+
+    public override async Task AfterActEntered()
+    {
+        if (Owner != null)
+        {
+            LockCurrentAct();
+            FourSoulsSystem.RefreshConsensus(Owner.RunState);
+        }
+        await base.AfterActEntered();
+    }
+
+    public override async Task AfterRemoved()
+    {
+        if (Owner != null)
+        {
+            FourSoulsSystem.RefreshConsensus(Owner.RunState);
+            Patch_NNormalMapPoint_FourSoulsGlow.RefreshGlows(Owner.RunState);
+        }
+        await base.AfterRemoved();
     }
 
     // === 战斗接入 ===
@@ -311,7 +341,8 @@ public class FourSoulsFragment : ModRelicTemplate, IModRightClickableRelic,
         var combatState = creature?.CombatState;
         // 复位"本场战斗已结算四魂"标记（多名玩家都持有碎片时，胜利结算只会走一次）
         FourSoulsSystem.ResetCombatAward();
-        if (owner != null && creature != null && combatState != null && Enabled)
+        if (owner != null) FourSoulsSystem.RefreshConsensus(owner.RunState);
+        if (owner != null && creature != null && combatState != null && FourSoulsSystem.IsActive(owner.RunState))
         {
             // 玩家与带四魂的敌人都会在这里被挂上【四魂】显示用能力（见 ApplyCombatStartBuffs）
             await FourSoulsSystem.ApplyCombatStartBuffs(
