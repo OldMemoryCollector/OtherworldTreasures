@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.CardPools;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -56,7 +57,11 @@ public class ShrinkRayCard : ModCardTemplate, IDerivedCard
 
     // 悬浮提示：预览原版「缩小」能力（体型缩小 + 攻击伤害 -30%）
     protected override IEnumerable<IHoverTip> AdditionalHoverTips => base.AdditionalHoverTips
-        .Append(HoverTipFactory.FromPower<ShrinkPower>());
+        .Append(PermanentShrinkHoverTip());
+
+    internal static IHoverTip PermanentShrinkHoverTip() => new HoverTip(
+        new LocString("cards", "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.tip.title"),
+        new LocString("cards", "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.tip.description"));
 
     // 湮灭：回合结束时若此牌仍在手牌中，则将其除外（走原版回合结束前的时点，早于手牌结算）
     // 注意：本 hook 跑在回合结束管线中间，抛异常会打断整条管线（表现为卡死），因此全程兜异常。

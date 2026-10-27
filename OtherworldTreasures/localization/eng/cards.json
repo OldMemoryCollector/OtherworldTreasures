@@ -23,6 +23,8 @@
   "OTHERWORLD_TREASURES_CARD_SCROLL_OF_WONDER.tip.description": "Never generates Curse, Status, Quest, Event, Ancient, or derived cards.",
   "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.title": "Shrink Ray",
   "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.description": "Apply [gold]Shrink[/gold] to an enemy.\nAn already Shrunk enemy cannot be Shrunk again.",
+  "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.tip.title": "Shrink",
+  "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.tip.description": "For this combat, the enemy becomes smaller and deals [blue]30%[/blue] less attack damage.",
   "OTHERWORLD_TREASURES_CARD_AIR_CANNON_BASH_CARD.title": "Bonk",
   "OTHERWORLD_TREASURES_CARD_AIR_CANNON_BASH_CARD.description": "Deal {Damage:diff()} damage.\nDraw 1 card.",
   "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_CARD.title": "Time Cloth",

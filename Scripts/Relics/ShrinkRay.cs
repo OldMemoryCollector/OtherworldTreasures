@@ -41,8 +41,7 @@ public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonIte
 
     // 悬浮提示：预览【缩小灯】卡牌 + 原版「缩小」能力说明
     protected override IEnumerable<IHoverTip> AdditionalHoverTips => base.AdditionalHoverTips
-        .Concat(HoverTipFactory.FromCardWithCardHoverTips<ShrinkRayCard>())
-        .Append(HoverTipFactory.FromPower<ShrinkPower>());
+        .Concat(HoverTipFactory.FromCardWithCardHoverTips<ShrinkRayCard>());
 
     // 遗物获得：注册模型身份令牌（右键同步派发依赖它）
     public override async Task AfterObtained()

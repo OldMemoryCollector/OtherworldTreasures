@@ -23,6 +23,8 @@
   "OTHERWORLD_TREASURES_CARD_SCROLL_OF_WONDER.tip.description": "呪い・状態異常・クエスト・イベント・エンシェント・トークンカードは生成されない。",
   "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.title": "スモールライト",
   "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.description": "敵1体に[gold]縮小[/gold]を付与する。\nすでに縮小している敵には再度縮小を付与できない。",
+  "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.tip.title": "縮小",
+  "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.tip.description": "この戦闘中、敵の体が小さくなり、攻撃ダメージが[blue]30%[/blue]減少する。",
   "OTHERWORLD_TREASURES_CARD_AIR_CANNON_BASH_CARD.title": "ドンッ",
   "OTHERWORLD_TREASURES_CARD_AIR_CANNON_BASH_CARD.description": "{Damage:diff()}ダメージを与える。\nカードを1枚引く。",
   "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_CARD.title": "タイムふろしき",

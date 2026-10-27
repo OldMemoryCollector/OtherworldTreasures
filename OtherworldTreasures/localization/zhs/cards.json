@@ -23,6 +23,8 @@
   "OTHERWORLD_TREASURES_CARD_SCROLL_OF_WONDER.tip.description": "不会生成诅咒、状态、任务、事件、先古与衍生卡牌。",
   "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.title": "缩小灯",
   "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.description": "将1名敌人[gold]缩小[/gold]。\n已被缩小的敌人无法再次缩小。",
+  "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.tip.title": "缩小",
+  "OTHERWORLD_TREASURES_CARD_SHRINK_RAY_CARD.tip.description": "本场战斗中，敌人体型缩小，攻击伤害降低[blue]30%[/blue]。",
   "OTHERWORLD_TREASURES_CARD_AIR_CANNON_BASH_CARD.title": "碰",
   "OTHERWORLD_TREASURES_CARD_AIR_CANNON_BASH_CARD.description": "造成{Damage:diff()}点伤害。\n抽1张牌。",
   "OTHERWORLD_TREASURES_CARD_TIME_CLOTH_CARD.title": "时光布",
