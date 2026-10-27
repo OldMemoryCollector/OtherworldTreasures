@@ -26,7 +26,8 @@ public class CrossNecklace : ModRelicTemplate
     private const int BlockAmount = 2;
 
     // 泰拉瑞亚向导赠送的专属遗物。
-    public override RelicRarity Rarity => RelicRarity.Ancient;
+    public override RelicRarity Rarity => RelicRarity.Event;
+    public override bool IsAllowedInShops => false;
 
     protected override IEnumerable<DynamicVar> CanonicalVars => new[]
     {

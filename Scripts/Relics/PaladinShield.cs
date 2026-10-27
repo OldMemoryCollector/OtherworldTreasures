@@ -19,9 +19,10 @@ namespace OtherworldTreasures.Scripts.Relics;
 [RegisterRelic(typeof(SharedRelicPool))]
 public sealed class PaladinShield : ModRelicTemplate
 {
-    public override RelicRarity Rarity => RelicRarity.Ancient;
+    public override RelicRarity Rarity => RelicRarity.Event;
+    public override bool IsAllowedInShops => false;
     protected override IEnumerable<DynamicVar> CanonicalVars =>
-        [new BlockVar(6m, ValueProp.Unpowered), new DynamicVar("BlockPerTeammate", 3m)];
+        [new BlockVar(8m, ValueProp.Unpowered)];
     public override bool IsAllowed(IRunState runState) => runState.Players.Count > 1;
     public override RelicAssetProfile AssetProfile => new(
         IconPath: "res://OtherworldTreasures/images/relics/PaladinShield_85.png",
@@ -31,22 +32,23 @@ public sealed class PaladinShield : ModRelicTemplate
         base.AdditionalHoverTips.Append(HoverTipFactory.FromPower<PaladinShieldPower>(25))
             .Append(HoverTipFactory.Static(StaticHoverTip.Block));
 
-    public override async Task BeforeSideTurnEnd(PlayerChoiceContext context, CombatSide side, IEnumerable<Creature> participants)
+    public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants,
+        ICombatState combatState)
     {
         if (side != CombatSide.Player || Owner.Creature.IsDead || !participants.Contains(Owner.Creature)) return;
-        int teammates = Owner.RunState.Players.Count(player => player != Owner);
-        decimal block = DynamicVars.Block.BaseValue + DynamicVars["BlockPerTeammate"].BaseValue * teammates;
         Flash();
-        await CreatureCmd.GainBlock(Owner.Creature, block, ValueProp.Unpowered, null);
+        await CreatureCmd.GainBlock(Owner.Creature, DynamicVars.Block.BaseValue, ValueProp.Unpowered, null);
     }
 
-    public override Task BeforeCombatStartLate() => PaladinShieldProtection.Refresh(Owner.Creature.CombatState);
+    public override Task BeforeSideTurnStart(PlayerChoiceContext context, CombatSide side,
+        IReadOnlyList<Creature> participants, ICombatState combatState) =>
+        PaladinShieldProtection.BeginSideTurn(combatState, side);
+
+    public override Task BeforeCombatStartLate() => PaladinShieldProtection.Reset(Owner.Creature.CombatState);
     public override Task AfterObtained() => PaladinShieldProtection.Refresh(Owner.Creature.CombatState);
     public override Task AfterRemoved() => PaladinShieldProtection.Refresh(Owner.Creature.CombatState);
     public override Task AfterCurrentHpChanged(Creature creature, decimal delta) =>
         creature.Player != null ? PaladinShieldProtection.Refresh(Owner.Creature.CombatState) : Task.CompletedTask;
-    public override Task AfterPlayerTurnStartEarly(PlayerChoiceContext context, Player player) =>
-        player == Owner ? PaladinShieldProtection.Refresh(Owner.Creature.CombatState) : Task.CompletedTask;
     public override Task AfterDeath(PlayerChoiceContext context, Creature creature, bool wasRemovalPrevented, float deathAnimLength) =>
         PaladinShieldProtection.Refresh(Owner.Creature.CombatState);
 }

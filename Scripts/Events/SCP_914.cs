@@ -407,7 +407,7 @@ public sealed class Scp914 : OtherworldEvent
 
     private IReadOnlyList<RelicModel?>? CreateRelics(int rank, int count, bool moduleOnly, ModelId? exclude = null)
     {
-        IEnumerable<RelicModel> pool = Owner.UnlockState.Relics.Where(r => IsOutputRelicRarity(r.Rarity, rank));
+        IEnumerable<RelicModel> pool = Owner.UnlockState.Relics.Where(r => IsOutputRelicRarity(r.Rarity, rank) && r.IsAllowed(Owner.RunState));
         if (moduleOnly) pool = pool.Where(r => r.GetType().Assembly == typeof(Scp914).Assembly);
         var candidates = pool.DistinctBy(r => r.Id)
             .Where(r => r.IsStackable || (!Owner.Relics.Any(owned => owned.Id == r.Id) && _selectedRelic?.Id != r.Id))

@@ -1,10 +1,9 @@
-using Godot;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Commands.Builders;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
-using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Models.RelicPools;
 using MegaCrit.Sts2.Core.Rooms;
@@ -22,17 +21,22 @@ namespace OtherworldTreasures.Scripts.Relics;
 public sealed class SporeSac : ModRelicTemplate, IRelicExtraIconAmountLabelSpecsProvider, IRelicExtraIconAmountLabelsChangeSource
 {
     private const int WinsPerBonus = 3;
-    private int _basePoison = 1, _wins, _temporaryPoison, _combatTurn;
-    private bool _spent;
-    // Existing save names remain intact. Combat charge now also survives saving.
-    [SavedProperty] public int SavedPoisonStacks { get => _basePoison; set { AssertMutable(); _basePoison = Math.Max(1, value); } }
+    private int _poisonPerSpore = 1, _initialSpores = 1, _spores, _wins;
+    private bool _nextBonusAddsSpores;
+
+    // Preserve existing permanent poison and victory progress when loading old runs.
+    // New saves also retain the stock of spores and the alternating growth phase.
+    [SavedProperty] public int SavedPoisonStacks { get => _poisonPerSpore; set { AssertMutable(); _poisonPerSpore = Math.Max(1, value); } }
     [SavedProperty] public int SavedWinsTowardNext { get => _wins; set { AssertMutable(); _wins = Math.Max(0, value); } }
-    [SavedProperty] public int SavedTemporaryPoison { get => _temporaryPoison; set { AssertMutable(); _temporaryPoison = Math.Max(0, value); } }
-    [SavedProperty] public int SavedCombatTurn { get => _combatTurn; set { AssertMutable(); _combatTurn = Math.Max(0, value); } }
-    [SavedProperty] public bool SavedSpentThisTurn { get => _spent; set { AssertMutable(); _spent = value; } }
+    [SavedProperty] public int SavedInitialSpores { get => _initialSpores; set { AssertMutable(); _initialSpores = Math.Max(1, value); } }
+    [SavedProperty] public int SavedSporeCount { get => _spores; set { AssertMutable(); _spores = Math.Max(0, value); } }
+    [SavedProperty] public bool SavedNextBonusAddsSpores { get => _nextBonusAddsSpores; set { AssertMutable(); _nextBonusAddsSpores = value; } }
+
     private SporeSac Live => IsMutable ? Owner.Relics.OfType<SporeSac>().FirstOrDefault() ?? this : this;
-    internal int AvailablePoison => !IsMutable ? 1 : Live._spent ? 0 : Live._basePoison + Live._temporaryPoison;
-    public override RelicRarity Rarity => RelicRarity.Ancient;
+    internal int AvailableSpores => !IsMutable ? 1 : Live._spores;
+    internal int PoisonPerSpore => Live._poisonPerSpore;
+    public override RelicRarity Rarity => RelicRarity.Event;
+    public override bool IsAllowedInShops => false;
     public override RelicAssetProfile AssetProfile => new(
         IconPath: "res://OtherworldTreasures/images/relics/Spore_Sac.png",
         IconOutlinePath: "res://OtherworldTreasures/images/relics/Spore_Sac.png",
@@ -45,59 +49,72 @@ public sealed class SporeSac : ModRelicTemplate, IRelicExtraIconAmountLabelSpecs
             ExtraIconAmountLabelSpec.RichText(ExtraIconAmountLabelCorner.TopLeft,
                 $"[font_size=16]{Live._wins}/{WinsPerBonus}[/font_size]"),
             ExtraIconAmountLabelSpec.RichText(ExtraIconAmountLabelCorner.BottomRight,
-                $"[font_size=16][color=#84d64b]{Live._basePoison}[/color][/font_size]")
+                $"[font_size=16][color=#84d64b]{Live._initialSpores}×{Live._poisonPerSpore}[/color][/font_size]")
         ];
     public override Task AfterObtained()
     {
-        _basePoison = 1; _wins = _temporaryPoison = _combatTurn = 0; _spent = false;
+        _poisonPerSpore = _initialSpores = 1;
+        _spores = _wins = 0;
+        _nextBonusAddsSpores = false;
         RefreshBadge();
         return Task.CompletedTask;
     }
-    // Legacy lifecycle call retained; state is now carried by the saved relic itself.
+    // Legacy lifecycle call retained; state is carried by each saved relic.
     internal static void ResetCombatScopedState() { }
     public override async Task BeforeCombatStart()
     {
-        var live = Live; live._temporaryPoison = live._combatTurn = 0; live._spent = false;
-        await PowerCmd.Apply<SporeSacPower>(new ThrowingPlayerChoiceContext(), Owner.Creature, live._basePoison, Owner.Creature, null);
+        var live = Live;
+        live._spores = live._initialSpores;
+        await PowerCmd.Apply<SporeSacPower>(new ThrowingPlayerChoiceContext(), Owner.Creature,
+            live._spores, Owner.Creature, null);
         RefreshDisplayPower();
     }
     public override Task AfterPlayerTurnStart(PlayerChoiceContext context, Player player)
     {
         if (player == Owner)
         {
-            var live = Live;
-            live._combatTurn++;
-            if (live._combatTurn > 1) live._temporaryPoison += 2;
-            live._spent = false;
+            // The first player turn is also a turn start: the initial spore and
+            // these two spores are separate grants, so a fresh combat opens at 3.
+            Live._spores += 2;
             RefreshDisplayPower();
         }
         return Task.CompletedTask;
     }
-    private void RefreshDisplayPower() => Owner.Creature.GetPower<SporeSacPower>()?.SetAmount(AvailablePoison, silent: true);
+    private void RefreshDisplayPower() => Owner.Creature.GetPower<SporeSacPower>()?.SetAmount(AvailableSpores, silent: true);
     public override async Task AfterAttack(PlayerChoiceContext context, AttackCommand command)
     {
         var live = Live;
         var attacker = command.Attacker;
-        if (live._spent || Owner.Creature.IsDead || attacker is not { Side: MegaCrit.Sts2.Core.Combat.CombatSide.Enemy, IsDead: false } ||
+        if (live._spores <= 0 || Owner.Creature.IsDead ||
+            attacker is not { Side: CombatSide.Enemy, IsDead: false } ||
             !command.Results.SelectMany(hit => hit).Any(result => result.Receiver == Owner.Creature)) return;
-        int amount = AvailablePoison;
-        // Commit the spent state before applying Poison; nested effects cannot fire again.
-        live._spent = true; live._temporaryPoison = 0;
-        RefreshDisplayPower(); Flash();
-        TerrariaRelicVfx.ReleaseSpores(Owner.Creature, amount);
-        await PowerCmd.Apply<PoisonPower>(context, attacker, amount, Owner.Creature, null);
+        int spores = live._spores;
+        int poison = spores * live._poisonPerSpore;
+        // Commit consumption first so nested effects cannot release the same stock.
+        live._spores = 0;
+        RefreshDisplayPower();
+        Flash();
+        TerrariaRelicVfx.ReleaseSpores(Owner.Creature, spores);
+        await PowerCmd.Apply<PoisonPower>(context, attacker, poison, Owner.Creature, null);
     }
     public override Task AfterCombatVictory(CombatRoom room)
     {
         var live = Live;
-        if (++live._wins >= WinsPerBonus) { live._wins = 0; live._basePoison++; }
-        live._temporaryPoison = live._combatTurn = 0; live._spent = false;
-        Flash(); RefreshBadge();
+        if (++live._wins >= WinsPerBonus)
+        {
+            live._wins = 0;
+            if (live._nextBonusAddsSpores) live._initialSpores++;
+            else live._poisonPerSpore++;
+            live._nextBonusAddsSpores = !live._nextBonusAddsSpores;
+        }
+        live._spores = 0;
+        Flash();
+        RefreshBadge();
         return Task.CompletedTask;
     }
     public override async Task AfterCombatEnd(CombatRoom room)
     {
-        var live = Live; live._temporaryPoison = live._combatTurn = 0; live._spent = false;
+        Live._spores = 0;
         if (Owner.Creature.GetPower<SporeSacPower>() is { } power) await PowerCmd.Remove(power);
     }
     public override Task AfterRemoved() => Owner.Creature.GetPower<SporeSacPower>() is { } power ? PowerCmd.Remove(power) : Task.CompletedTask;

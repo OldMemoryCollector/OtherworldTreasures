@@ -21,17 +21,62 @@ internal static class PaladinShieldProtection
     internal static bool IsCommittingNativeHpModifiers => _committedHpModifiers > 0;
     private sealed record Transfer(Creature Protector, int Amount);
     private static readonly ConditionalWeakTable<DamageResult, Transfer> PendingTransfers = new();
-
-    internal static PaladinShield? ProtectorFor(Creature target, ValueProp props)
+    private static readonly AsyncLocal<int> TransferDepth = new();
+    private sealed class EnemyPhase
     {
-        // Unblockable non-attack effects are HP loss/payments, not damage to
-        // share. This also makes transferred HP loss incapable of bouncing.
-        if (target.Player == null || target.IsDead || target.CombatState is not { } combat ||
-            combat.Players.Count < 2 || props.HasFlag(ValueProp.Unblockable) && !props.HasFlag(ValueProp.Move)) return null;
+        internal int Round;
+        internal bool Active;
+        internal readonly HashSet<PaladinShield> Qualified = new();
+    }
+    private static readonly ConditionalWeakTable<ICombatState, EnemyPhase> EnemyPhases = new();
+
+    internal static Task Reset(ICombatState? combat)
+    {
+        if (combat != null) EnemyPhases.Remove(combat);
+        return Refresh(combat);
+    }
+
+    internal static Task BeginSideTurn(ICombatState combat, CombatSide side)
+    {
+        var phase = EnemyPhases.GetOrCreateValue(combat);
+        if (side == CombatSide.Player)
+        {
+            phase.Active = false;
+            phase.Qualified.Clear();
+        }
+        else if (!phase.Active || phase.Round != combat.RoundNumber)
+        {
+            // Snapshot once before any enemy starts acting. Losing block later
+            // does not switch protection off halfway through this phase.
+            phase.Round = combat.RoundNumber;
+            phase.Active = true;
+            phase.Qualified.Clear();
+            foreach (var player in combat.Players.OrderBy(player => player.NetId))
+            {
+                var creature = player.Creature;
+                if (creature.IsDead || creature.Block * 4L < creature.MaxHp) continue;
+                foreach (var relic in player.Relics.OfType<PaladinShield>().Where(relic => !relic.IsMelted))
+                    phase.Qualified.Add(relic);
+            }
+        }
+        return Refresh(combat);
+    }
+
+    internal static PaladinShield? ProtectorFor(Creature target, ValueProp props, bool ignoreTransferGuard = false)
+    {
+        // HP payments/Poison are not shared. A transfer can consume the
+        // protector's block, but must never bounce to another shield owner.
+        if ((!ignoreTransferGuard && TransferDepth.Value > 0) || target.Player == null || target.IsDead ||
+            target.CombatState is not { } combat || combat.Players.Count < 2 ||
+            combat.CurrentSide != CombatSide.Enemy ||
+            !EnemyPhases.TryGetValue(combat, out var phase) || !phase.Active ||
+            phase.Round != combat.RoundNumber ||
+            props.HasFlag(ValueProp.Unblockable) && !props.HasFlag(ValueProp.Move)) return null;
         return combat.Players.OrderBy(player => player.NetId)
             .Where(player => player.Creature != target && player.Creature.IsAlive &&
-                player.Creature.CombatState == combat && player.Creature.CurrentHp * 4L > player.Creature.MaxHp)
-            .SelectMany(player => player.Relics.OfType<PaladinShield>()).FirstOrDefault(relic => !relic.IsMelted);
+                player.Creature.CombatState == combat)
+            .SelectMany(player => player.Relics.OfType<PaladinShield>())
+            .FirstOrDefault(relic => !relic.IsMelted && phase.Qualified.Contains(relic));
     }
 
     internal static int SharedAmount(Creature target, decimal amount, ValueProp props) =>
@@ -44,7 +89,7 @@ internal static class PaladinShieldProtection
         {
             var target = player.Creature;
             var current = target.GetPower<PaladinShieldPower>();
-            bool protectedNow = ProtectorFor(target, ValueProp.Move) != null;
+            bool protectedNow = ProtectorFor(target, ValueProp.Move, ignoreTransferGuard: true) != null;
             if (protectedNow && current == null)
                 await PowerCmd.Apply<PaladinShieldPower>(new ThrowingPlayerChoiceContext(), target, 25m, null, null);
             else if (!protectedNow && current != null) await PowerCmd.Remove(current);
@@ -88,8 +133,13 @@ internal static class PaladinShieldProtection
             if (transfer.Protector.IsDead) continue;
             transfer.Protector.Player?.Relics.OfType<PaladinShield>().FirstOrDefault()?.Flash();
             result.Receiver.GetPower<PaladinShieldPower>()?.FlashProtection();
-            await CreatureCmd.Damage(context, transfer.Protector, transfer.Amount,
-                ValueProp.Unblockable | ValueProp.Unpowered, null, null, null);
+            TransferDepth.Value++;
+            try
+            {
+                await CreatureCmd.Damage(context, transfer.Protector, transfer.Amount,
+                    ValueProp.Unpowered, null, null, null);
+            }
+            finally { TransferDepth.Value--; }
         }
         return results;
     }

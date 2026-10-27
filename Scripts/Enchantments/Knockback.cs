@@ -26,8 +26,15 @@ public interface IKnockbackImmune
 
 public abstract class KnockbackEnchantmentBase : OtherworldEnchantmentBase
 {
-    private readonly Dictionary<Creature, int> _knockbackDamageByCreature = new();
-    private readonly HashSet<Creature> _stunnedThisPlay = new();
+    private Dictionary<Creature, int> _knockbackDamageByCreature = new();
+    private HashSet<Creature> _stunnedThisPlay = new();
+
+    protected override void DeepCloneFields()
+    {
+        base.DeepCloneFields();
+        _knockbackDamageByCreature = new();
+        _stunnedThisPlay = new();
+    }
 
     protected abstract int Rank { get; }
 

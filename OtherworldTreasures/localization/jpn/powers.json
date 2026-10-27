@@ -6,7 +6,7 @@
   "OTHERWORLD_TREASURES_POWER_TAMED_PET.title": "懐柔",
   "OTHERWORLD_TREASURES_POWER_TAMED_PET.description": "与えるアタックダメージが[blue]50%[/blue]減少する。",
   "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.title": "胞子の袋",
-  "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description": "今ターンに放出できる[gold]毒[/gold]は{Amount}。最初に攻撃してきた敵に一度だけ放ち、再び蓄える。",
+  "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description": "現在の胞子は[blue]{Amount}[/blue]個。胞子1個につき[blue]{PoisonPerSpore}[/blue]の[gold]毒[/gold]を与える。敵の攻撃を受けると、その敵に全胞子を放出して消費する。",
   "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.title": "変身",
   "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.description": "変身の残り時間は{Amount}ターン。",
   "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.title": "火傷",
@@ -82,5 +82,5 @@
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.title": "金属化",
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.description": "ターン終了時、[gold]ブロック[/gold]を[blue]{Amount}[/blue]得る。",
   "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.title": "パラディンのたて",
-  "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.description": "被ダメージが[blue]25%[/blue]減少する。軽減した分はHPが[blue]25%[/blue]を上回る盾の所持者が受ける。"
+  "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.description": "この敵ターン中、受けるHPダメージの[blue]25%[/blue]を盾を持つ味方が肩代わりする。肩代わりしたダメージは、その味方の[gold]ブロック[/gold]で先に防ぐ。"
 }

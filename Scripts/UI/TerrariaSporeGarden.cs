@@ -55,7 +55,7 @@ public partial class TerrariaSporeGarden : Node2D
         Visible = true;
         if (node.Visuals?.Bounds is { } bounds)
             Position = node.GetGlobalTransform().AffineInverse() * bounds.GetGlobalRect().GetCenter() + new Vector2(0, -12);
-        Advance(delta, relic.AvailablePoison);
+        Advance(delta, relic.AvailableSpores);
     }
     // The native runtime and the visual verification harness use this same step.
     internal void Advance(double delta, int desired)

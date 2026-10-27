@@ -6,7 +6,7 @@
   "OTHERWORLD_TREASURES_POWER_TAMED_PET.title": "Tamed",
   "OTHERWORLD_TREASURES_POWER_TAMED_PET.description": "Deals [blue]50%[/blue] less attack damage.",
   "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.title": "Spore Sac",
-  "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description": "[gold]Poison[/gold] ready this turn: {Amount}. Release once against the first enemy that attacks you, then build up again.",
+  "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description": "You have [blue]{Amount}[/blue] spores. Each applies [blue]{PoisonPerSpore}[/blue] [gold]Poison[/gold]. When attacked by an enemy, release all spores at the attacker, then lose all spores.",
   "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.title": "Transformation",
   "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.description": "{Amount} turn(s) of transformation remaining.",
   "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.title": "Burn",
@@ -82,5 +82,5 @@
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.title": "Metallicize",
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.description": "At the end of your turn, gain [blue]{Amount}[/blue] [gold]Block[/gold].",
   "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.title": "Paladin's Shield",
-  "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.description": "Take [blue]25%[/blue] less damage. A shield-bearing teammate above [blue]25%[/blue] HP takes the prevented damage."
+  "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.description": "For this enemy turn, a shield-bearing teammate takes [blue]25%[/blue] of your HP damage. Their [gold]Block[/gold] absorbs the transferred damage first."
 }

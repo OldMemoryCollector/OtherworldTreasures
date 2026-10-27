@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.Localization;
+using OtherworldTreasures.Scripts.Relics;
 using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Scaffolding.Content;
 
@@ -7,8 +8,8 @@ namespace OtherworldTreasures.Scripts.Powers;
 
 /// <summary>
 /// 孢子囊面板：纯展示能力，没有任何效果。
-/// 挂在玩家身上，数量 = 当前回合受到攻击时会给攻击者施加的中毒层数
-/// （基础层数 + 战斗内加成），由 SporeSac 在战斗开始时挂上、每个玩家回合开始刷新。
+/// 挂在玩家身上，数量为当前孢子数量；单孢子中毒层数单独显示。
+/// 由 SporeSac 在战斗开始、每个玩家回合开始和释放后刷新。
 /// 大图标复用遗物图，小图标用像素版孢子囊。
 /// </summary>
 [RegisterPower]
@@ -26,5 +27,13 @@ public class SporeSacPower : ModPowerTemplate
     // 本地化：显式指定 key（与 TamedPet 等保持一致，不依赖模板 Id 推导）
     public override LocString Title => new LocString("powers", "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.title");
 
-    public override LocString Description => new LocString("powers", "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description");
+    public override LocString Description
+    {
+        get
+        {
+            var description = new LocString("powers", "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description");
+            description.Add("PoisonPerSpore", IsMutable ? Owner?.Player?.Relics.OfType<SporeSac>().FirstOrDefault()?.PoisonPerSpore ?? 1 : 1);
+            return description;
+        }
+    }
 }

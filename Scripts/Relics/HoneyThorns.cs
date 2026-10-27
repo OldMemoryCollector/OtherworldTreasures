@@ -1,9 +1,8 @@
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Commands.Builders;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
-using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Models.RelicPools;
 using MegaCrit.Sts2.Core.ValueProps;
@@ -17,17 +16,22 @@ namespace OtherworldTreasures.Scripts.Relics;
 public sealed class HoneyThorns : ModRelicTemplate
 {
     private bool _resolving;
-    public override RelicRarity Rarity => RelicRarity.Ancient;
+    public override RelicRarity Rarity => RelicRarity.Event;
+    public override bool IsAllowedInShops => false;
     public override RelicAssetProfile AssetProfile => new(
         IconPath: "res://OtherworldTreasures/images/relics/HoneyThorns_85.png",
         IconOutlinePath: "res://OtherworldTreasures/images/relics/HoneyThorns_85.png",
         BigIconPath: "res://OtherworldTreasures/images/relics/HoneyThorns.png");
-    public override async Task AfterDamageReceived(PlayerChoiceContext context, Creature target, DamageResult result,
-        ValueProp props, Creature? dealer, CardModel? source)
+
+    public override async Task AfterAttack(PlayerChoiceContext context, AttackCommand command)
     {
-        if (_resolving || target != Owner.Creature || target.IsDead || result.UnblockedDamage <= 0 ||
-            !CombatManager.Instance.IsInProgress || CombatManager.Instance.IsEnding || target.CombatState is not { } combat ||
-            !combat.Enemies.Any(enemy => enemy.IsAlive)) return;
+        var owner = Owner.Creature;
+        // AfterAttack runs once for the whole attack, including every hit. Blocked
+        // attacks still trigger; poison, recoil and other direct HP loss do not.
+        if (_resolving || owner.IsDead || command.Attacker?.Side != CombatSide.Enemy ||
+            !command.Results.SelectMany(hit => hit).Any(result => result.Receiver == owner) ||
+            !CombatManager.Instance.IsInProgress || CombatManager.Instance.IsEnding ||
+            owner.CombatState is not { } combat || !combat.Enemies.Any(enemy => enemy.IsAlive)) return;
         _resolving = true;
         try
         {
@@ -39,9 +43,9 @@ public sealed class HoneyThorns : ModRelicTemplate
                 var enemies = combat.Enemies.Where(enemy => enemy.IsAlive).ToArray();
                 if (enemies.Length == 0) break;
                 var enemy = rng.NextItem(enemies)!;
-                await TerrariaRelicVfx.FlyBee(target, enemy);
-                await CreatureCmd.Damage(context, enemy, 3m, ValueProp.Unpowered, target, null, null);
-                if (enemy.IsAlive) await PowerCmd.Apply<PoisonPower>(context, enemy, 1m, target, null);
+                await TerrariaRelicVfx.FlyBee(owner, enemy);
+                await CreatureCmd.Damage(context, enemy, 3m, ValueProp.Unpowered, owner, null, null);
+                if (enemy.IsAlive) await PowerCmd.Apply<PoisonPower>(context, enemy, 1m, owner, null);
             }
         }
         finally { _resolving = false; }

@@ -6,7 +6,7 @@
   "OTHERWORLD_TREASURES_POWER_TAMED_PET.title": "驯服",
   "OTHERWORLD_TREASURES_POWER_TAMED_PET.description": "造成的攻击伤害减少[blue]50%[/blue]。",
   "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.title": "孢子囊",
-  "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description": "本回合可释放{Amount}层[gold]中毒[/gold]。仅向首个攻击你的敌人释放一次，之后重新积累。",
+  "OTHERWORLD_TREASURES_POWER_SPORE_SAC_POWER.description": "当前持有[blue]{Amount}[/blue]个孢子，每个孢子施加[blue]{PoisonPerSpore}[/blue]层[gold]中毒[/gold]。受到敌人攻击时，向攻击者释放全部孢子，随后清空。",
   "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.title": "变身",
   "OTHERWORLD_TREASURES_POWER_OMNITRIX_TRANSFORM.description": "变身时长剩余{Amount}回合。",
   "OTHERWORLD_TREASURES_POWER_ALIEN_SCORCH.title": "灼伤",
@@ -82,5 +82,5 @@
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.title": "金属化",
   "OTHERWORLD_TREASURES_POWER_SHIMMER_METALLICIZE.description": "回合结束时，获得[blue]{Amount}[/blue]点[gold]格挡[/gold]。",
   "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.title": "圣骑士护盾",
-  "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.description": "受到的伤害减少[blue]25%[/blue]，由一名生命值高于[blue]25%[/blue]的持盾队友承担。"
+  "OTHERWORLD_TREASURES_POWER_PALADIN_SHIELD.description": "本次敌方行动阶段，受到的生命伤害有[blue]25%[/blue]由一名持盾队友承担，并优先消耗该队友的[gold]格挡[/gold]。"
 }

@@ -22,7 +22,8 @@ public class MythicCharm : ModRelicTemplate
     private const int LowHealthHealPerTurn = 2;
 
     // 泰拉瑞亚向导赠送的专属遗物。
-    public override RelicRarity Rarity => RelicRarity.Ancient;
+    public override RelicRarity Rarity => RelicRarity.Event;
+    public override bool IsAllowedInShops => false;
 
     // 遗物图片资源（IconPath=小图标85x85，IconOutlinePath=轮廓85x85，BigIconPath=大图标256x256）
     public override RelicAssetProfile AssetProfile => new(
