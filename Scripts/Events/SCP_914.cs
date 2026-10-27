@@ -1,5 +1,8 @@
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Context;
+using MegaCrit.Sts2.Core.GameActions;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Gold;
 using MegaCrit.Sts2.Core.Entities.Relics;
@@ -39,6 +42,8 @@ public sealed class Scp914 : OtherworldEvent
     private CardModel? _selectedCard;
     private RelicModel? _selectedRelic;
     private bool _finished;
+    private bool _pickingRelic;
+    private TaskCompletionSource<bool>? _relicSelectionDone;
 
     // Dedicated SCP-914 event background; keep it separate from other event art and card portraits.
     public override EventAssetProfile AssetProfile => new(
@@ -94,34 +99,76 @@ public sealed class Scp914 : OtherworldEvent
         ShowProcessingOptions("CARD_SELECTED", selected.Title, [HoverTipFactory.FromCard(selected)]);
     }
 
-    private Task SelectRelic()
+    private async Task SelectRelic()
     {
-        // 2026-10-17：不再调用原版遗物选择界面（遗物多时会单行溢出屏幕、取消还会卡死），
-        // 改为进入"投料页"，由玩家直接点顶部遗物栏里任意一件遗物投入。
-        Scp914Pickup.Arm(this);
+        if (_pickingRelic || _finished || IsFinished) return;
+        _pickingRelic = true;
+        _relicSelectionDone = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        var candidates = Owner.Relics.ToArray();
+        var sync = RunManager.Instance.PlayerChoiceSynchronizer;
+        uint choiceId = sync.ReserveChoiceId(Owner);
         SetEventState(PageDescription("RELIC_PICK"), new[]
         {
-            new EventOption(this, ReturnToInitial, ModOptionKey("RELIC_PICK", "BACK"))
+            new EventOption(this, CancelRelicInput, ModOptionKey("RELIC_PICK", "BACK"))
         });
-        return Task.CompletedTask;
+        try
+        {
+            IReadOnlyList<int> indexes;
+            if (RunManager.Instance.NetService.Type != NetGameType.Replay &&
+                (LocalContext.IsMe(Owner) || RunManager.Instance.NetService.Type == NetGameType.Singleplayer))
+            {
+                var node = Node ?? throw new InvalidOperationException("SCP-914 relic input requires the event layout.");
+                void OnLayoutClosed() => Scp914Pickup.Disarm(this);
+                node.TreeExiting += OnLayoutClosed;
+                RelicModel? picked;
+                try { picked = await Scp914Pickup.Pick(this); }
+                finally { if (Godot.GodotObject.IsInstanceValid(node)) node.TreeExiting -= OnLayoutClosed; }
+                int index = Array.IndexOf(candidates, picked);
+                indexes = index < 0 ? Array.Empty<int>() : new[] { index };
+                sync.SyncLocalChoice(Owner, choiceId, PlayerChoiceResult.FromIndexes(indexes.ToList()));
+            }
+            else indexes = (await sync.WaitForRemoteChoice(Owner, choiceId)).AsIndexes();
+
+            // Cancellation's event option restores the initial page. A choice
+            // packet may arrive before that option packet, so leave this page
+            // intact until CancelRelicInput runs on every peer.
+            if (_finished || IsFinished || indexes.Count == 0) return;
+            int selectedIndex = indexes[0];
+            var relic = indexes.Count == 1 && selectedIndex >= 0 && selectedIndex < candidates.Length
+                ? candidates[selectedIndex] : null;
+            if (relic == null || !Owner.Relics.Contains(relic))
+            {
+                SetEventState(PageDescription("INPUT_UNAVAILABLE"), new[]
+                {
+                    new EventOption(this, ReturnToInitial, ModOptionKey("INPUT_UNAVAILABLE", "BACK"))
+                });
+                return;
+            }
+            _selectedRelic = relic;
+            _selectedCard = null;
+            ShowProcessingOptions("RELIC_SELECTED", relic.Title.GetFormattedText(), relic.HoverTips);
+        }
+        finally
+        {
+            _pickingRelic = false;
+            Scp914Pickup.Disarm(this);
+            _relicSelectionDone?.TrySetResult(true);
+        }
     }
 
-    // 遗物栏左键接管（见 Scp914Pickup.cs 的补丁）点击后的回调。
-    internal void OnRelicPickedFromBar(RelicModel relic)
+    private async Task CancelRelicInput()
     {
-        if (_finished) return;
-        Scp914Pickup.Disarm();
-        if (!Owner.Relics.Contains(relic))
-        {
-            SetEventState(PageDescription("INPUT_UNAVAILABLE"), new[]
-            {
-                new EventOption(this, ReturnToInitial, ModOptionKey("INPUT_UNAVAILABLE", "BACK"))
-            });
-            return;
-        }
-        _selectedRelic = relic;
-        _selectedCard = null;
-        ShowProcessingOptions("RELIC_SELECTED", relic.Title.GetFormattedText(), relic.HoverTips);
+        var finished = _relicSelectionDone?.Task;
+        Scp914Pickup.Disarm(this);
+        if (finished != null) await finished;
+        if (!_finished && !IsFinished) await ReturnToInitial();
+    }
+
+    protected override void OnEventFinished()
+    {
+        _finished = true;
+        Scp914Pickup.Disarm(this);
+        base.OnEventFinished();
     }
 
     private void ShowProcessingOptions(string page, string itemName, IEnumerable<IHoverTip> tips)
@@ -142,7 +189,7 @@ public sealed class Scp914 : OtherworldEvent
 
     private Task ReturnToInitial()
     {
-        Scp914Pickup.Disarm();
+        Scp914Pickup.Disarm(this);
         _selectedCard = null;
         _selectedRelic = null;
         SetEventState(InitialDescription, GenerateInitialOptions());
@@ -203,7 +250,7 @@ public sealed class Scp914 : OtherworldEvent
         }
 
         // 加工完不结束事件：回到初始页，玩家想走再点离开（用户 2026-10-17）。
-        Scp914Pickup.Disarm();
+        Scp914Pickup.Disarm(this);
         var resultDescription = PageDescription(plan.ResultPage);
         IReadOnlyList<string> outputNames = plan.Cards.Count > 0
             ? plan.Cards.Select(card => Scp914Colors.Tag(Scp914Colors.Of(card.Rarity), card.Title)).ToArray()

@@ -38,6 +38,8 @@ internal static partial class Scp914Pickup
 
     private static Scp914? _armed;
 
+    private static TaskCompletionSource<RelicModel?>? _selection;
+
     internal static bool IsActive => _armed != null;
 
     internal static void Track(NRelicInventoryHolder holder)
@@ -53,9 +55,12 @@ internal static partial class Scp914Pickup
         }
     }
 
-    internal static void Arm(Scp914 scp)
+    internal static Task<RelicModel?> Pick(Scp914 scp)
     {
+        Disarm();
         _armed = scp;
+        var selection = new TaskCompletionSource<RelicModel?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _selection = selection;
         try
         {
             for (int i = Holders.Count - 1; i >= 0; i--)
@@ -74,22 +79,37 @@ internal static partial class Scp914Pickup
         {
             Entry.Logger.Warn($"[SCP914-Pickup] 遗物栏引导创建失败（仅提示）：{e}");
         }
+        return selection.Task;
     }
 
-    internal static void Disarm()
+    internal static void Disarm(Scp914? owner = null)
     {
+        if (owner != null && !ReferenceEquals(_armed, owner)) return;
+        var selection = _selection;
+        _selection = null;
         _armed = null;
         ClearHighlights();
+        selection?.TrySetResult(null);
     }
 
-    internal static void TryPick(RelicModel relic) => _armed?.OnRelicPickedFromBar(relic);
+    internal static void TryPick(RelicModel relic)
+    {
+        if (_armed == null || _selection == null ||
+            ((EventModel)_armed).Owner?.Relics.Contains(relic) != true) return;
+        var selection = _selection;
+        _selection = null;
+        _armed = null;
+        ClearHighlights();
+        selection.TrySetResult(relic);
+    }
 
     // 一件遗物的引导：图标外圈套一个品质色方框并呼吸。图标本身的颜色和缩放都不动。
     internal static void Highlight(NRelicInventoryHolder holder)
     {
         try
         {
-            if (!GodotObject.IsInstanceValid(holder) || Frames.ContainsKey(holder))
+            if (!GodotObject.IsInstanceValid(holder) || Frames.ContainsKey(holder) ||
+                _armed == null || ((EventModel)_armed).Owner?.Relics.Contains(holder.Relic.Model) != true)
             {
                 return;
             }
