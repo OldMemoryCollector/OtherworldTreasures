@@ -33,7 +33,7 @@ public abstract class PlantSummonBase : ModMonsterTemplate
     protected abstract string BodyTexturePath { get; }
 
     // 形象在画面里的相对大小（源图建议 512x512）
-    protected virtual float BodyScale => 0.42f;
+    protected virtual float BodyScale => 0.30f;
 
     // 形象位置微调（正数 = 向下/向右），用来对站位
     protected virtual Vector2 BodyOffset => Vector2.Zero;
@@ -43,17 +43,28 @@ public abstract class PlantSummonBase : ModMonsterTemplate
     // 所以这里按各植物贴图的 alpha 范围量出真实中心，再把落点挪过去。
     protected virtual Vector2 VisualCenterRatio => new(0.5f, 0.5f);
 
-    // 随从站位：相对"主人（玩家）节点"的偏移，+X = 靠敌人那一侧，+Y = 往下。
-    // 原版把非骨手随从统一摆在 玩家位置 + (植物半宽 - 20, +10)，会和玩家/骨手挤在一起，
-    // 所以这里自己摆：豌豆射手/向日葵稍微后移一点 + 下移半个身位（半身位≈110px），让骨手露出来。
-    public virtual Vector2 LayoutOffset => new Vector2(100f, 120f);
+    // Preferred position beside the owner. Actual placement also reserves every
+    // other creature's body and health bar in the multiplayer formation.
+    public virtual Vector2 LayoutOffset => new Vector2(185f, 0f);
 
     // 把场上所有植物按各自 LayoutOffset 重摆一次。
     // 原版 NCombatRoom.AddCreature 会把"非骨手随从"统一挪到一个固定位置，会把先前召唤的植物、
     // 以及驯服随从一并带跑；所以每次有新的随从加入时，两类随从都要整体重摆（见 GamePatches 的两个排版补丁）。
     internal static void ApplyPlantLayouts(NCombatRoom room)
     {
-        foreach (var node in room.CreatureNodes)
+        // A fixed offset can put one player's pet directly on another player.
+        // Reserve both bodies and their health/status bars before placing pets.
+        var occupied = room.CreatureNodes
+            .Where(n => n.Entity.IsAlive && n.Entity.Monster is not PlantSummonBase)
+            .Select(n => n.Hitbox.GetGlobalRect().GrowIndividual(12f, 18f, 12f, 84f))
+            .ToList();
+        var plants = room.CreatureNodes
+            .Where(n => n.Entity.IsAlive && n.Entity.Monster is PlantSummonBase)
+            .OrderBy(n => room.GetCreatureNode(n.Entity.PetOwner?.Creature)?.GlobalPosition.X ?? 0f)
+            .ThenBy(n => n.Entity.CombatId)
+            .ToArray();
+        var stage = new Rect2(12f, 180f, 1896f, 770f);
+        foreach (var node in plants)
         {
             if (node.Entity?.Monster is not PlantSummonBase plant)
             {
@@ -65,7 +76,27 @@ public abstract class PlantSummonBase : ModMonsterTemplate
             {
                 continue;
             }
-            node.Position = playerNode.Position + plant.LayoutOffset;
+            var body = node.Hitbox.GetGlobalRect();
+            var offset = body.Position - node.GlobalPosition;
+            var ownerBody = playerNode.Hitbox.GetGlobalRect();
+            var desired = playerNode.GlobalPosition + plant.LayoutOffset;
+            var candidates = new List<Vector2>
+            {
+                new(ownerBody.End.X + 24f - offset.X, playerNode.GlobalPosition.Y),
+                new(ownerBody.Position.X - 24f - body.Size.X - offset.X, playerNode.GlobalPosition.Y)
+            };
+            // Additional rows cover crowded multiplayer formations and Osty.
+            foreach (float y in new[] { playerNode.GlobalPosition.Y, playerNode.GlobalPosition.Y - 300f, playerNode.GlobalPosition.Y - 440f })
+                for (float x = 110f; x <= 900f; x += 180f)
+                    candidates.Add(new Vector2(x, y));
+            var origin = candidates.OrderBy(p => p.Y == playerNode.GlobalPosition.Y ? 0 : 1)
+                .ThenBy(p => p.DistanceSquaredTo(desired)).FirstOrDefault(p =>
+            {
+                var area = new Rect2(p + offset, body.Size).GrowIndividual(12f, 12f, 12f, 84f);
+                return stage.Encloses(area) && !occupied.Any(r => r.Intersects(area));
+            }, desired);
+            node.GlobalPosition = origin;
+            occupied.Add(new Rect2(origin + offset, body.Size).GrowIndividual(12f, 12f, 12f, 84f));
         }
     }
 
@@ -240,6 +271,11 @@ public abstract class PlantSummonBase : ModMonsterTemplate
 
         // 5) 让游戏用新的 Bounds 重算 Hitbox 与血条位置
         creatureNode.SetScaleAndHue(1f, 0f);
+
+        // The AddCreature postfix runs before the custom sprite bounds exist.
+        // Place again once the actual body and health bar have their final size.
+        if (NCombatRoom.Instance is { } room)
+            ApplyPlantLayouts(room);
 
         Entry.Logger.Info($"[Plant] {GetType().Name} 形象: scale={BodyScale} offset={BodyOffset} size={size} bounds={bounds.Position} creature={creatureNode.GlobalPosition} spriteZ={sprite.ZIndex}");
     }

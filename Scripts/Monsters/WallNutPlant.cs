@@ -27,8 +27,8 @@ public class WallNutPlant : PlantSummonBase
     // 贴图里可见坚果墙的中心（按 alpha 范围量取），供原版特效落点对齐
     protected override Vector2 VisualCenterRatio => new(0.501f, 0.514f);
 
-    // 站位：坚果墙站在我们阵型最前面（至少在豌豆射手/向日葵的两倍位置上）
-    public override Vector2 LayoutOffset => new(300f, 10f);
+    // Prefer the front of its owner; crowded formations still avoid other bodies and health bars.
+    public override Vector2 LayoutOffset => new(240f, 0f);
 
     // 每回合获得的格挡（概率翻倍走基类的 DoubleActionChance，和其他植物同一套 20%）
     public const int BlockPerTurn = 6;

@@ -1158,8 +1158,7 @@ public static class Patch_PotionModel_Description
 // === Patch 14: 我们植物的站位 ===
 // 随从的站位其实在 NCombatRoom.AddCreature(Creature) 里：原版把"非骨手随从"统一摆在
 //   位置 = 玩家位置 + (植物半宽 - 20, +10)
-// 所以我们的植物会和玩家/骨手挤在一起。这里在它之后重新摆：
-//   坚果墙 → 站在所有随从最前（有骨手就摆到骨手前面）  豌豆射手 / 向日葵 → 后移下移约半个身位，让骨手露出来
+// 所以我们的植物会和玩家/骨手挤在一起。这里在它之后按身体和血条的实际矩形重新摆位。
 // 顺带把骨手血条的 ZIndex 提上去，避免被我们的植物盖住。
 [HarmonyPatch(typeof(NCombatRoom), nameof(NCombatRoom.AddCreature))]
 public static class Patch_NCombatRoom_PlantLayout
@@ -1191,8 +1190,6 @@ public static class Patch_NCombatRoom_PlantLayout
             {
                 ostyBar.ZIndex = OstyHealthBarZIndex;
             }
-
-            plantNode.Position = playerNode.Position + plant.LayoutOffset;
 
             // 原版 AddCreature 会把所有"非骨手随从"统一挪到一个固定位置，会把先前召唤的植物
             // 以及驯服随从（桃太郎）一并带跑；所以每次有新植物加入，两类随从都要整体重摆一遍。
