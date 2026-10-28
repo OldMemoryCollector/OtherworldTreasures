@@ -117,6 +117,8 @@ public class TimeClothCard : ModCardTemplate, IDerivedCard
         finally
         {
             TimeClothState.IsTargeting = false;
+            TimeClothState.TargetingFinishedFrame = GodotObject.IsInstanceValid(targetManager) && targetManager.IsInsideTree()
+                ? targetManager.GetTree().GetFrame() : -1;
         }
 
         if (targetNode == null)

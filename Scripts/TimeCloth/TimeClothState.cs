@@ -50,8 +50,9 @@ public static class TimeClothState
 
     private static Dictionary<Creature, CreatureSnapshot>? _previousTurn;
     private static Dictionary<Creature, CreatureSnapshot>? _currentTurn;
-    private static Dictionary<(Player Owner, Type RelicType), int>? _previousRelicCounters;
-    private static Dictionary<(Player Owner, Type RelicType), int>? _currentRelicCounters;
+    private readonly record struct RelicCounterSnapshot(int Value, RelicStatus Status);
+    private static Dictionary<(Player Owner, Type RelicType), RelicCounterSnapshot>? _previousRelicCounters;
+    private static Dictionary<(Player Owner, Type RelicType), RelicCounterSnapshot>? _currentRelicCounters;
     private static ICombatState? _capturedCombat;
     private static int _capturedTurn = -1;
 
@@ -61,6 +62,9 @@ public static class TimeClothState
     // 是否正在进行【时光布】的目标选择：此时点击遗物格应视为"选目标"，
     // 而不是原版的"打开遗物介绍"（见 GamePatches 里对 NRelicInventory.OnRelicClicked 的拦截）
     public static bool IsTargeting;
+    // Finishing the target task can resume OnPlay before the same mouse release
+    // reaches NRelicInventory. That release still belongs to target selection.
+    public static long TargetingFinishedFrame = -1;
 
     public static void Clear()
     {
@@ -72,6 +76,7 @@ public static class TimeClothState
         _capturedTurn = -1;
         PendingIsRewind = false;
         IsTargeting = false;
+        TargetingFinishedFrame = -1;
     }
 
     // 玩家回合开始：把"本回合"滚动为"上一回合"，再记录新快照
@@ -293,7 +298,7 @@ public static class TimeClothState
     // 回溯：把计数还原到"上一回合开始时"
     public static void RewindRelicCounter(RelicModel relic)
     {
-        if (_previousRelicCounters == null || !_previousRelicCounters.TryGetValue((relic.Owner, relic.GetType()), out int value))
+        if (_previousRelicCounters == null || !_previousRelicCounters.TryGetValue((relic.Owner, relic.GetType()), out var snapshot))
         {
             Entry.Logger.Info("[TimeCloth] Rewind skipped: no previous counter for this relic");
             return;
@@ -301,9 +306,10 @@ public static class TimeClothState
 
         if (relic is ITimeClothCounter counter)
         {
-            counter.TimeClothCounter = value;
+            counter.TimeClothCounter = snapshot.Value;
+            relic.Status = snapshot.Status;
             counter.RefreshTimeClothCounterUi();
-            Entry.Logger.Info($"[TimeCloth] Relic counter rewound: {relic.GetType().Name} = {value}");
+            Entry.Logger.Info($"[TimeCloth] Relic counter rewound: {relic.GetType().Name} = {snapshot.Value}");
             return;
         }
 
@@ -313,8 +319,9 @@ public static class TimeClothState
             Entry.Logger.Info($"[TimeCloth] {relic.GetType().Name} has no rewindable counter");
             return;
         }
-        property.SetValue(relic, value);
-        Entry.Logger.Info($"[TimeCloth] Turn counter rewound: {relic.GetType().Name}.{property.Name} = {value}");
+        property.SetValue(relic, snapshot.Value);
+        relic.Status = snapshot.Status;
+        Entry.Logger.Info($"[TimeCloth] Turn counter rewound: {relic.GetType().Name}.{property.Name} = {snapshot.Value}");
     }
 
     // 加速：回合计数 +1（已处于"即将触发"状态时不再推进，否则会跳过触发条件）
@@ -326,16 +333,27 @@ public static class TimeClothState
             Entry.Logger.Info($"[TimeCloth] {relic.GetType().Name} has no turn counter to advance");
             return;
         }
-        if (relic.Status == RelicStatus.Active)
-        {
-            Entry.Logger.Info($"[TimeCloth] {relic.GetType().Name} is already about to trigger, not advancing");
-            return;
-        }
         if (property.GetValue(relic) is not int current)
         {
             return;
         }
+        // These native setters update the displayed number without always
+        // updating Status. Derive readiness from the actual (possibly silver)
+        // interval so repeated accelerations cannot skip the next activation.
+        int? interval = relic is MegaCrit.Sts2.Core.Models.Relics.HappyFlower
+            or MegaCrit.Sts2.Core.Models.Relics.FakeHappyFlower
+            or MegaCrit.Sts2.Core.Models.Relics.Pendulum
+            or MegaCrit.Sts2.Core.Models.Relics.PollinousCore
+            ? relic.DynamicVars["Turns"].IntValue : null;
+        if (interval is { } turns && current >= turns - 1 || interval == null && relic.Status == RelicStatus.Active)
+        {
+            if (interval != null) relic.Status = RelicStatus.Active;
+            Entry.Logger.Info($"[TimeCloth] {relic.GetType().Name} is already about to trigger, not advancing");
+            return;
+        }
         property.SetValue(relic, current + 1);
+        if (interval is { } threshold)
+            relic.Status = current + 1 == threshold - 1 ? RelicStatus.Active : RelicStatus.Normal;
         Entry.Logger.Info($"[TimeCloth] Turn counter advanced: {relic.GetType().Name}.{property.Name} {current} -> {current + 1}");
     }
 
@@ -361,22 +379,22 @@ public static class TimeClothState
         return snapshot;
     }
 
-    private static Dictionary<(Player Owner, Type RelicType), int> CaptureRelicCounters(IEnumerable<Player> owners)
+    private static Dictionary<(Player Owner, Type RelicType), RelicCounterSnapshot> CaptureRelicCounters(IEnumerable<Player> owners)
     {
-        var result = new Dictionary<(Player Owner, Type RelicType), int>();
+        var result = new Dictionary<(Player Owner, Type RelicType), RelicCounterSnapshot>();
         foreach (var owner in owners)
         {
             foreach (var relic in owner.Relics)
             {
                 if (relic is ITimeClothCounter counter)
                 {
-                    result[(owner, relic.GetType())] = counter.TimeClothCounter;
+                    result[(owner, relic.GetType())] = new(counter.TimeClothCounter, relic.Status);
                     continue;
                 }
                 var property = FindTurnCounterProperty(relic);
                 if (property?.GetValue(relic) is int value)
                 {
-                    result[(owner, relic.GetType())] = value;
+                    result[(owner, relic.GetType())] = new(value, relic.Status);
                 }
             }
         }

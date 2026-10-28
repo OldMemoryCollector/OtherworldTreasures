@@ -664,9 +664,9 @@ internal static class ThirdPartyGuards
 [HarmonyPatch(typeof(NRelicInventory), "OnRelicClicked")]
 public static class Patch_NRelicInventory_NoInspectWhileTargeting
 {
-    static bool Prefix()
+    static bool Prefix(NRelicInventory __instance)
     {
-        if (!TimeClothState.IsTargeting)
+        if (!TimeClothState.IsTargeting && TimeClothState.TargetingFinishedFrame != __instance.GetTree().GetFrame())
         {
             return true;
         }
