@@ -1,3 +1,6 @@
+using System.Text.Json;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
+using STS2RitsuLib.Networking.ManagedActions;
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
@@ -44,6 +47,17 @@ public sealed class Scp914 : OtherworldEvent
     private bool _finished;
     private bool _pickingRelic;
     private TaskCompletionSource<bool>? _relicSelectionDone;
+    private bool _processing;
+    private int _processSequence;
+    private Dictionary<int, ProcessingRequest>? _processRequests;
+    private static RitsuLibManagedNetActionDescriptor<ProcessingPayload>? s_processingAction;
+
+    private readonly record struct ProcessingPayload(int Sequence, byte Mode);
+    private sealed class ProcessingRequest
+    {
+        public TaskCompletionSource<bool> Ready { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource<bool> Finished { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    }
 
     // Dedicated SCP-914 event background; keep it separate from other event art and card portraits.
     public override EventAssetProfile AssetProfile => new(
@@ -168,6 +182,12 @@ public sealed class Scp914 : OtherworldEvent
     {
         _finished = true;
         Scp914Pickup.Disarm(this);
+        if (_processRequests != null)
+            foreach (var request in _processRequests.Values)
+            {
+                request.Ready.TrySetResult(false);
+                request.Finished.TrySetResult(false);
+            }
         base.OnEventFinished();
     }
 
@@ -196,7 +216,78 @@ public sealed class Scp914 : OtherworldEvent
         return Task.CompletedTask;
     }
 
+    // Native independent event options run locally before remote options arrive.
+    // Serialize processing itself through the shared action queue so run-wide
+    // rewards, gold and pickup hooks have the same order on every peer.
+    internal static void RegisterProcessingAction()
+    {
+        if (s_processingAction != null) return;
+        s_processingAction = new RitsuLibManagedNetActionDescriptor<ProcessingPayload>(
+            Entry.ModId, "scp914_process",
+            static payload => JsonSerializer.SerializeToUtf8Bytes(payload),
+            static bytes => JsonSerializer.Deserialize<ProcessingPayload>(bytes),
+            ExecuteProcessingAction, GameActionType.Any);
+        RitsuLibManagedNetActions.Register(s_processingAction);
+    }
+
+    private ProcessingRequest GetProcessingRequest(int sequence)
+    {
+        _processRequests ??= new();
+        if (!_processRequests.TryGetValue(sequence, out var request))
+            _processRequests[sequence] = request = new ProcessingRequest();
+        return request;
+    }
+
     private async Task Process(string mode, int cost)
+    {
+        if (_finished || _processing) return;
+        _processing = true;
+        int sequence = ++_processSequence;
+        var request = GetProcessingRequest(sequence);
+        request.Ready.TrySetResult(true);
+        if (LocalContext.IsMe(Owner) || RunManager.Instance.NetService.Type == NetGameType.Singleplayer)
+        {
+            byte modeIndex = mode switch { "COARSE" => 0, "FINE" => 1, "VERY_FINE" => 2, _ => throw new ArgumentException("Unknown SCP-914 mode", nameof(mode)) };
+            if (s_processingAction == null || !RitsuLibManagedNetActions.Request(
+                RunManager.Instance, s_processingAction, new ProcessingPayload(sequence, modeIndex)))
+            {
+                _processing = false;
+                request.Finished.TrySetResult(false);
+                await ReopenProcessingOptions();
+            }
+        }
+        await request.Finished.Task;
+        _processRequests?.Remove(sequence);
+    }
+
+    private static async Task ExecuteProcessingAction(RitsuLibManagedNetActionContext<ProcessingPayload> context)
+    {
+        var refinery = RunManager.Instance.EventSynchronizer.Events.OfType<Scp914>()
+            .FirstOrDefault(e => e.Owner == context.Player);
+        if (refinery == null || refinery._finished) return;
+        var request = refinery.GetProcessingRequest(context.Message.Sequence);
+        // The queued action can arrive before this owner's native option packet.
+        // Waiting here leaves that packet free to run through EventSynchronizer.
+        if (!await request.Ready.Task) return;
+        try
+        {
+            var (mode, cost) = context.Message.Mode switch
+            {
+                0 => ("COARSE", CoarseCost),
+                1 => ("FINE", FineCost),
+                2 => ("VERY_FINE", VeryFineCost),
+                _ => throw new ArgumentException("Invalid SCP-914 processing mode")
+            };
+            if (!refinery._finished) await refinery.ProcessCore(mode, cost);
+        }
+        finally
+        {
+            refinery._processing = false;
+            request.Finished.TrySetResult(true);
+        }
+    }
+
+    private async Task ProcessCore(string mode, int cost)
     {
         if (_finished) return;
         if (_selectedCard != null && (!Owner.Deck.Cards.Contains(_selectedCard) || !IsProcessableCard(_selectedCard)) ||

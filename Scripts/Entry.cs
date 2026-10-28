@@ -125,6 +125,7 @@ public class Entry
         TimeClothRelic.RegisterGrantAction();
         TimeClothCard.RegisterTargetAction();
         DavesSeeds.RegisterSeedsAction();
+        OtherworldTreasures.Scripts.Events.Scp914.RegisterProcessingAction();
 
         // 其余右键遗物（原素瓶 / 缩小灯 / 库拉的骰子 / 任意门 / 四魂碎片）统一走这条通道
         RelicRightClickSync.Register();
