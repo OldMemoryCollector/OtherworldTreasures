@@ -109,10 +109,9 @@ public static class Patch_FlutterPower_FlightNegation
     }
 }
 
-// === Patch: NPotionContainer.GrowPotionHolders（补齐"减少药水栏"方向） ===
-// 原版只按 for (i = _holders.Count; i < newMax; i++) 补齐，MaxPotionCount 变小时不会移除多余药水格，
-// 导致原素瓶 -1 药水栏后顶栏 UI 不变。Postfix 在 max 变小时摘掉多余 holder。
-// 必须同时从私有 _holders 列表中移除：否则该列表长度仍偏大，后续放药水会放进已隐藏的格子。
+// === Patch: NPotionContainer.GrowPotionHolders（同步缩槽后的模型与显示位置） ===
+// Player 先把被裁掉槽位中的药水搬进前方空槽，再发送 MaxPotionCountChanged。
+// 因此必须按模型引用重排整个 holder，不能直接释放末格中的有效药水显示。
 [HarmonyPatch(typeof(NPotionContainer), "GrowPotionHolders")]
 public static class Patch_NPotionContainer_GrowPotionHolders
 {
@@ -120,22 +119,53 @@ public static class Patch_NPotionContainer_GrowPotionHolders
     {
         try
         {
-            var holdersField = AccessTools.Field(typeof(NPotionContainer), "_holders");
-            if (holdersField?.GetValue(__instance) is not IList holders) return;
-            while (holders.Count > newMaxPotionSlots)
+            if (AccessTools.Field(typeof(NPotionContainer), "_holders").GetValue(__instance)
+                    is not List<NPotionHolder> holders || holders.Count <= newMaxPotionSlots)
+                return;
+            if (AccessTools.Field(typeof(NPotionContainer), "_player").GetValue(__instance)
+                    is not MegaCrit.Sts2.Core.Entities.Players.Player player ||
+                AccessTools.Field(typeof(NPotionContainer), "_potionHolders").GetValue(__instance)
+                    is not Control container)
+                return;
+
+            // 先验证全部目标位置，避免中途失败留下只重排一半的列表。
+            var ordered = new List<NPotionHolder>(newMaxPotionSlots);
+            for (int slot = 0; slot < newMaxPotionSlots; slot++)
             {
-                int last = holders.Count - 1;
-                if (holders[last] is NPotionHolder holder)
-                {
-                    holder.QueueFreeSafely();
-                }
-                holders.RemoveAt(last);
-                Entry.Logger.Info($"[PotionUi] removed holder → count={holders.Count} (max={newMaxPotionSlots})");
+                var potion = player.GetPotionAtSlotIndex(slot);
+                var holder = holders.FirstOrDefault(h =>
+                    !ordered.Contains(h) && ReferenceEquals(h.Potion?.Model, potion));
+                if (holder == null || holder.GetParent() != container)
+                    throw new InvalidOperationException($"No potion holder for slot {slot}");
+                ordered.Add(holder);
             }
+
+            var retired = holders.Where(h => !ordered.Contains(h)).ToArray();
+            if (retired.Any(h => h.HasPotion || h.GetParent() != container))
+                throw new InvalidOperationException("Cannot retire a holder that still contains a potion");
+            holders.Clear();
+            holders.AddRange(ordered);
+            for (int slot = 0; slot < ordered.Count; slot++)
+                container.MoveChild(ordered[slot], slot);
+
+            foreach (var holder in retired)
+            {
+                // 保留刚使用/丢弃药水的原生退场动画；空格不再参与布局和输入。
+                MegaCrit.Sts2.Core.Nodes.HoverTips.NHoverTipSet.Remove(holder);
+                holder.Reparent(__instance);
+                holder.MouseFilter = Control.MouseFilterEnum.Ignore;
+                holder.FocusMode = Control.FocusModeEnum.None;
+                holder.GetNode<Control>("%EmptyIcon").Hide();
+                var retireTween = holder.CreateTween();
+                retireTween.TweenInterval(0.5);
+                retireTween.TweenCallback(Callable.From(() => holder.QueueFreeSafely()));
+            }
+            AccessTools.Method(typeof(NPotionContainer), "UpdateNavigation").Invoke(__instance, null);
+            Entry.Logger.Info($"[PotionUi] reconciled holders → count={holders.Count} (max={newMaxPotionSlots})");
         }
         catch (Exception e)
         {
-            Entry.Logger.Info($"[PotionUi] shrink error: {e.Message}");
+            Entry.Logger.Info($"[PotionUi] shrink error: {e}");
         }
     }
 }
