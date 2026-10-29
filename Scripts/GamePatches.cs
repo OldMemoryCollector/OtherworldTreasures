@@ -14,6 +14,7 @@ using MegaCrit.Sts2.Core.Entities.Merchant;
 using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Factories;
+using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -106,6 +107,21 @@ public static class Patch_FlutterPower_FlightNegation
         {
             __result = 1m;
         }
+    }
+}
+
+// 原素瓶可能在用药后移除最后一格。原生动作收尾仍会打印旧栏位，
+// ToString 直接索引该格会抛异常并阻断动作队列；这里只保护诊断文本。
+[HarmonyPatch(typeof(UsePotionAction), nameof(UsePotionAction.ToString))]
+public static class Patch_UsePotionAction_ToString
+{
+    static bool Prefix(UsePotionAction __instance, ref string __result)
+    {
+        if (__instance.PotionIndex < __instance.Player.PotionSlots.Count)
+            return true;
+        var target = __instance.Player.Creature.CombatState?.GetCreature(__instance.TargetId);
+        __result = $"{nameof(UsePotionAction)} {__instance.Player.NetId} [removed slot] index: {__instance.PotionIndex} target: {__instance.TargetId} ({target}) combat: {__instance.WasEnqueuedInCombat}";
+        return false;
     }
 }
 
