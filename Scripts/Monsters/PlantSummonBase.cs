@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Audio;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -12,6 +13,7 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Monsters;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
+using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.ValueProps;
@@ -34,6 +36,8 @@ public abstract class PlantSummonBase : ModMonsterTemplate
 
     // 形象在画面里的相对大小（源图建议 512x512）
     protected virtual float BodyScale => 0.30f;
+    private float _layoutScale = 1f;
+    private float DisplayScale => BodyScale * _layoutScale;
 
     // 形象位置微调（正数 = 向下/向右），用来对站位
     protected virtual Vector2 BodyOffset => Vector2.Zero;
@@ -63,41 +67,105 @@ public abstract class PlantSummonBase : ModMonsterTemplate
             .OrderBy(n => room.GetCreatureNode(n.Entity.PetOwner?.Creature)?.GlobalPosition.X ?? 0f)
             .ThenBy(n => n.Entity.CombatId)
             .ToArray();
-        var stage = new Rect2(12f, 180f, 1896f, 770f);
-        foreach (var node in plants)
+        if (plants.Length == 0) return;
+
+        // The multiplayer roster extends downwards as players join. It is a
+        // real obstruction even though it is outside the combat creature tree.
+        if (NRun.Instance?.GlobalUi.MultiplayerPlayerContainer is { } roster && roster.IsVisibleInTree())
         {
-            if (node.Entity?.Monster is not PlantSummonBase plant)
+            Rect2? panel = null;
+            void Visit(Node node)
             {
-                continue;
+                if (node is Control control && control.IsVisibleInTree())
+                {
+                    var rect = control.GetGlobalRect();
+                    if (rect.HasArea()) panel = panel?.Merge(rect) ?? rect;
+                }
+                foreach (var child in node.GetChildren()) Visit(child);
             }
-            var owner = node.Entity.PetOwner;
-            var playerNode = owner == null ? null : room.GetCreatureNode(owner.Creature);
-            if (playerNode == null)
-            {
-                continue;
-            }
-            var body = node.Hitbox.GetGlobalRect();
-            var offset = body.Position - node.GlobalPosition;
-            var ownerBody = playerNode.Hitbox.GetGlobalRect();
-            var desired = playerNode.GlobalPosition + plant.LayoutOffset;
-            var candidates = new List<Vector2>
-            {
-                new(ownerBody.End.X + 24f - offset.X, playerNode.GlobalPosition.Y),
-                new(ownerBody.Position.X - 24f - body.Size.X - offset.X, playerNode.GlobalPosition.Y)
-            };
-            // Additional rows cover crowded multiplayer formations and Osty.
-            foreach (float y in new[] { playerNode.GlobalPosition.Y, playerNode.GlobalPosition.Y - 300f, playerNode.GlobalPosition.Y - 440f })
-                for (float x = 110f; x <= 900f; x += 180f)
-                    candidates.Add(new Vector2(x, y));
-            var origin = candidates.OrderBy(p => p.Y == playerNode.GlobalPosition.Y ? 0 : 1)
-                .ThenBy(p => p.DistanceSquaredTo(desired)).FirstOrDefault(p =>
-            {
-                var area = new Rect2(p + offset, body.Size).GrowIndividual(12f, 12f, 12f, 84f);
-                return stage.Encloses(area) && !occupied.Any(r => r.Intersects(area));
-            }, desired);
-            node.GlobalPosition = origin;
-            occupied.Add(new Rect2(origin + offset, body.Size).GrowIndividual(12f, 12f, 12f, 84f));
+            foreach (var child in roster.GetChildren()) Visit(child);
+            if (panel is { } hud)
+                occupied.Add(new Rect2(new Vector2(0f, hud.Position.Y - 12f), new Vector2(hud.End.X + 12f, hud.Size.Y + 24f)));
         }
+
+        // Plan the entire formation before moving any plant. The previous
+        // per-plant fallback put later pets back on their owner when rows filled.
+        float right = room.CreatureNodes.Where(n => n.Entity.IsAlive && n.Entity.Side == CombatSide.Enemy)
+            .Select(n => n.Hitbox.GetGlobalRect().Position.X - 12f).DefaultIfEmpty(1908f).Min();
+        var stage = new Rect2(12f, 180f, Math.Max(0f, right - 12f), 770f);
+        foreach (bool keepOwnerRow in new[] { true, false })
+        foreach (float factor in new[] { 1f, .9f, .8f, .7f, .6f, .5f, .45f, .4f })
+        {
+            var free = new List<Rect2> { stage };
+            foreach (var rect in occupied) free = SubtractPlantSpace(free, rect);
+            var planned = new Vector2[plants.Length];
+            int attempts = 0;
+            if (!PlanPlantPositions(room, plants, 0, factor, keepOwnerRow, free, planned, ref attempts)) continue;
+            foreach (var node in plants)
+            {
+                var plant = (PlantSummonBase)node.Entity.Monster!;
+                if (Math.Abs(plant._layoutScale - factor) > .001f)
+                {
+                    plant._layoutScale = factor;
+                    plant.RefreshBodyVisual(updateLayout: false);
+                }
+            }
+            for (int i = 0; i < plants.Length; i++) plants[i].GlobalPosition = planned[i];
+            return;
+        }
+        Entry.Logger.Info("[Plant] No unobstructed allied formation fits the current encounter.");
+    }
+
+    private static List<Rect2> SubtractPlantSpace(List<Rect2> spaces, Rect2 obstacle)
+    {
+        var result = new List<Rect2>();
+        foreach (var space in spaces)
+        {
+            if (!space.Intersects(obstacle)) { result.Add(space); continue; }
+            var cut = space.Intersection(obstacle);
+            if (cut.Position.X > space.Position.X) result.Add(new Rect2(space.Position, new Vector2(cut.Position.X - space.Position.X, space.Size.Y)));
+            if (cut.End.X < space.End.X) result.Add(new Rect2(new Vector2(cut.End.X, space.Position.Y), new Vector2(space.End.X - cut.End.X, space.Size.Y)));
+            if (cut.Position.Y > space.Position.Y) result.Add(new Rect2(space.Position, new Vector2(space.Size.X, cut.Position.Y - space.Position.Y)));
+            if (cut.End.Y < space.End.Y) result.Add(new Rect2(new Vector2(space.Position.X, cut.End.Y), new Vector2(space.Size.X, space.End.Y - cut.End.Y)));
+        }
+        // Overlapping maximal rectangles are intentional. Remove contained
+        // duplicates so a crowded scene does not grow the search exponentially.
+        for (int i = result.Count - 1; i >= 0; i--)
+            if (result.Where((_, j) => j != i).Any(r => r.Encloses(result[i]))) result.RemoveAt(i);
+        return result;
+    }
+
+    private static bool PlanPlantPositions(NCombatRoom room, NCreature[] nodes, int index, float factor,
+        bool keepOwnerRow, List<Rect2> free, Vector2[] planned, ref int attempts)
+    {
+        if (index == nodes.Length) return true;
+        if (++attempts > 3000) return false;
+        var node = nodes[index];
+        var plant = (PlantSummonBase)node.Entity.Monster!;
+        var ownerNode = node.Entity.PetOwner is { } owner ? room.GetCreatureNode(owner.Creature) : null;
+        if (ownerNode == null) return false;
+        var body = node.Hitbox.GetGlobalRect();
+        float ratio = factor / plant._layoutScale;
+        var size = body.Size * ratio;
+        var offset = (body.Position - node.GlobalPosition - plant.BodyOffset) * ratio + plant.BodyOffset;
+        // Include the leading block icon, health text and one status row.
+        var padding = new Vector2(36f, 12f);
+        var areaSize = size + new Vector2(48f, 96f);
+        var desired = ownerNode.GlobalPosition + plant.LayoutOffset;
+        var desiredArea = desired + offset - padding;
+        var candidates = free.Where(r => r.Size.X >= areaSize.X && r.Size.Y >= areaSize.Y)
+            .Select(r => new Vector2(Math.Clamp(desiredArea.X, r.Position.X, r.End.X - areaSize.X),
+                Math.Clamp(desiredArea.Y, r.Position.Y, r.End.Y - areaSize.Y)))
+            .Where(p => !keepOwnerRow || Math.Abs(p.Y - desiredArea.Y) <= 1f)
+            .Distinct().OrderBy(p => Math.Abs(p.Y - desiredArea.Y))
+            .ThenBy(p => p.DistanceSquaredTo(desiredArea)).ToArray();
+        foreach (var position in candidates)
+        {
+            planned[index] = position + padding - offset;
+            if (PlanPlantPositions(room, nodes, index + 1, factor, keepOwnerRow,
+                SubtractPlantSpace(free, new Rect2(position, areaSize)), planned, ref attempts)) return true;
+        }
+        return false;
     }
 
     // 受击特效落点重定向：原版攻击的 HitVfx 打在"攻击目标"（玩家）身上，
@@ -217,7 +285,7 @@ public abstract class PlantSummonBase : ModMonsterTemplate
     // 按当前状态刷新身体贴图、缩放与占位矩形。
     // 生物的坐标原点在"脚底"，所以这里让图片底边正好落在原点上，
     // 并把 Bounds（血条/名字/能力栏都以它为基准）设成植物实际占用的矩形。
-    protected void RefreshBodyVisual()
+    protected void RefreshBodyVisual(bool updateLayout = true)
     {
         var creatureNode = Creature.GetCreatureNode();
         var visuals = creatureNode?.Visuals;
@@ -240,7 +308,7 @@ public abstract class PlantSummonBase : ModMonsterTemplate
         // 2) Sprite2D 中心归零 + 向上偏半个图高 → 画出来的"底边中心"正好落在节点原点上；
         //    再把节点原点挪到生物原点（脚底）+ 微调，这样无论工厂内部的父子偏移如何都准
         sprite.Texture = texture;
-        sprite.Scale = Vector2.One * BodyScale;
+        sprite.Scale = Vector2.One * DisplayScale;
         sprite.Offset = new Vector2(0f, -texture.GetHeight() / 2f);
         sprite.GlobalPosition = creatureNode.GlobalPosition + BodyOffset;
         // 身体不要盖住血条（血条是 NCreature 场景里 Visuals 的兄弟节点，按绘制顺序排）
@@ -248,7 +316,7 @@ public abstract class PlantSummonBase : ModMonsterTemplate
 
         // 3) Bounds 贴合植物实际占用的矩形（左上角在原点上方）
         //    血条/名字/能力栏的位置与宽度都以它为基准
-        var size = new Vector2(texture.GetWidth(), texture.GetHeight()) * BodyScale;
+        var size = new Vector2(texture.GetWidth(), texture.GetHeight()) * DisplayScale;
         var bounds = visuals.Bounds;
         bounds.Size = size;
         bounds.GlobalPosition = creatureNode.GlobalPosition + new Vector2(-size.X / 2f, -size.Y) + BodyOffset;
@@ -263,8 +331,8 @@ public abstract class PlantSummonBase : ModMonsterTemplate
         if (visuals.GetNodeOrNull<Marker2D>("%CenterPos") is { } vfxMarker)
         {
             var visualCenter = new Vector2(
-                (VisualCenterRatio.X - 0.5f) * texture.GetWidth() * BodyScale,
-                (VisualCenterRatio.Y - 1f) * texture.GetHeight() * BodyScale);
+                (VisualCenterRatio.X - 0.5f) * texture.GetWidth() * DisplayScale,
+                (VisualCenterRatio.Y - 1f) * texture.GetHeight() * DisplayScale);
             vfxMarker.GlobalPosition = creatureNode.GlobalPosition + visualCenter + BodyOffset;
             Entry.Logger.Info($"[Plant] {GetType().Name} 特效落点: {vfxMarker.GlobalPosition}（中心偏移={visualCenter}）");
         }
@@ -274,14 +342,14 @@ public abstract class PlantSummonBase : ModMonsterTemplate
 
         // The AddCreature postfix runs before the custom sprite bounds exist.
         // Place again once the actual body and health bar have their final size.
-        if (NCombatRoom.Instance is { } room)
+        if (updateLayout && NCombatRoom.Instance is { } room)
             ApplyPlantLayouts(room);
 
-        Entry.Logger.Info($"[Plant] {GetType().Name} 形象: scale={BodyScale} offset={BodyOffset} size={size} bounds={bounds.Position} creature={creatureNode.GlobalPosition} spriteZ={sprite.ZIndex}");
+        Entry.Logger.Info($"[Plant] {GetType().Name} 形象: scale={DisplayScale} offset={BodyOffset} size={size} bounds={bounds.Position} creature={creatureNode.GlobalPosition} spriteZ={sprite.ZIndex}");
     }
 
     // 形象在画面上的高度（像素），供特效定位用
-    protected float BodyHeightPx => (PlantFx.LoadTexture(GetBodyTexturePath())?.GetHeight() ?? 0) * BodyScale;
+    protected float BodyHeightPx => (PlantFx.LoadTexture(GetBodyTexturePath())?.GetHeight() ?? 0) * DisplayScale;
 
     // === 承伤链 ===
     // 顺序（坚果墙 > 骨手 > 驯服的怪物 > 豌豆射手 > 向日葵 > 玩家）统一由 PetAbsorb 实现：
