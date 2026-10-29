@@ -138,7 +138,8 @@ public sealed class EnchantingTable : ModRelicTemplate, IModRightClickableRelic,
         var candidates = combat.AllCards.Where(HasAnyLegalEnchantment).ToList();
         if (candidates.Count == 0) return;
         var selected = (await CardSelectCmd.FromSimpleGrid(context, candidates, Owner,
-            new CardSelectorPrefs(CardSelectorPrefs.EnchantSelectionPrompt, 1) { Cancelable = true })).FirstOrDefault();
+            // The native simple-grid screen ignores Cancelable; an empty confirmed selection safely exits.
+            new CardSelectorPrefs(CardSelectorPrefs.EnchantSelectionPrompt, 0, 1) { RequireManualConfirmation = true })).FirstOrDefault();
         if (selected == null || !EnchantForLevels(selected, TemporaryCost)) return;
         int index = selected.DeckVersion == null ? -1 : Owner.Deck.Cards.ToList().IndexOf(selected.DeckVersion);
         if (index >= 0)
