@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Entities.Relics;
@@ -26,13 +28,54 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
 {
     private const int initialUses = 3;
 
-    // 按玩家隔离的状态（遗物实例每次战斗重建，static 又会被两名玩家共享）
-    private sealed class PlayerState
+    // 已经扣过次数的目的地（同一目的地只扣一次）。
+    // 必须进存档：原先放在 PerPlayerState 里，那一层是 ConditionalWeakTable<Player, …>，
+    // 读档后 Player 对象是新建的，表就空了，于是同一个地图点会被重复扣次数，玩家凭空少一次飞行。
+    // 现在改成 [SavedProperty] 字符串，首次使用时解析，变更时回写。
+    private readonly HashSet<(int ActIndex, MapCoord Coord)> _chargedCoords = new();
+    private bool _chargedCoordsLoaded;
+    private string _savedChargedCoords = "";
+
+    [SavedProperty]
+    public string SavedChargedCoords
     {
-        public readonly HashSet<(int ActIndex, MapCoord Coord)> ChargedCoords = new();
+        get => _savedChargedCoords;
+        set
+        {
+            AssertMutable();
+            _savedChargedCoords = value ?? "";
+            _chargedCoordsLoaded = false;
+        }
     }
 
-    private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
+    private HashSet<(int ActIndex, MapCoord Coord)> ChargedCoords
+    {
+        get
+        {
+            if (!_chargedCoordsLoaded)
+            {
+                _chargedCoordsLoaded = true;
+                _chargedCoords.Clear();
+                foreach (var token in Progress.SavedChargedCoords.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var halves = token.Split(':');
+                    if (halves.Length != 2) continue;
+                    if (!int.TryParse(halves[0], out int act)) continue;
+                    var xy = halves[1].Split(',');
+                    if (xy.Length != 2) continue;
+                    if (!int.TryParse(xy[0], out int col) || !int.TryParse(xy[1], out int row)) continue;
+                    _chargedCoords.Add((act, new MapCoord(col, row)));
+                }
+            }
+            return _chargedCoords;
+        }
+    }
+
+    private void PersistChargedCoords()
+    {
+        Progress.SavedChargedCoords = string.Join(';',
+            ChargedCoords.Select(c => $"{c.ActIndex}:{c.Coord.col},{c.Coord.row}"));
+    }
 
     // 无 runState 参数时的静态查询取当前跑局
     private static IRunState? CurrentRun => RunManager.Instance?.DebugOnlyGetState();
@@ -127,7 +170,9 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
     {
         Progress.SavedRemaining = initialUses;
         Progress.Armed = false;
-        S.ChargedCoords.Clear();
+        // 新跑局重新开始记账，旧档残留也一并清掉
+        ChargedCoords.Clear();
+        PersistChargedCoords();
         Status = RelicStatus.Normal;
         InvokeDisplayAmountChanged();
         Entry.Logger.Info($"[AnywhereDoor] AfterObtained: uses reset to {Remaining}");
@@ -243,13 +288,15 @@ public class AnywhereDoor : ModRelicTemplate, IDoraemonItem, IModRightClickableR
         }
 
         // 同一目的地只扣一次：重复进入这个地图点的房间不算新的飞越
-        if (!S.ChargedCoords.Add((runState.CurrentActIndex, currentPoint.coord)))
+        if (!ChargedCoords.Add((runState.CurrentActIndex, currentPoint.coord)))
         {
             Entry.Logger.Info($"[AnywhereDoor] {currentPoint.coord} 已扣过次数（重复进入同一地图点），本次不扣");
             return Task.CompletedTask;
         }
 
         Progress.SavedRemaining--;
+        // 记账要落进存档，否则读档后同一目的地会被再扣一次
+        PersistChargedCoords();
         Progress.InvokeDisplayAmountChanged();
         if (Remaining <= 0)
         {

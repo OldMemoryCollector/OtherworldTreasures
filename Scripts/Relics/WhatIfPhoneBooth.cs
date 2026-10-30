@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Relics;
@@ -8,6 +9,7 @@ using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.RelicPools;
+using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
@@ -170,6 +172,14 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
             $"seed={seed}, usesThisCombat={S.UsesThisCombat}");
 
         // 4) 走原版"跳进指定房间"通道重新进入这场战斗
+        // 重进房间会拆掉手牌界面；如果跟当前动作队列在同一帧里进行，卡牌节点会被重复释放回对象池，
+        // 日志表现为「NCard ... already been freed」（原版 owfight 通道不会，因为它不在动作队列内部）。
+        // 先让出一帧，等 UI 树稳定再拆房间。
+        if (NGame.Instance is { } game && game.GetTree() is { } tree)
+        {
+            await game.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+        }
+
         await runManager.EnterRoomDebug(currentRoom.RoomType, MapPointType.Unassigned, encounter);
         runManager.ActionExecutor.Unpause();
 
