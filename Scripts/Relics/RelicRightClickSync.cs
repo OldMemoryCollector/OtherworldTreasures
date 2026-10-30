@@ -109,7 +109,10 @@ internal static class RelicRightClickSync
         }
         catch (Exception e)
         {
-            Entry.Logger.Info($"[RelicRightClick] 右键动作执行异常（已忽略）：{e}");
+            // 这里原本是 Info 级「已忽略」，等于把所有右键遗物的异常静默吞掉：
+            // 缩小灯在战斗结束后右键就是这么无声失效的（ArgumentOutOfRangeException）。
+            // 通道本身要继续吞异常以免打断动作队列，但至少要能在日志里被看见。
+            Entry.Logger.Warn($"[RelicRightClick] 右键动作执行异常（已吞，不打断队列）：{e}");
         }
     }
 }

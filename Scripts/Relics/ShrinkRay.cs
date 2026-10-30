@@ -58,10 +58,16 @@ public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonIte
         return true;
     }
 
-    // 仅在战斗内可点（合成卡牌需要战斗状态）
+    // 仅在战斗内可点（合成卡牌需要战斗状态）。
+    // 必须同时要求 IsInProgress：战斗结束后 DebugOnlyGetState 仍然非空，只判它会把右键放行到
+    // 原版 AddGeneratedCardToCombat —— 该方法在战斗已结束（以及 creature 的 CombatState 为空）
+    // 时返回空数组，内部却直接取 [0]，于是抛 ArgumentOutOfRangeException。
+    // 异常又被右键通道的 catch 吞掉，玩家看到的就是「右键完全没反应」。
     public bool CanExecuteRightClick(ModRightClickExecutionContext context)
     {
-        return Owner != null && CombatManager.Instance.DebugOnlyGetState() != null;
+        return Owner != null
+            && CombatManager.Instance.IsInProgress
+            && CombatManager.Instance.DebugOnlyGetState() != null;
     }
 
     // 只有发起者本机负责入队；实际发卡由联机动作在所有端统一执行
@@ -86,10 +92,12 @@ public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonIte
         {
             return;
         }
+        // CanExecuteRightClick 只是发起端的本地预检，权威执行侧必须再兜一次：
+        // 战斗不在进行中时绝不能走到 AddGeneratedCardToCombat。
         var combatState = CombatManager.Instance.DebugOnlyGetState();
-        if (combatState == null)
+        if (combatState == null || !CombatManager.Instance.IsInProgress)
         {
-            Entry.Logger.Info("[ShrinkRay] GrantShrinkRayCard aborted: not in combat");
+            Entry.Logger.Info("[ShrinkRay] GrantShrinkRayCard aborted: combat is not in progress");
             return;
         }
 
