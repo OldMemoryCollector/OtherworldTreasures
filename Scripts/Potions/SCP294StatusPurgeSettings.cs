@@ -43,8 +43,8 @@ internal static partial class Scp294Settings
               StatusPurgeTarget.Allies => Text("我方状态清除", "Ally status removal", "味方の状態解除"),
               _ => Text("全体状态清除", "Everyone status removal", "全体の状態解除") })
                 .WithDescription(target == StatusPurgeTarget.Everyone
-                    ? Text("只清除药水给予的状态。与敌方、我方规则重叠时分别执行。开局生效。", "Only potion-granted statuses are removed. Overlapping enemy and ally rules apply separately. Applies to new runs.", "薬による状態だけを解除。敵側・味方の設定と重なる場合はそれぞれ適用。新しいランに適用。")
-                    : Text("每X个完整回合结束时清除药水给予的状态；单项随机一种，一半向上取整。开局生效。", "Remove potion-granted statuses after every X complete rounds. Single picks one per creature; half rounds up. Applies to new runs.", "Xラウンド終了ごとに薬による状態だけを解除。単項目はランダムに1種類、半分は切り上げ。新しいランに適用。"))
+                    ? Text("定期清除药水给予的状态，新开局生效。", "Only potion-granted statuses are removed. Overlapping enemy and ally rules apply separately. Applies to new runs.", "薬による状態だけを解除。敵側・味方の設定と重なる場合はそれぞれ適用。新しいランに適用。")
+                    : Text("定期清除药水给予的状态，新开局生效。", "Remove potion-granted statuses after every X complete rounds. Single picks one per creature; half rounds up. Applies to new runs.", "Xラウンド終了ごとに薬による状態だけを解除。単項目はランダムに1種類、半分は切り上げ。新しいランに適用。"))
                 .WithEnabledWhen(() => EverywhereMode);
             section.AddToggle("enabled", Text("启用状态清除", "Enable status removal", "状態解除を有効化"),
                 ModSettingsBindings.Global<Scp294Config,bool>(Entry.ModId,Key,d=>Scp294StatusPurge.Options(d,target).Enabled,(d,v)=>Scp294StatusPurge.Options(d,target).Enabled=v));
@@ -53,7 +53,7 @@ internal static partial class Scp294Settings
                 placeholder:Text("1","1","1"),maxLength:10,description:Text("X须为正整数。","X must be a positive integer.","Xは正の整数。"),valueValidationVisual:Scp294StatusPurge.ValidInterval);
             section.AddEnumChoice("selection",Text("清除种类","Status selection","種類"),
                 ModSettingsBindings.Global<Scp294Config,StatusPurgeSelection>(Entry.ModId,Key,d=>Scp294StatusPurge.Options(d,target).Selection,(d,v)=>Scp294StatusPurge.Options(d,target).Selection=v),
-                v=>v==StatusPurgeSelection.Single?Text("单项","Single","単項目"):Text("全部","All","全種類"),presentation:ModSettingsChoicePresentation.Dropdown);
+                v=>v==StatusPurgeSelection.Single?Text("随机单项","Single","単項目"):Text("全部","All","全種類"),presentation:ModSettingsChoicePresentation.Dropdown);
             section.AddEnumChoice("layers",Text("移除层数","Layers removed","解除するスタック数"),
                 ModSettingsBindings.Global<Scp294Config,StatusPurgeLayers>(Entry.ModId,Key,d=>Scp294StatusPurge.Options(d,target).Layers,(d,v)=>Scp294StatusPurge.Options(d,target).Layers=v),
                 v=>v switch{StatusPurgeLayers.One=>Text("1","1","1"),StatusPurgeLayers.Two=>Text("2","2","2"),StatusPurgeLayers.Three=>Text("3","3","3"),StatusPurgeLayers.Half=>Text("一半","Half","半分"),_=>Text("All","All","All")},presentation:ModSettingsChoicePresentation.Dropdown);

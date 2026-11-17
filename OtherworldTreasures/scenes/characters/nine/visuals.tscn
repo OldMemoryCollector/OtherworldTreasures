@@ -1,0 +1,43 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/characters/nine/frames/ph000_00.png" id="1_idle"]
+
+[node name="Nine" type="Node2D"]
+
+[node name="Visuals" type="Sprite2D" parent="."]
+unique_name_in_owner = true
+texture_filter = 1
+position = Vector2(-109.48, -306.68)
+scale = Vector2(0.68, 0.68)
+texture = ExtResource("1_idle")
+centered = false
+
+[node name="Bounds" type="Control" parent="."]
+unique_name_in_owner = true
+offset_left = -75.0
+offset_top = -290.0
+offset_right = 75.0
+mouse_filter = 2
+
+[node name="IntentPos" type="Marker2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(0, -320)
+
+[node name="CenterPos" type="Marker2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(0, -145)
+
+[node name="TalkPos" type="Marker2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(15, -290)
+
+[node name="OrbPos" type="Marker2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(0, -335)
+
+[node name="FormVfx" type="Control" parent="."]
+unique_name_in_owner = true
+offset_left = -75.0
+offset_top = -290.0
+offset_right = 75.0
+mouse_filter = 2

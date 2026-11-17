@@ -1,0 +1,17 @@
+{
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.title": "奈茵",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.titleObject": "奈茵",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.description": "来自《苍翼默示录》的魔女。",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.cardsModifierTitle": "奈茵卡牌",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.cardsModifierDescription": "使用奈茵的基础牌、普通牌、罕见牌、稀有牌与先古牌。",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.possessiveAdjective": "她的",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.pronounObject": "她",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.pronounPossessive": "她的",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.pronounSubject": "她",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.banter.alive.endTurnPing": "还没结束。",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.banter.dead.endTurnPing": "……",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.aromaPrinciple": "……",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.eventDeathPrevention": "还不能在这里倒下。",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.goldMonologue": "……",
+  "OTHERWORLD_TREASURES_CHARACTER_KONOE.unlockText": "奈茵"
+}

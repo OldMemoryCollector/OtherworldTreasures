@@ -1,0 +1,5 @@
+{
+  "OTHERWORLD_TREASURES_ORB_SPIDER_WEB_ORB.title": "蛛丝充能球",
+  "OTHERWORLD_TREASURES_ORB_SPIDER_WEB_ORB.description": "被动：对随机敌人施加[blue]3[/blue]层[gold]网缚[/gold]。\n激发：对随机敌人施加[blue]6[/blue]层[gold]网缚[/gold]。",
+  "OTHERWORLD_TREASURES_ORB_SPIDER_WEB_ORB.smartDescription": "[gold]被动：[/gold]回合结束时，对随机敌人施加[blue]{Passive}[/blue]层[gold]网缚[/gold]。\n[gold]激发：[/gold]对随机敌人施加[blue]{Evoke}[/blue]层[gold]网缚[/gold]。"
+}

@@ -25,6 +25,21 @@ public class MemoryKeeper : ModAncientEventTemplate
     // 背景场景：旧忆收藏家专属背景（神秘之手场景图）
     public override string CustomBackgroundScenePath => "res://OtherworldTreasures/scenes/events/background_scenes/memory_keeper.tscn";
 
+#if STS2_113
+    public override void ConfigureBackgroundScene(Control backgroundScene)
+    {
+        base.ConfigureBackgroundScene(backgroundScene);
+        try
+        {
+            MemoryKeeperVessels.ApplyToBackground(backgroundScene, CurrentOptions);
+        }
+        catch (Exception e)
+        {
+            GD.PushWarning("[OtherworldTreasures] 记忆收藏家罐体填充失败：" + e);
+        }
+    }
+#endif
+
     // 地图图标（278x278）与通关回顾头像（88x88）：旧忆收藏家专属
     public override AncientEventPresentationAssetProfile AncientPresentationAssetProfile => new(
         MapIconPath: "res://OtherworldTreasures/images/ancients/memory_keeper_map.png",

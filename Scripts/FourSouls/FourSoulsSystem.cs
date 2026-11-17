@@ -169,7 +169,12 @@ internal static class FourSoulsSystem
     private static SoulKind[] PickKinds(Rng rng, int n)
     {
         var pool = new List<SoulKind>(Souls.All);
-        rng.Shuffle(pool);
+        // Preserve the existing RNG consumption on both game API branches.
+        for (int i = pool.Count - 1; i > 0; i--)
+        {
+            int j = rng.NextInt(i + 1);
+            (pool[i], pool[j]) = (pool[j], pool[i]);
+        }
         return pool.Take(Math.Clamp(n, 0, pool.Count)).ToArray();
     }
 

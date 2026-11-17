@@ -41,6 +41,8 @@ public class Entry
     // 自定义牌堆：小破表变身的暂存堆（Headless 永不显示，只用来放变身前暂存的原始牌堆）
     public static PileType OmnitrixStashPile;
 
+    public static PileType PokerFlightPile;
+
     // 战后生命水晶与生命果奖励：领取对应的可计数遗物。
     public static RewardType LifeCrystalRewardType;
     public static RewardType LifeFruitRewardType;
@@ -51,8 +53,14 @@ public class Entry
     {
         var assembly = Assembly.GetExecutingAssembly();
         RitsuLibFramework.EnsureGodotScriptsRegistered(assembly, Logger);
+        DevelopmentContent.Initialize();
         ModTypeDiscoveryHub.RegisterModAssembly(ModId, assembly);
+        Konoe.KonoeHeat.Register();
+        // 奈茵配色：唯一状态源 + 联机切换动作 + 局内按玩家持久化
+        OtherworldTreasures.Scripts.Konoe.KonoeColorState.Initialize();
         Events.TrainingProgress.Initialize();
+        Events.YakyukenProgress.Initialize();
+        VitalCrystalHp.Initialize();
         Events.MustDieRunData.Initialize();
         ShimmerDropData.Initialize();
         Potions.Scp294Settings.Initialize();
@@ -66,10 +74,21 @@ public class Entry
         ModRightClickRegistry.Register(Events.Scp914PickupRightClick.Instance);
         ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<MegaCrit.Sts2.Core.Nodes.Events.NEventOptionButton, Scp294BrewPreviewIcon>(
             "scp294_brew_preview", static _ => new Scp294BrewPreviewIcon());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NCreature, Konoe.KonoeElementRibbons>(
+            "konoe_element_ribbons", static _ => new Konoe.KonoeElementRibbons());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<MegaCrit.Sts2.Core.Nodes.Cards.NCard, Konoe.KonoeSpellCardUi>(
+            "konoe_dynamic_spell_card", static _ => new Konoe.KonoeSpellCardUi());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<MegaCrit.Sts2.Core.Nodes.Cards.NCard, Konoe.KonoeCardFrameUi>(
+            "konoe_card_frame_overlay", static _ => new Konoe.KonoeCardFrameUi());
         ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NCreature, TerrariaSporeGarden>(
             "terraria_spores", static _ => new TerrariaSporeGarden());
         ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NCreature, ScouterReadout>(
             "scouter_readout", static _ => new ScouterReadout());
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NCombatUi, PokerPileHud>(
+            "death_poker_pile", static _ => new PokerPileHud());
+        // BBCF 火热值 / STOCK HUD：直接挂战斗 UI，自行绑定本地玩家（不走次级资源 UI 挂载策略）
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NCombatUi, Konoe.KonoeHeatHud>(
+            "konoe_heat_hud", static _ => new Konoe.KonoeHeatHud());
         ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NHealthBar, TemporaryHealthReadout>(
             "temporary_health_readout", static _ => new TemporaryHealthReadout());
         ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<MegaCrit.Sts2.Core.Nodes.Relics.NRelic, GoldenRelicBorder>(
@@ -86,6 +105,12 @@ public class Entry
                 Name = "OtherworldGhostIntentSeal",
                 DuplicatePolicy = NodeAttachmentDuplicatePolicy.ReuseExistingByName,
             });
+
+        // 所有开局大厅共用奈茵选色，仍由前置负责节点挂载。
+        KonoeColorSelectUi.Register();
+        // 进入游戏后的角色本体：同局所有端都按该玩家选中的编号给奈茵换色
+        ModNodeAttachmentRegistry.For(ModId).RegisterReadyChild<NCreature, KonoeColorVisual>(
+            "konoe_color_visual", static _ => new KonoeColorVisual());
 
         // 注册自定义奖励：生命水晶。无动态状态，读档时工厂直接重建新实例
         LifeCrystalRewardType = ModRewardRegistry.For(ModId)
@@ -179,6 +204,17 @@ public class Entry
             Style = ModCardPileUiStyle.Headless,
             Anchor = ModCardPileAnchor.Default,
             IconPath = "res://OtherworldTreasures/images/piles/exclusion_pile.svg",
+            OnOpen = ctx => ctx.ShowDefaultPileScreen(),
+            VisibleWhen = ctx => false,
+        }).PileType;
+
+        // Flying cards return next turn without entering any shuffleable or recoverable pile.
+        PokerFlightPile = registry.RegisterOwned("poker_flight", new ModCardPileSpec
+        {
+            Scope = ModCardPileScope.CombatOnly,
+            Style = ModCardPileUiStyle.Headless,
+            Anchor = ModCardPileAnchor.Default,
+            IconPath = DeathPoker.PileImage,
             OnOpen = ctx => ctx.ShowDefaultPileScreen(),
             VisibleWhen = ctx => false,
         }).PileType;

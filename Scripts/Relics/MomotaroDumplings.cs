@@ -440,9 +440,11 @@ public class MomotaroDumplings : ModRelicTemplate,
 
     // === 死亡永久消失 / 战后保存血量 ===
 
-    public override async Task AfterDeath(
-        PlayerChoiceContext choiceContext, Creature creature,
-        bool wasRemovalPrevented, float deathAnimLength)
+    #if STS2_113
+    public override async Task AfterDeath(PlayerChoiceContext choiceContext, Creature creature, MegaCrit.Sts2.Core.Models.CardModel? source, bool wasRemovalPrevented, float deathAnimLength)
+#else
+    public override async Task AfterDeath(PlayerChoiceContext choiceContext, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
+#endif
     {
         if (!wasRemovalPrevented && creature.PetOwner == Owner && TamedPets.IsTamed(creature))
         {
@@ -450,7 +452,11 @@ public class MomotaroDumplings : ModRelicTemplate,
             Persist();
             Entry.Logger.Info($"[MomotaroDumplings] 随从永久死亡：{removed?.MonsterId.Entry}");
         }
+        #if STS2_113
+        await base.AfterDeath(choiceContext, creature, source, wasRemovalPrevented, deathAnimLength);
+        #else
         await base.AfterDeath(choiceContext, creature, wasRemovalPrevented, deathAnimLength);
+        #endif
     }
 
     public override async Task AfterCombatVictory(CombatRoom room)

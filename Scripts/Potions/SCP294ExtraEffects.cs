@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.Factories;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
@@ -32,7 +33,7 @@ public sealed partial class SCP294Potion
         if (ingredients.Any(i => i.Effect == BrewEffect.FoulSplash))
             return potion.Owner.RunState?.CurrentRoom is { } room && FoulPotion.GetFoulPotionMerchantTarget(room).button != null;
         if (!ingredients.All(i => i.Effect is BrewEffect.Heal or BrewEffect.HealPercent or BrewEffect.MaxHp or
-            BrewEffect.FairyRevive or BrewEffect.FillPotionSlots or BrewEffect.HealExtraTurn or BrewEffect.AmbergrisHeal)) return false;
+                BrewEffect.FairyRevive or BrewEffect.FillPotionSlots or BrewEffect.HealExtraTurn or BrewEffect.AmbergrisHeal)) return false;
         return true;
     }
 
@@ -117,7 +118,7 @@ public sealed partial class SCP294Potion
             case BrewEffect.HealExtraTurn:
                 await CreatureCmd.Heal(creature, creature.MaxHp * amount / 100m);
                 if (CombatManager.Instance.IsInProgress)
-                    await Scp294PotionSources.Apply<AmbergrisPower>(context, creature, 1, Owner.Creature, null);
+                    await Scp294PotionSources.Apply<ExtraTurnEffectPower>(context, creature, 1, Owner.Creature, null);
                 return true;
             case BrewEffect.ExhaustHandDraw:
                 if (creature.Player is not { } glowPlayer) return true;
@@ -192,7 +193,7 @@ public sealed partial class SCP294Potion
             (BrewEffect.HealExtraTurn, _) => $"回复最大生命值的{n}%；在战斗中使用时额外进行1个回合。",
             (BrewEffect.ExhaustHandDraw, _) => $"消耗你的手牌，然后抽{n}张牌。",
             (BrewEffect.ChannelSameOrbs, _) => $"生成{n}个{orb}充能球。",
-            (BrewEffect.ChannelRandomOrbs, _) => $"生成{n}个随机充能球，每个球的类型单独随机。",
+            (BrewEffect.ChannelRandomOrbs, _) => $"生成{n}个随机充能球。",
             _ => null
         };
     }

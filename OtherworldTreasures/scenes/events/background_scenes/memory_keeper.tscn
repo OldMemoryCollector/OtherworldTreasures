@@ -1,6 +1,502 @@
-[gd_scene load_steps=2 format=3 uid="uid://b7omc2kpe1bgx"]
+[gd_scene load_steps=18 format=3 uid="uid://b7omc2kpe1bgx"]
 
-[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/ancients/memory_keeper_placeholder.png" id="1_bg"]
+[ext_resource type="Texture2D" uid="uid://csfrq3d67suwu" path="res://OtherworldTreasures/images/ancients/memory_keeper_bg.png" id="1_bg"]
+[ext_resource type="Texture2D" uid="uid://dk5gmlv4igsqi" path="res://OtherworldTreasures/images/ancients/memory_keeper_shadow.png" id="2_collector"]
+[ext_resource type="Texture2D" uid="uid://d081stafhlywq" path="res://OtherworldTreasures/images/ancients/memory_keeper_bottle.png" id="3_bottle"]
+
+[sub_resource type="Gradient" id="Gradient_glow"]
+offsets = PackedFloat32Array(0, 0.4, 1)
+colors = PackedColorArray(0.94, 0.9, 1, 1, 0.74, 0.68, 0.96, 0.42, 0.52, 0.46, 0.86, 0)
+
+[sub_resource type="GradientTexture2D" id="GTex_glow"]
+gradient = SubResource("Gradient_glow")
+width = 512
+height = 512
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_dot"]
+offsets = PackedFloat32Array(0, 0.35, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.88, 0.84, 1, 0.45, 0.72, 0.66, 0.96, 0)
+
+[sub_resource type="GradientTexture2D" id="GTex_dot"]
+gradient = SubResource("Gradient_dot")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_shade"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0.38, 0, 0, 0, 0.72)
+
+[sub_resource type="GradientTexture2D" id="GTex_shade"]
+gradient = SubResource("Gradient_shade")
+width = 4
+height = 256
+fill_to = Vector2(0, 1)
+
+[sub_resource type="Animation" id="Animation_relics"]
+resource_name = "relics"
+length = 6.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Bottles/Bottle1/Relic:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.88), Color(1, 1, 1, 0.967), Color(1, 1, 1, 0.967), Color(1, 1, 1, 0.88), Color(1, 1, 1, 0.793), Color(1, 1, 1, 0.793), Color(1, 1, 1, 0.88)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Bottles/Bottle2/Relic:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.967), Color(1, 1, 1, 0.967), Color(1, 1, 1, 0.88), Color(1, 1, 1, 0.793), Color(1, 1, 1, 0.793), Color(1, 1, 1, 0.88), Color(1, 1, 1, 0.967)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Bottles/Bottle3/Relic:modulate")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.967), Color(1, 1, 1, 0.88), Color(1, 1, 1, 0.793), Color(1, 1, 1, 0.793), Color(1, 1, 1, 0.88), Color(1, 1, 1, 0.967), Color(1, 1, 1, 0.967)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Bottles/Bottle4/Relic:modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.88), Color(1, 1, 1, 0.793), Color(1, 1, 1, 0.793), Color(1, 1, 1, 0.88), Color(1, 1, 1, 0.967), Color(1, 1, 1, 0.967), Color(1, 1, 1, 0.88)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("JarRelics/JarSlot1/Relic:modulate")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.453)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("JarRelics/JarSlot2/Relic:modulate")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.453)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("JarRelics/JarSlot3/Relic:modulate")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.54)]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("JarRelics/JarSlot4/Relic:modulate")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.627)]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("JarRelics/JarSlot5/Relic:modulate")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.627)]
+}
+tracks/9/type = "value"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("JarRelics/JarSlot6/Relic:modulate")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.54)]
+}
+tracks/10/type = "value"
+tracks/10/imported = false
+tracks/10/enabled = true
+tracks/10/path = NodePath("JarRelics/JarSlot7/Relic:modulate")
+tracks/10/interp = 1
+tracks/10/loop_wrap = true
+tracks/10/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.453), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.627), Color(1, 1, 1, 0.54), Color(1, 1, 1, 0.453)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_relics"]
+_data = {
+&"relics": SubResource("Animation_relics")
+}
+
+[sub_resource type="Animation" id="Animation_glow"]
+resource_name = "glow"
+length = 6.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("LampGlowL:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1.5, 3, 4.5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.3), Color(1, 1, 1, 0.88), Color(1, 1, 1, 0.34), Color(1, 1, 1, 0.8), Color(1, 1, 1, 0.3)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("LampGlowR:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1.5, 3, 4.5, 6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.78), Color(1, 1, 1, 0.32), Color(1, 1, 1, 0.84), Color(1, 1, 1, 0.36), Color(1, 1, 1, 0.78)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("MistGlow:modulate")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 3, 6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.06), Color(1, 1, 1, 0.14), Color(1, 1, 1, 0.06)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_glow"]
+_data = {
+&"glow": SubResource("Animation_glow")
+}
+
+[sub_resource type="Animation" id="Animation_motes"]
+resource_name = "motes"
+length = 20.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Motes/Mote01:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 5, 10, 15, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Motes/Mote01:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 5, 10, 15, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Motes/Mote02:modulate")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 3.33, 6.67, 10, 13.33, 16.67, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Motes/Mote02:scale")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 3.33, 6.67, 10, 13.33, 16.67, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Motes/Mote03:modulate")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Motes/Mote03:scale")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Motes/Mote04:modulate")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 5, 10, 15, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08)]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Motes/Mote04:scale")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 5, 10, 15, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7)]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Motes/Mote05:modulate")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0, 3.33, 6.67, 10, 13.33, 16.67, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08)]
+}
+tracks/9/type = "value"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("Motes/Mote05:scale")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = {
+"times": PackedFloat32Array(0, 3.33, 6.67, 10, 13.33, 16.67, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7)]
+}
+tracks/10/type = "value"
+tracks/10/imported = false
+tracks/10/enabled = true
+tracks/10/path = NodePath("Motes/Mote06:modulate")
+tracks/10/interp = 1
+tracks/10/loop_wrap = true
+tracks/10/keys = {
+"times": PackedFloat32Array(0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08)]
+}
+tracks/11/type = "value"
+tracks/11/imported = false
+tracks/11/enabled = true
+tracks/11/path = NodePath("Motes/Mote06:scale")
+tracks/11/interp = 1
+tracks/11/loop_wrap = true
+tracks/11/keys = {
+"times": PackedFloat32Array(0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7)]
+}
+tracks/12/type = "value"
+tracks/12/imported = false
+tracks/12/enabled = true
+tracks/12/path = NodePath("Motes/Mote07:modulate")
+tracks/12/interp = 1
+tracks/12/loop_wrap = true
+tracks/12/keys = {
+"times": PackedFloat32Array(0, 5, 10, 15, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08)]
+}
+tracks/13/type = "value"
+tracks/13/imported = false
+tracks/13/enabled = true
+tracks/13/path = NodePath("Motes/Mote07:scale")
+tracks/13/interp = 1
+tracks/13/loop_wrap = true
+tracks/13/keys = {
+"times": PackedFloat32Array(0, 5, 10, 15, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7)]
+}
+tracks/14/type = "value"
+tracks/14/imported = false
+tracks/14/enabled = true
+tracks/14/path = NodePath("Motes/Mote08:modulate")
+tracks/14/interp = 1
+tracks/14/loop_wrap = true
+tracks/14/keys = {
+"times": PackedFloat32Array(0, 3.33, 6.67, 10, 13.33, 16.67, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08)]
+}
+tracks/15/type = "value"
+tracks/15/imported = false
+tracks/15/enabled = true
+tracks/15/path = NodePath("Motes/Mote08:scale")
+tracks/15/interp = 1
+tracks/15/loop_wrap = true
+tracks/15/keys = {
+"times": PackedFloat32Array(0, 3.33, 6.67, 10, 13.33, 16.67, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7)]
+}
+tracks/16/type = "value"
+tracks/16/imported = false
+tracks/16/enabled = true
+tracks/16/path = NodePath("Motes/Mote09:modulate")
+tracks/16/interp = 1
+tracks/16/loop_wrap = true
+tracks/16/keys = {
+"times": PackedFloat32Array(0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08)]
+}
+tracks/17/type = "value"
+tracks/17/imported = false
+tracks/17/enabled = true
+tracks/17/path = NodePath("Motes/Mote09:scale")
+tracks/17/interp = 1
+tracks/17/loop_wrap = true
+tracks/17/keys = {
+"times": PackedFloat32Array(0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7)]
+}
+tracks/18/type = "value"
+tracks/18/imported = false
+tracks/18/enabled = true
+tracks/18/path = NodePath("Motes/Mote10:modulate")
+tracks/18/interp = 1
+tracks/18/loop_wrap = true
+tracks/18/keys = {
+"times": PackedFloat32Array(0, 5, 10, 15, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.62), Color(1, 1, 1, 0.08)]
+}
+tracks/19/type = "value"
+tracks/19/imported = false
+tracks/19/enabled = true
+tracks/19/path = NodePath("Motes/Mote10:scale")
+tracks/19/interp = 1
+tracks/19/loop_wrap = true
+tracks/19/keys = {
+"times": PackedFloat32Array(0, 5, 10, 15, 20),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7), Vector2(1.15, 1.15), Vector2(0.7, 0.7)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_motes"]
+_data = {
+&"motes": SubResource("Animation_motes")
+}
+
+[sub_resource type="Animation" id="Animation_shadow"]
+resource_name = "shadow"
+length = 24.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("KeeperShadow:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 6, 12, 18, 24),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.88), Color(1, 1, 1, 1), Color(1, 1, 1, 0.92), Color(1, 1, 1, 1), Color(1, 1, 1, 0.88)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_shadow"]
+_data = {
+&"shadow": SubResource("Animation_shadow")
+}
 
 [node name="MemoryKeeperBackground" type="Control"]
 layout_mode = 3
@@ -9,14 +505,815 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
 
-[node name="TextureRect" type="TextureRect" parent="."]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 texture = ExtResource("1_bg")
 expand_mode = 2
 stretch_mode = 6
+metadata/_edit_lock_ = true
+
+[node name="KeeperShadow" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.463542
+anchor_top = 0.592593
+anchor_right = 0.463542
+anchor_bottom = 0.59300005
+offset_left = -51.000427
+offset_top = -112.000275
+offset_right = 268.99957
+offset_bottom = 174.73596
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_collector")
+metadata/_edit_lock_ = true
+
+[node name="MistGlow" type="TextureRect" parent="."]
+modulate = Color(1, 1, 1, 0.06629485)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.520833
+anchor_top = 0.416667
+anchor_right = 0.520833
+anchor_bottom = 0.416667
+offset_left = -270.0
+offset_top = -270.0
+offset_right = 270.0
+offset_bottom = 270.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GTex_glow")
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="LampGlowL" type="TextureRect" parent="."]
+modulate = Color(1, 1, 1, 0.3912754)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.280208
+anchor_top = 0.285185
+anchor_right = 0.280208
+anchor_bottom = 0.285185
+offset_left = -90.0
+offset_top = -90.0
+offset_right = 90.0
+offset_bottom = 90.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GTex_glow")
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="LampGlowR" type="TextureRect" parent="."]
+modulate = Color(1, 1, 1, 0.7076092)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.730729
+anchor_top = 0.260185
+anchor_right = 0.730729
+anchor_bottom = 0.260185
+offset_left = -90.0
+offset_top = -90.0
+offset_right = 90.0
+offset_bottom = 90.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GTex_glow")
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="Motes" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
+
+[node name="Mote01" type="TextureRect" parent="Motes"]
+modulate = Color(1, 1, 1, 0.48024642)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.21875
+anchor_top = 0.592593
+anchor_right = 0.21875
+anchor_bottom = 0.592593
+offset_left = -7.2
+offset_top = -7.2
+offset_right = 7.2
+offset_bottom = 7.2
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1.0335387, 1.0335387)
+pivot_offset = Vector2(7.2, 7.2)
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+
+[node name="Mote02" type="TextureRect" parent="Motes"]
+modulate = Color(1, 1, 1, 0.55921197)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.291667
+anchor_top = 0.462963
+anchor_right = 0.291667
+anchor_bottom = 0.462963
+offset_left = -7.2
+offset_top = -7.2
+offset_right = 7.2
+offset_bottom = 7.2
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1.0993433, 1.0993433)
+pivot_offset = Vector2(7.2, 7.2)
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+
+[node name="Mote03" type="TextureRect" parent="Motes"]
+modulate = Color(1, 1, 1, 0.3595072)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.364583
+anchor_top = 0.648148
+anchor_right = 0.364583
+anchor_bottom = 0.648148
+offset_left = -7.2
+offset_top = -7.2
+offset_right = 7.2
+offset_bottom = 7.2
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.9329226, 0.9329226)
+pivot_offset = Vector2(7.2, 7.2)
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+
+[node name="Mote04" type="TextureRect" parent="Motes"]
+modulate = Color(1, 1, 1, 0.48024642)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.447917
+anchor_top = 0.398148
+anchor_right = 0.447917
+anchor_bottom = 0.398148
+offset_left = -7.2
+offset_top = -7.2
+offset_right = 7.2
+offset_bottom = 7.2
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1.0335387, 1.0335387)
+pivot_offset = Vector2(7.2, 7.2)
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+
+[node name="Mote05" type="TextureRect" parent="Motes"]
+modulate = Color(1, 1, 1, 0.55921197)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.520833
+anchor_top = 0.574074
+anchor_right = 0.520833
+anchor_bottom = 0.574074
+offset_left = -7.2
+offset_top = -7.2
+offset_right = 7.2
+offset_bottom = 7.2
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1.0993433, 1.0993433)
+pivot_offset = Vector2(7.2, 7.2)
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+
+[node name="Mote06" type="TextureRect" parent="Motes"]
+modulate = Color(1, 1, 1, 0.3595072)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.614583
+anchor_top = 0.481481
+anchor_right = 0.614583
+anchor_bottom = 0.481481
+offset_left = -7.2
+offset_top = -7.2
+offset_right = 7.2
+offset_bottom = 7.2
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.9329226, 0.9329226)
+pivot_offset = Vector2(7.2, 7.2)
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+
+[node name="Mote07" type="TextureRect" parent="Motes"]
+modulate = Color(1, 1, 1, 0.48024642)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.692708
+anchor_top = 0.638889
+anchor_right = 0.692708
+anchor_bottom = 0.638889
+offset_left = -7.2
+offset_top = -7.2
+offset_right = 7.2
+offset_bottom = 7.2
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1.0335387, 1.0335387)
+pivot_offset = Vector2(7.2, 7.2)
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+
+[node name="Mote08" type="TextureRect" parent="Motes"]
+modulate = Color(1, 1, 1, 0.55921197)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.78125
+anchor_top = 0.425926
+anchor_right = 0.78125
+anchor_bottom = 0.425926
+offset_left = -7.2
+offset_top = -7.2
+offset_right = 7.2
+offset_bottom = 7.2
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1.0993433, 1.0993433)
+pivot_offset = Vector2(7.2, 7.2)
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+
+[node name="Mote09" type="TextureRect" parent="Motes"]
+modulate = Color(1, 1, 1, 0.3595072)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.84375
+anchor_top = 0.555556
+anchor_right = 0.84375
+anchor_bottom = 0.555556
+offset_left = -7.2
+offset_top = -7.2
+offset_right = 7.2
+offset_bottom = 7.2
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.9329226, 0.9329226)
+pivot_offset = Vector2(7.2, 7.2)
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+
+[node name="Mote10" type="TextureRect" parent="Motes"]
+modulate = Color(1, 1, 1, 0.48024642)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.15625
+anchor_top = 0.444444
+anchor_right = 0.15625
+anchor_bottom = 0.444444
+offset_left = -7.2
+offset_top = -7.2
+offset_right = 7.2
+offset_bottom = 7.2
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1.0335387, 1.0335387)
+pivot_offset = Vector2(7.2, 7.2)
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+
+[node name="BottomShade" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -201.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+texture = SubResource("GTex_shade")
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="JarRelics" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
+
+[node name="JarSlot1" type="Control" parent="JarRelics"]
+layout_mode = 1
+anchor_left = 0.066146
+anchor_top = 0.785185
+anchor_right = 0.066146
+anchor_bottom = 0.785185
+offset_left = 9.799805
+offset_top = -16.799866
+offset_right = 64.9998
+offset_bottom = 38.400085
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
+
+[node name="Relic" type="TextureRect" parent="JarRelics/JarSlot1"]
+modulate = Color(1, 1, 1, 0.54)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="JarSlot2" type="Control" parent="JarRelics"]
+layout_mode = 1
+anchor_left = 0.136458
+anchor_top = 0.785185
+anchor_right = 0.136458
+anchor_bottom = 0.785185
+offset_left = 80.800385
+offset_top = -15.799866
+offset_right = 138.40039
+offset_bottom = 41.80011
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
+
+[node name="Relic" type="TextureRect" parent="JarRelics/JarSlot2"]
+modulate = Color(1, 1, 1, 0.54)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="JarSlot3" type="Control" parent="JarRelics"]
+layout_mode = 1
+anchor_left = 0.198437
+anchor_top = 0.785185
+anchor_right = 0.198437
+anchor_bottom = 0.785185
+offset_left = 130.40057
+offset_top = -28.799866
+offset_right = 195.20056
+offset_bottom = 36.000183
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
+
+[node name="Relic" type="TextureRect" parent="JarRelics/JarSlot3"]
+modulate = Color(1, 1, 1, 0.54)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="JarSlot4" type="Control" parent="JarRelics"]
+layout_mode = 1
+anchor_left = 0.298958
+anchor_top = 0.785185
+anchor_right = 0.298958
+anchor_bottom = 0.785185
+offset_left = 411.60037
+offset_top = -16.799866
+offset_right = 471.60037
+offset_bottom = 43.200134
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Relic" type="TextureRect" parent="JarRelics/JarSlot4"]
+modulate = Color(1, 1, 1, 0.54)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_right = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="JarSlot5" type="Control" parent="JarRelics"]
+layout_mode = 1
+anchor_left = 0.716146
+anchor_top = 0.74100006
+anchor_right = 0.716146
+anchor_bottom = 0.785185
+offset_left = 17.999817
+offset_top = -52.16803
+offset_right = 75.59979
+offset_bottom = -23.19989
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Relic" type="TextureRect" parent="JarRelics/JarSlot5"]
+modulate = Color(1, 1, 1, 0.54)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="JarSlot6" type="Control" parent="JarRelics"]
+layout_mode = 1
+anchor_left = 0.808333
+anchor_top = 0.785185
+anchor_right = 0.808333
+anchor_bottom = 0.785185
+offset_left = 17.800415
+offset_top = -21.799866
+offset_right = 82.600464
+offset_bottom = 43.000183
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Relic" type="TextureRect" parent="JarRelics/JarSlot6"]
+modulate = Color(1, 1, 1, 0.54)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="JarSlot7" type="Control" parent="JarRelics"]
+layout_mode = 1
+anchor_left = 0.881771
+anchor_top = 0.785185
+anchor_right = 0.881771
+anchor_bottom = 0.785185
+offset_left = 10.199768
+offset_top = -25.799866
+offset_right = 67.79974
+offset_bottom = 31.80011
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Relic" type="TextureRect" parent="JarRelics/JarSlot7"]
+modulate = Color(1, 1, 1, 0.54)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="Bottles" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
+
+[node name="Bottle1" type="Control" parent="Bottles"]
+layout_mode = 1
+anchor_left = 0.364583
+anchor_top = 0.764815
+anchor_right = 0.364583
+anchor_bottom = 0.764815
+offset_left = -57.0
+offset_top = -62.4
+offset_right = 57.0
+offset_bottom = 62.4
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
+
+[node name="Glow" type="TextureRect" parent="Bottles/Bottle1"]
+modulate = Color(0.82, 0.72, 1, 0.5)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.63
+anchor_right = 0.5
+anchor_bottom = 0.63
+offset_left = -85.0996
+offset_top = -226.30011
+offset_right = 25.100395
+offset_bottom = -116.1001
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
+
+[node name="Relic" type="TextureRect" parent="Bottles/Bottle1"]
+modulate = Color(1, 1, 1, 0.88)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.63
+anchor_right = 0.5
+anchor_bottom = 0.63
+offset_left = -58.999603
+offset_top = -200.2001
+offset_right = -0.9996033
+offset_bottom = -142.2001
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
+
+[node name="Jar" type="TextureRect" parent="Bottles/Bottle1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -29.999603
+offset_top = -171.2001
+offset_right = -29.999603
+offset_bottom = -171.2001
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_bottle")
+expand_mode = 1
+metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
+
+[node name="Bottle2" type="Control" parent="Bottles"]
+layout_mode = 1
+anchor_left = 0.25625
+anchor_top = 0.775926
+anchor_right = 0.25625
+anchor_bottom = 0.775926
+offset_left = -50.1
+offset_top = -54.6
+offset_right = 50.1
+offset_bottom = 54.6
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Glow" type="TextureRect" parent="Bottles/Bottle2"]
+modulate = Color(0.82, 0.72, 1, 0.5)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.63
+anchor_right = 0.5
+anchor_bottom = 0.63
+offset_left = 162.40002
+offset_top = -347.70004
+offset_right = 257.40002
+offset_bottom = -252.70004
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="Relic" type="TextureRect" parent="Bottles/Bottle2"]
+modulate = Color(1, 1, 1, 0.88)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.63
+anchor_right = 0.5
+anchor_bottom = 0.63
+offset_left = 184.90002
+offset_top = -325.20004
+offset_right = 234.90002
+offset_bottom = -275.20004
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="Jar" type="TextureRect" parent="Bottles/Bottle2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 209.90002
+offset_top = -300.20004
+offset_right = 209.90002
+offset_bottom = -300.20004
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_bottle")
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="Bottle3" type="Control" parent="Bottles"]
+layout_mode = 1
+anchor_left = 0.59000003
+anchor_top = 0.33400002
+anchor_right = 0.66200006
+anchor_bottom = 0.37
+offset_left = 128.52032
+offset_top = 216.7681
+offset_right = 159.5763
+offset_bottom = 318.2401
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
+
+[node name="Glow" type="TextureRect" parent="Bottles/Bottle3"]
+modulate = Color(0.82, 0.72, 1, 0.5)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.63
+anchor_right = 0.5
+anchor_bottom = 0.63
+offset_left = -198.30038
+offset_top = -367.3001
+offset_right = -88.10039
+offset_bottom = -257.1001
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="Relic" type="TextureRect" parent="Bottles/Bottle3"]
+modulate = Color(1, 1, 1, 0.88)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.63
+anchor_right = 0.5
+anchor_bottom = 0.63
+offset_left = -172.20038
+offset_top = -341.20013
+offset_right = -114.20038
+offset_bottom = -283.20013
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="Jar" type="TextureRect" parent="Bottles/Bottle3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -143.20038
+offset_top = -312.2001
+offset_right = -143.20038
+offset_bottom = -312.2001
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_bottle")
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="Bottle4" type="Control" parent="Bottles"]
+layout_mode = 1
+anchor_left = 0.859375
+anchor_top = 0.775926
+anchor_right = 0.859375
+anchor_bottom = 0.775926
+offset_left = -50.1
+offset_top = -54.6
+offset_right = 50.1
+offset_bottom = 54.6
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
+
+[node name="Glow" type="TextureRect" parent="Bottles/Bottle4"]
+modulate = Color(0.82, 0.72, 1, 0.5)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.63
+anchor_right = 0.5
+anchor_bottom = 0.63
+offset_left = -169.40002
+offset_top = -263.70004
+offset_right = -74.400024
+offset_bottom = -168.70004
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GTex_dot")
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="Relic" type="TextureRect" parent="Bottles/Bottle4"]
+modulate = Color(1, 1, 1, 0.88)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.63
+anchor_right = 0.5
+anchor_bottom = 0.63
+offset_left = -146.90002
+offset_top = -241.20004
+offset_right = -96.900024
+offset_bottom = -191.20004
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="Jar" type="TextureRect" parent="Bottles/Bottle4"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -121.900024
+offset_top = -216.20004
+offset_right = -121.900024
+offset_bottom = -216.20004
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_bottle")
+expand_mode = 1
+metadata/_edit_lock_ = true
+
+[node name="RelicsAnim" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_relics")
+}
+autoplay = "relics"
+
+[node name="GlowAnim" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_glow")
+}
+autoplay = "glow"
+
+[node name="MotesAnim" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_motes")
+}
+autoplay = "motes"
+
+[node name="ShadowAnim" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_shadow")
+}
+autoplay = "shadow"

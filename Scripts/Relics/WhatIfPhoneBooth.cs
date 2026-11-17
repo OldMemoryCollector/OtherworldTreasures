@@ -13,6 +13,8 @@ using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Saves.Runs;
+using OtherworldTreasures.Scripts.Balance;
 using STS2RitsuLib;
 using STS2RitsuLib.Interactions.RightClick;
 using STS2RitsuLib.Interop.AutoRegistration;
@@ -29,8 +31,8 @@ namespace OtherworldTreasures.Scripts.Relics;
 public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClickableRelic,
     RelicRightClickSync.ICrossEndRightClickEffect
 {
-    // 每场战斗的使用次数上限。当前给 999（等于不限制），后续要加限制改这里即可。
-    private const int maxUsesPerCombat = 999;
+    private bool Balanced => RelicBalanceRules.WhatIfPhoneBooth(IsMutable ? Owner : null);
+    private int MaxUsesPerCombat => Balanced ? 3 : 999;
 
     private sealed class PlayerState
     {
@@ -39,6 +41,43 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
     }
 
     private PlayerState S => PerPlayerState<PlayerState>.Of(Owner);
+    private WhatIfPhoneBooth Progress => Owner?.Relics.OfType<WhatIfPhoneBooth>().FirstOrDefault() ?? this;
+    private string _balancedCombatKey = string.Empty;
+    private int _balancedUses;
+    private int _balancedStartHp = -1;
+
+    [SavedProperty]
+    public string SavedBalancedCombatKey
+    {
+        get => _balancedCombatKey;
+        set { AssertMutable(); _balancedCombatKey = value ?? string.Empty; }
+    }
+    [SavedProperty]
+    public int SavedBalancedUses
+    {
+        get => _balancedUses;
+        set { AssertMutable(); _balancedUses = Math.Clamp(value, 0, 3); }
+    }
+    [SavedProperty]
+    public int SavedBalancedStartHp
+    {
+        get => _balancedStartHp;
+        set { AssertMutable(); _balancedStartHp = value; }
+    }
+
+    private int UsesThisCombat => !Balanced ? S.UsesThisCombat
+        : Owner.RunState.CurrentRoom is CombatRoom room &&
+          Progress.SavedBalancedCombatKey == RelicBalanceRules.CombatKey(Owner, room)
+            ? Progress.SavedBalancedUses : 0;
+
+    private void PrepareBalancedCombat(CombatRoom room)
+    {
+        string key = RelicBalanceRules.CombatKey(Owner, room);
+        if (Progress.SavedBalancedCombatKey == key) return;
+        Progress.SavedBalancedCombatKey = key;
+        Progress.SavedBalancedUses = 0;
+        Progress.SavedBalancedStartHp = Owner.Creature.CurrentHp;
+    }
 
     // 哆啦A梦道具：自定义稀有度
     public override RelicRarity Rarity => ModRelicRarity.Doraemon;
@@ -66,6 +105,9 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
     {
         S.UsesThisCombat = 0;
         S.CombatStartHp = -1;
+        Progress.SavedBalancedCombatKey = string.Empty;
+        Progress.SavedBalancedUses = 0;
+        Progress.SavedBalancedStartHp = -1;
         var identity = RitsuLibFramework.EnsureModelIdentity(this);
         Entry.Logger.Info($"[WhatIfPhoneBooth] AfterObtained, EnsureModelIdentity => {identity.Value}");
         await base.AfterObtained();
@@ -74,7 +116,9 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
     // 战斗开始：记录起始血量（重开战斗时会再次触发，用已用次数防止覆盖）
     public override async Task AfterRoomEntered(AbstractRoom room)
     {
-        if (room is CombatRoom && S.UsesThisCombat == 0)
+        if (room is CombatRoom) await RelicBalanceRules.WaitReady(Owner);
+        if (Balanced && room is CombatRoom combatRoom) PrepareBalancedCombat(combatRoom);
+        if (!Balanced && room is CombatRoom && S.UsesThisCombat == 0)
         {
             S.CombatStartHp = Owner?.Creature?.CurrentHp ?? -1;
             Entry.Logger.Info($"[WhatIfPhoneBooth] Combat start HP snapshot = {S.CombatStartHp}");
@@ -86,10 +130,16 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
     public override async Task AfterCombatEnd(CombatRoom room)
     {
         S.UsesThisCombat = 0;
+        if (Balanced)
+        {
+            Progress.SavedBalancedCombatKey = string.Empty;
+            Progress.SavedBalancedUses = 0;
+            Progress.SavedBalancedStartHp = -1;
+        }
         await base.AfterCombatEnd(room);
     }
 
-    // 读档/新开跑时复位（见 RunLifecycle）：允许玩家 SL 后重新使用
+    // 仅清理原模式的临时状态；平衡版次数保存在遗物字段中。
     internal static void ResetCombatScopedState()
     {
         PerPlayerState<PlayerState>.ClearAll();
@@ -105,7 +155,9 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
     public bool CanExecuteRightClick(ModRightClickExecutionContext context)
     {
         return Owner != null
-            && S.UsesThisCombat < maxUsesPerCombat
+            && RelicBalanceRules.Ready(Owner)
+            && UsesThisCombat < MaxUsesPerCombat
+            && (!Balanced || CombatManager.Instance.IsInProgress)
             && CombatManager.Instance.DebugOnlyGetState() != null;
     }
 
@@ -115,12 +167,17 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
         return Task.CompletedTask;
     }
 
-    Task RelicRightClickSync.ICrossEndRightClickEffect.ApplyRightClickAsync(PlayerChoiceContext choiceContext)
-        => RestartCombatWithNewTimeline();
+    async Task RelicRightClickSync.ICrossEndRightClickEffect.ApplyRightClickAsync(PlayerChoiceContext choiceContext)
+    {
+        await RelicBalanceRules.WaitReady(Owner);
+        if (!CombatManager.Instance.IsInProgress) return;
+        await RestartCombatWithNewTimeline();
+    }
 
     private async Task RestartCombatWithNewTimeline()
     {
-        if (S.UsesThisCombat >= maxUsesPerCombat || CombatManager.Instance.DebugOnlyGetState() == null) return;
+        if (UsesThisCombat >= MaxUsesPerCombat || CombatManager.Instance.DebugOnlyGetState() == null
+            || (Balanced && !CombatManager.Instance.IsInProgress)) return;
         if (Owner?.RunState is not RunState runState)
         {
             return;
@@ -141,7 +198,13 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
             return;
         }
 
-        S.UsesThisCombat++;
+        if (Balanced)
+        {
+            PrepareBalancedCombat(currentRoom);
+            if (Progress.SavedBalancedUses >= 3) return;
+            Progress.SavedBalancedUses++;
+        }
+        else S.UsesThisCombat++;
 
         // 1) 换一个新的时间线：重播种影响洗牌/选牌的随机数
         // 改走联机一致的 RNG，避免两端分叉：种子从共享的 Shuffle 子流取，不再用进程本地随机数
@@ -152,9 +215,10 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
         // 2) 血量还原到战斗开始时（等同"退出重进"）
         // 注意：若战斗中途存档重进，本场开始的快照在进程重启后已丢失（static 重置），此时跳过回血，
         // 但"重开本场战斗"的主体效果不受影响。
-        if (Owner.Creature != null && S.CombatStartHp > 0)
+        int startHp = Balanced ? Progress.SavedBalancedStartHp : S.CombatStartHp;
+        if (Owner.Creature != null && startHp > 0)
         {
-            await CreatureCmd.SetCurrentHp(Owner.Creature, Math.Min(S.CombatStartHp, Owner.Creature.MaxHp));
+            await CreatureCmd.SetCurrentHp(Owner.Creature, Math.Min(startHp, Owner.Creature.MaxHp));
         }
         else
         {
@@ -169,7 +233,7 @@ public class WhatIfPhoneBooth : ModRelicTemplate, IDoraemonItem, IModRightClicka
         Flash();
         Entry.Logger.Info(
             $"[WhatIfPhoneBooth] Restarting combat: encounter={encounter.Id.Entry}, roomType={currentRoom.RoomType}, " +
-            $"seed={seed}, usesThisCombat={S.UsesThisCombat}");
+            $"seed={seed}, usesThisCombat={UsesThisCombat}");
 
         // 4) 走原版"跳进指定房间"通道重新进入这场战斗
         // 重进房间会拆掉手牌界面；如果跟当前动作队列在同一帧里进行，卡牌节点会被重复释放回对象池，

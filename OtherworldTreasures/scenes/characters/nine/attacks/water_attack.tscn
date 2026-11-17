@@ -1,0 +1,126 @@
+[gd_scene load_steps=13 format=3 uid="uid://bvlul3a3bg04b"]
+
+[ext_resource type="PackedScene" path="res://OtherworldTreasures/scenes/vfx/konoe/water_hit.tscn" id="effect"]
+[ext_resource type="Texture2D" uid="uid://b5ol364ndef6b" path="res://OtherworldTreasures/images/characters/nine/attack_poses/ph200_00.png" id="pose_0"]
+[ext_resource type="Texture2D" uid="uid://ba2q3omvegcse" path="res://OtherworldTreasures/images/characters/nine/attack_poses/ph200_01.png" id="pose_1"]
+[ext_resource type="Texture2D" uid="uid://b4b8225s3moph" path="res://OtherworldTreasures/images/characters/nine/attack_poses/ph200_02.png" id="pose_2"]
+[ext_resource type="Texture2D" uid="uid://b6r7ycjgmpeth" path="res://OtherworldTreasures/images/characters/nine/attack_poses/ph200_03.png" id="pose_3"]
+[ext_resource type="Texture2D" uid="uid://blglpqji6bph7" path="res://OtherworldTreasures/images/characters/nine/attack_poses/ph200_04.png" id="pose_4"]
+[ext_resource type="Texture2D" uid="uid://dkqv0xhr16biv" path="res://OtherworldTreasures/images/characters/nine/attack_poses/ph200_05.png" id="pose_5"]
+[ext_resource type="Texture2D" uid="uid://gmgrgkhmya31" path="res://OtherworldTreasures/images/characters/nine/attack_poses/ph200_06.png" id="pose_6"]
+[ext_resource type="Texture2D" uid="uid://b3unb6hl4j6ne" path="res://OtherworldTreasures/images/characters/nine/attack_poses/ph200_07.png" id="pose_7"]
+
+[sub_resource type="SpriteFrames" id="PoseFrames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("pose_0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("pose_1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("pose_2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("pose_3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("pose_4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("pose_5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("pose_6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("pose_7")
+}],
+"loop": false,
+"name": &"pose",
+"speed": 1.0
+}]
+
+[sub_resource type="Animation" id="Attack"]
+resource_name = "attack"
+length = 0.585
+step = 0.005
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Pose:frame")
+tracks/0/interp = 0
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.05, 0.105, 0.155, 0.335, 0.385, 0.435, 0.505),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5, 6, 7]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Pose:visible")
+tracks/1/interp = 0
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.565),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [true, false]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("CastPoint/Effect:visible")
+tracks/2/interp = 0
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.155, 0.515),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [false, true, false]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("CastPoint/Effect:frame")
+tracks/3/interp = 0
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0.155, 0.215, 0.275, 0.335, 0.395, 0.455),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5]
+}
+
+[sub_resource type="AnimationLibrary" id="Library"]
+_data = {
+&"attack": SubResource("Attack")
+}
+
+[node name="waterAttack" type="Node2D"]
+
+[node name="Pose" type="AnimatedSprite2D" parent="."]
+texture_filter = 1
+position = Vector2(-306, -471.92)
+scale = Vector2(0.68, 0.68)
+sprite_frames = SubResource("PoseFrames")
+animation = &"pose"
+frame = 3
+centered = false
+
+[node name="CastPoint" type="Marker2D" parent="."]
+position = Vector2(60, -195)
+
+[node name="Effect" parent="CastPoint" instance=ExtResource("effect")]
+position = Vector2(195, -4)
+autoplay = ""
+frame = 5
+frame_progress = 1.0
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("Library")
+}

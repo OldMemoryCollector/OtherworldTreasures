@@ -1,0 +1,221 @@
+[gd_scene load_steps=20 format=3 uid="uid://qpmkod51y7ow"]
+
+[ext_resource type="Texture2D" uid="uid://bnfkgrp02k3dp" path="res://OtherworldTreasures/images/ui/konoe/stock_emblem.png" id="1_stock"]
+[ext_resource type="Texture2D" uid="uid://cgwpoyj2v7ntc" path="res://OtherworldTreasures/images/ui/konoe/heat_track.png" id="2_track"]
+[ext_resource type="Texture2D" uid="uid://bn4qgenyrcarl" path="res://OtherworldTreasures/images/ui/konoe/heat_fill_blue.png" id="3_blue"]
+[ext_resource type="Texture2D" uid="uid://cn4u5jq0ffs53" path="res://OtherworldTreasures/images/ui/konoe/heat_fill_green.png" id="4_green"]
+[ext_resource type="Texture2D" uid="uid://bnxoq0i3c1lqc" path="res://OtherworldTreasures/images/ui/konoe/heat_fill_red.png" id="5_red"]
+[ext_resource type="Texture2D" uid="uid://bvhbnl0sf4c6t" path="res://OtherworldTreasures/images/ui/konoe/heat_fill_gold.png" id="6_gold"]
+[ext_resource type="Texture2D" uid="uid://drutw44ygqlh0" path="res://OtherworldTreasures/images/ui/konoe/heat_font.png" id="7_font"]
+[ext_resource type="Texture2D" uid="uid://da35mhd33w56o" path="res://OtherworldTreasures/images/ui/konoe/orb_glow.png" id="8_rune"]
+[ext_resource type="Texture2D" uid="uid://queqrqky3jio" path="res://OtherworldTreasures/images/ui/konoe/spell_icons.png" id="9_icons"]
+[ext_resource type="Texture2D" uid="uid://d3aporkkhbf0v" path="res://OtherworldTreasures/images/ui/konoe/stock_label.png" id="10_stock_label"]
+
+[sub_resource type="AtlasTexture" id="Atlas_blue"]
+atlas = ExtResource("3_blue")
+region = Rect2(0, 9, 64, 14)
+
+[sub_resource type="AtlasTexture" id="Atlas_green"]
+atlas = ExtResource("4_green")
+region = Rect2(0, 9, 64, 14)
+
+[sub_resource type="AtlasTexture" id="Atlas_red"]
+atlas = ExtResource("5_red")
+region = Rect2(0, 9, 64, 14)
+
+[sub_resource type="AtlasTexture" id="Atlas_gold"]
+atlas = ExtResource("6_gold")
+region = Rect2(0, 9, 64, 14)
+
+[sub_resource type="AtlasTexture" id="Atlas_d0"]
+atlas = ExtResource("7_font")
+region = Rect2(0, 0, 41, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_d1"]
+atlas = ExtResource("7_font")
+region = Rect2(0, 0, 41, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_d2"]
+atlas = ExtResource("7_font")
+region = Rect2(0, 0, 41, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_current"]
+atlas = ExtResource("9_icons")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_stored"]
+atlas = ExtResource("9_icons")
+region = Rect2(0, 0, 64, 64)
+
+[node name="KonoeHeatHudLayer" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 168.00002
+offset_top = 782.0
+offset_right = 168.00002
+offset_bottom = 782.0
+scale = Vector2(0.62, 0.62)
+mouse_filter = 2
+metadata/fill_from_right = true
+metadata/orb_spin_speed = 0.55
+metadata/digit_leading_zero = true
+
+[node name="StockEmblem" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = -43.225754
+offset_top = -17.741936
+offset_right = 316.77423
+offset_bottom = 72.258064
+mouse_filter = 2
+texture = ExtResource("1_stock")
+expand_mode = 1
+stretch_mode = 2
+
+[node name="StockLabel" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 118.064575
+offset_top = 50.0
+offset_right = 246.06458
+offset_bottom = 82.0
+mouse_filter = 2
+texture = ExtResource("10_stock_label")
+expand_mode = 1
+stretch_mode = 2
+
+[node name="OrbRune" type="TextureRect" parent="."]
+self_modulate = Color(1, 0.9, 1, 0.85)
+layout_mode = 0
+offset_left = 268.0645
+offset_top = 16.25806
+offset_right = 324.0645
+offset_bottom = 72.25806
+pivot_offset = Vector2(28, 28)
+mouse_filter = 2
+texture = ExtResource("8_rune")
+expand_mode = 1
+stretch_mode = 2
+
+[node name="Track" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = -151.61285
+offset_top = 60.0
+offset_right = 872.38715
+offset_bottom = 124.0
+mouse_filter = 2
+texture = ExtResource("2_track")
+expand_mode = 1
+stretch_mode = 2
+
+[node name="FillClip" type="Control" parent="."]
+clip_contents = true
+anchors_preset = 0
+offset_left = 53.387146
+offset_top = 86.0
+offset_right = 660.38715
+offset_bottom = 100.0
+mouse_filter = 2
+
+[node name="Blue" type="TextureRect" parent="FillClip"]
+visible = false
+layout_mode = 0
+offset_right = 607.0
+offset_bottom = 14.0
+mouse_filter = 2
+texture = SubResource("Atlas_blue")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Green" type="TextureRect" parent="FillClip"]
+visible = false
+layout_mode = 0
+offset_right = 607.0
+offset_bottom = 14.0
+mouse_filter = 2
+texture = SubResource("Atlas_green")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Red" type="TextureRect" parent="FillClip"]
+visible = false
+layout_mode = 0
+offset_right = 607.0
+offset_bottom = 14.0
+mouse_filter = 2
+texture = SubResource("Atlas_red")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Gold" type="TextureRect" parent="FillClip"]
+visible = false
+layout_mode = 0
+offset_right = 607.0
+offset_bottom = 14.0
+mouse_filter = 2
+texture = SubResource("Atlas_gold")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Digits" type="Control" parent="."]
+anchors_preset = 0
+offset_left = 203.2258
+offset_top = 54.838707
+offset_right = 326.2258
+offset_bottom = 118.83871
+scale = Vector2(0.72, 0.72)
+pivot_offset = Vector2(123, 32)
+mouse_filter = 2
+
+[node name="D0" type="TextureRect" parent="Digits"]
+visible = false
+layout_mode = 0
+offset_left = -417.45694
+offset_right = -376.45694
+offset_bottom = 64.0
+mouse_filter = 2
+texture = SubResource("Atlas_d0")
+expand_mode = 1
+stretch_mode = 2
+
+[node name="D1" type="TextureRect" parent="Digits"]
+visible = false
+layout_mode = 0
+offset_left = -376.45694
+offset_right = -335.45694
+offset_bottom = 64.0
+mouse_filter = 2
+texture = SubResource("Atlas_d1")
+expand_mode = 1
+stretch_mode = 2
+
+[node name="D2" type="TextureRect" parent="Digits"]
+visible = false
+layout_mode = 0
+offset_left = -335.45694
+offset_right = -294.45694
+offset_bottom = 64.0
+mouse_filter = 2
+texture = SubResource("Atlas_d2")
+expand_mode = 1
+stretch_mode = 2
+
+[node name="OrbIconCurrent" type="TextureRect" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 267.74194
+offset_top = 17.741936
+offset_right = 331.74194
+offset_bottom = 81.741936
+mouse_filter = 2
+texture = SubResource("Atlas_current")
+expand_mode = 1
+
+[node name="OrbIconStored" type="TextureRect" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 79.03226
+offset_top = 24.193546
+offset_right = 127.03226
+offset_bottom = 72.19355
+mouse_filter = 2
+texture = SubResource("Atlas_stored")
+expand_mode = 1

@@ -122,7 +122,11 @@ public class WildmuttPassivePower : WildmuttPowerBase
             await CardPileCmd.Draw(c, 1, player);
         }
     }
+    #if STS2_113
+    public override async Task AfterDeath(PlayerChoiceContext c, Creature creature, MegaCrit.Sts2.Core.Models.CardModel? source, bool wasRemovalPrevented, float deathAnimLength)
+#else
     public override async Task AfterDeath(PlayerChoiceContext c, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
+#endif
     {
         if (!wasRemovalPrevented && creature == Prey && creature.IsDead) await RewardAndRetarget(c, creature);
     }

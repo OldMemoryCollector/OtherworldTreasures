@@ -1,0 +1,182 @@
+[gd_scene load_steps=18 format=3 uid="uid://sqai3vm31i2c"]
+
+[ext_resource type="Texture2D" uid="uid://g58v8h5m8yx6" path="res://OtherworldTreasures/images/ui/konoe/color_select/col_backplate.png" id="1_backplate"]
+[ext_resource type="Texture2D" uid="uid://bqnopfkmkl57l" path="res://OtherworldTreasures/images/ui/konoe/color_select/col_twin_arrows.png" id="2_twinarrows"]
+[ext_resource type="Texture2D" uid="uid://3vftokp2xg0n" path="res://OtherworldTreasures/images/ui/konoe/color_select/col_diamond.png" id="3_diamond"]
+[ext_resource type="Texture2D" uid="uid://dq70fqldi4wky" path="res://OtherworldTreasures/images/ui/konoe/color_select/col_cursor.png" id="4_cursor"]
+[ext_resource type="Texture2D" uid="uid://dtsajdbaqhkd6" path="res://OtherworldTreasures/images/ui/konoe/color_select/frame_colored_00.png" id="10_frame00"]
+[ext_resource type="Texture2D" uid="uid://dnsng6pre2y3h" path="res://OtherworldTreasures/images/ui/konoe/color_select/frame_colored_01.png" id="11_frame01"]
+[ext_resource type="Texture2D" uid="uid://0tc3klh6a0rp" path="res://OtherworldTreasures/images/ui/konoe/color_select/frame_colored_02.png" id="12_frame02"]
+[ext_resource type="Texture2D" uid="uid://boogt7rfxq2i8" path="res://OtherworldTreasures/images/ui/konoe/color_select/frame_colored_03.png" id="13_frame03"]
+[ext_resource type="Texture2D" uid="uid://cno6cqefw7f71" path="res://OtherworldTreasures/images/ui/konoe/color_select/frame_colored_04.png" id="14_frame04"]
+[ext_resource type="Texture2D" uid="uid://b37e1jk53oofo" path="res://OtherworldTreasures/images/ui/konoe/color_select/frame_colored_05.png" id="15_frame05"]
+[ext_resource type="Texture2D" uid="uid://m04d4mn2wa1a" path="res://OtherworldTreasures/images/ui/konoe/color_select/frame_colored_06.png" id="16_frame06"]
+[ext_resource type="Texture2D" uid="uid://g4gu0gx0ur83" path="res://OtherworldTreasures/images/ui/konoe/color_select/frame_colored_07.png" id="17_frame07"]
+[ext_resource type="Texture2D" uid="uid://r4duw71bmcmp" path="res://OtherworldTreasures/images/ui/konoe/color_select/frame_colored_08.png" id="18_frame08"]
+[ext_resource type="Texture2D" uid="uid://3h65ur366hko" path="res://OtherworldTreasures/images/ui/konoe/color_select/frame_colored_09.png" id="19_frame09"]
+
+[sub_resource type="SpriteFrames" id="ColorFrames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("10_frame00")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_frame01")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_frame02")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_frame03")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_frame04")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_frame05")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_frame06")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_frame07")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_frame08")
+}, {
+"duration": 1.0,
+"texture": ExtResource("19_frame09")
+}],
+"loop": true,
+"name": &"pose",
+"speed": 12.0
+}]
+
+[sub_resource type="Animation" id="ColorAnim"]
+resource_name = "pose"
+length = 0.833333
+loop_mode = 1
+step = 0.01
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Pose:frame")
+tracks/0/interp = 0
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0833333, 0.166667, 0.25, 0.333333, 0.416667, 0.5, 0.583333, 0.666667, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+}
+
+[sub_resource type="AnimationLibrary" id="ColorLibrary"]
+_data = {
+&"pose": SubResource("ColorAnim")
+}
+
+[node name="KonoeColorSelectLayer" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 1450.0
+offset_top = 176.0
+offset_right = 2474.0
+offset_bottom = 1576.0
+scale = Vector2(0.68, 0.68)
+mouse_filter = 2
+
+[node name="BackPlate" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 19.0
+offset_right = 316.0
+offset_bottom = 1043.0
+mouse_filter = 2
+texture = ExtResource("1_backplate")
+expand_mode = 1
+
+[node name="TwinArrows" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 266.0
+offset_right = 316.0
+offset_bottom = 778.0
+mouse_filter = 2
+texture = ExtResource("2_twinarrows")
+expand_mode = 1
+
+[node name="CharacterFrames" type="Control" parent="."]
+anchors_preset = 0
+offset_left = 170.0
+offset_top = 420.0
+offset_right = 682.0
+offset_bottom = 871.0
+scale = Vector2(1.5, 1.5)
+pivot_offset = Vector2(256, 225.5)
+mouse_filter = 2
+metadata/frame_fps = 12.0
+
+[node name="Pose" type="AnimatedSprite2D" parent="CharacterFrames"]
+texture_filter = 1
+position = Vector2(-230.94125, -14.637254)
+sprite_frames = SubResource("ColorFrames")
+animation = &"pose"
+frame = 3
+centered = false
+flip_h = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="CharacterFrames"]
+libraries = {
+&"": SubResource("ColorLibrary")
+}
+autoplay = "pose"
+
+[node name="Diamond" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 60.29409
+offset_top = 29.411757
+offset_right = 316.29407
+offset_bottom = 285.41174
+mouse_filter = 2
+texture = ExtResource("3_diamond")
+expand_mode = 1
+
+[node name="CursorUp" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 123.52936
+offset_top = 54.411766
+offset_right = 251.52936
+offset_bottom = 118.411766
+mouse_filter = 2
+texture = ExtResource("4_cursor")
+expand_mode = 1
+
+[node name="CursorDown" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 123.52936
+offset_top = 201.47057
+offset_right = 251.52936
+offset_bottom = 265.47058
+mouse_filter = 2
+texture = ExtResource("4_cursor")
+expand_mode = 1
+flip_v = true
+
+[node name="DigitTens" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 104.0
+offset_right = 188.0
+offset_bottom = 168.0
+mouse_filter = 2
+expand_mode = 1
+
+[node name="DigitOnes" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 188.0
+offset_top = 104.0
+offset_right = 226.0
+offset_bottom = 168.0
+mouse_filter = 2
+expand_mode = 1

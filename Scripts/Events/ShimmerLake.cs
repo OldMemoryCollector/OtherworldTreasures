@@ -73,7 +73,11 @@ public sealed class ShimmerLake : OtherworldEvent
         var crystal = Owner.Relics.OfType<LifeCrystal>().FirstOrDefault();
         if (crystal == null || Owner.Creature.MaxHp <= 10) return false;
         await crystal.ConsumeOne();
+#if STS2_113
+        await CreatureCmd.LoseMaxHp(new ThrowingPlayerChoiceContext(), Owner.Creature, 10m, null);
+#else
         await CreatureCmd.LoseMaxHp(new ThrowingPlayerChoiceContext(), Owner.Creature, 10m, false);
+#endif
         await RelicCmd.Obtain<VitalCrystal>(Owner);
         return true;
     }

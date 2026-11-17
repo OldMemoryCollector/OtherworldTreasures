@@ -331,55 +331,46 @@ internal static partial class MartialArtsVfx
         }
     }
 
-    // Generated transparent energy envelope, animated by shader and gentle scale.
-    // Character stays visible through the texture's transparent center.
+    // 界王拳光环：4 层 brumm 碎片叠加，动画/坐标/缩放全在 kaioken_aura.tscn 里可视化编辑。
+    // C# 只负责整体对齐角色、按力量层级调整整体规模、以及末路态变色。
     private sealed partial class KaiokenAura : Node2D
     {
+        private const string ScenePath = "res://OtherworldTreasures/scenes/vfx/kaioken_aura.tscn";
+        private static PackedScene? _packed;
         private readonly Creature _owner;
-        private double _t;
         private double _check;
-        private Sprite2D? _sprite;
-        private int _tier = -1;
-        private float _activation;
+        private Node2D? _layers;
         public KaiokenAura(Creature owner) => _owner = owner;
         public override void _Ready()
         {
-            var texture = Texture("kaioken_aura");
-            var used = texture.GetImage().GetUsedRect();
-            _sprite = new Sprite2D { Texture = texture, Centered = false,
-                Offset = new Vector2(-used.GetCenter().X, -used.End.Y), TextureFilter = TextureFilterEnum.Linear,
-                Material = new ShaderMaterial { Shader = GD.Load<Shader>("res://OtherworldTreasures/shaders/kaioken_aura_flow.gdshader") } };
-            AddChild(_sprite);
-            AlignToActorFeet();
+            _packed ??= GD.Load<PackedScene>(ScenePath);
+            var inst = _packed.Instantiate();
+            AddChild(inst);
+            _layers = inst.GetNodeOrNull<Node2D>("Layers");
+            AlignToActor();
         }
-        private void AlignToActorFeet()
+        private void AlignToActor()
         {
             if (GetParent() is not NCreature actor) return;
             var bounds = actor.Visuals.Bounds.GetGlobalRect();
-            Position = actor.GetGlobalTransform().AffineInverse() * new Vector2(bounds.GetCenter().X, bounds.End.Y);
+            Position = actor.GetGlobalTransform().AffineInverse() * bounds.GetCenter();
         }
         public override void _Process(double delta)
         {
-            _t += delta; _check += delta;
+            _check += delta;
             var power = _owner.GetPower<KaiokenPower>();
             if (power == null || !_owner.IsAlive || (_check >= .25 && CombatManager.Instance.IsOverOrEnding))
             { QueueFree(); return; }
             if (_check >= .25) _check = 0;
+            if (_layers == null) return;
             int tier = power.Amount >= 10000 ? 2 : power.Amount >= 1000 ? 1 : 0;
-            if (tier != _tier) { _tier = tier; _activation = 0; }
-            _activation += (float)delta;
-            if (_sprite == null) return;
             float actorHeight = CreatureNode(_owner)?.Hitbox.Size.Y ?? 210f;
-            float height = Mathf.Clamp(actorHeight, 130f, 330f) * (1.55f + tier * .16f) * 1.15f;
-            float pulse = 1f + .025f * Mathf.Sin((float)_t * (2f + tier * .25f));
-            float surge = 1f + .12f * Mathf.Exp(-_activation * 7f);
-            _sprite.Scale = new Vector2(height * (2f / 3f) / _sprite.Texture.GetWidth() * pulse * surge,
-                height / _sprite.Texture.GetHeight() * (1f + .025f * Mathf.Sin((float)_t * 2.6f)) * surge);
-            // The opaque texture bottom stays planted at the actor feet as the aura pulses.
-            _sprite.Position = Vector2.Zero;
-            AlignToActorFeet();
+            float size = Mathf.Clamp(actorHeight, 130f, 330f) * (1.55f + tier * .16f) * 1.15f;
+            float s = size / 280f;
+            _layers.Scale = new Vector2(s, s);
             bool doom = _owner.GetPower<KaiokenDoomPower>() != null;
-            _sprite.Modulate = doom ? new Color(.78f, .38f, .48f, .82f) : new Color(1, 1, 1, .78f + tier * .07f);
+            _layers.Modulate = doom ? new Color(.78f, .38f, .48f, .9f) : new Color(1, 1, 1, .88f + tier * .04f);
+            AlignToActor();
         }
     }
 

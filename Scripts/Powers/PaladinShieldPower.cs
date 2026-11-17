@@ -34,7 +34,12 @@ public sealed class PaladinShieldPower : ModPowerTemplate
             : amount;
     public override Task AfterCurrentHpChanged(Creature creature, decimal delta) =>
         creature.Player != null ? PaladinShieldProtection.Refresh(Owner.CombatState) : Task.CompletedTask;
-    public override Task AfterDeath(PlayerChoiceContext context, Creature creature, bool wasRemovalPrevented, float deathAnimLength) =>
+    #if STS2_113
+    public override Task AfterDeath(PlayerChoiceContext context, Creature creature, MegaCrit.Sts2.Core.Models.CardModel? source, bool wasRemovalPrevented, float deathAnimLength)
+#else
+    public override Task AfterDeath(PlayerChoiceContext context, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
+#endif
+        =>
         PaladinShieldProtection.Refresh(Owner.CombatState);
     public override Task AfterCombatEnd(CombatRoom room) => PowerCmd.Remove(this);
 }

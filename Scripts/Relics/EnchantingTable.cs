@@ -81,15 +81,25 @@ public sealed class EnchantingTable : ModRelicTemplate, IModRightClickableRelic,
         return base.BeforeCombatStartLate();
     }
 
+    #if STS2_113
+    public override async Task AfterDeath(PlayerChoiceContext context, Creature creature, MegaCrit.Sts2.Core.Models.CardModel? source, bool wasRemovalPrevented, float deathAnimLength)
+#else
     public override async Task AfterDeath(PlayerChoiceContext context, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
+#endif
     {
-        if (creature.Side == CombatSide.Enemy && !wasRemovalPrevented && _awardedThisCombat.Add(creature))
+        if (creature.Side == CombatSide.Enemy && !wasRemovalPrevented
+            && creature.Powers.All(power => power.ShouldOwnerDeathTriggerFatal())
+            && _awardedThisCombat.Add(creature))
         {
             int hp = _combatOriginalMaxHp.TryGetValue(creature, out var original) ? original : creature.MaxHp;
             SavedTotalExperience += Math.Max(1, hp / 6);
             RefreshUi();
         }
+        #if STS2_113
+        await base.AfterDeath(context, creature, source, wasRemovalPrevented, deathAnimLength);
+        #else
         await base.AfterDeath(context, creature, wasRemovalPrevented, deathAnimLength);
+        #endif
     }
 
     public override Task AfterRestSiteHeal(Player player, bool isMimicked)

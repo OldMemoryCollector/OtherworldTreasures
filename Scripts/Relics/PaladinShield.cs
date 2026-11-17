@@ -23,7 +23,12 @@ public sealed class PaladinShield : ModRelicTemplate
     public override bool IsAllowedInShops => false;
     protected override IEnumerable<DynamicVar> CanonicalVars =>
         [new BlockVar(8m, ValueProp.Unpowered)];
-    public override bool IsAllowed(IRunState runState) => runState.Players.Count > 1;
+    #if STS2_113
+    protected override bool IsAllowedInternal(IRunState runState)
+    #else
+    public override bool IsAllowed(IRunState runState)
+    #endif
+        => runState.Players.Count > 1;
     public override RelicAssetProfile AssetProfile => new(
         IconPath: "res://OtherworldTreasures/images/relics/PaladinShield_85.png",
         IconOutlinePath: "res://OtherworldTreasures/images/relics/PaladinShield_85.png",
@@ -49,6 +54,11 @@ public sealed class PaladinShield : ModRelicTemplate
     public override Task AfterRemoved() => PaladinShieldProtection.Refresh(Owner.Creature.CombatState);
     public override Task AfterCurrentHpChanged(Creature creature, decimal delta) =>
         creature.Player != null ? PaladinShieldProtection.Refresh(Owner.Creature.CombatState) : Task.CompletedTask;
-    public override Task AfterDeath(PlayerChoiceContext context, Creature creature, bool wasRemovalPrevented, float deathAnimLength) =>
+    #if STS2_113
+    public override Task AfterDeath(PlayerChoiceContext context, Creature creature, MegaCrit.Sts2.Core.Models.CardModel? source, bool wasRemovalPrevented, float deathAnimLength)
+#else
+    public override Task AfterDeath(PlayerChoiceContext context, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
+#endif
+        =>
         PaladinShieldProtection.Refresh(Owner.Creature.CombatState);
 }

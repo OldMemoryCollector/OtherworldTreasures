@@ -211,7 +211,11 @@ public static class TamedPets
                 FlipToFaceEnemy(node);
 
                 // 血条（ToggleIsInteractable 同时控制血条可见性）
+#if STS2_113
+                node.SetIsInteractable(true, changeVisibilityImmediately: true);
+#else
                 node.ToggleIsInteractable(true);
+#endif
 
                 // 先按体型调整视觉大小，再用"缩放后的实际宽度"来排位置
                 ApplyBodyScale(ordered[i]);

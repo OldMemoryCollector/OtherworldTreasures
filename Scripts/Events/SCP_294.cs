@@ -113,7 +113,7 @@ public sealed partial class Scp294 : OtherworldEvent
                 var title = new LocString(LocTable, Id.Entry + ".pages.CHOICE_OPTION.title");
                 title.Add("Option", $"{ConcentrationName(concentration)} · {SCP294Potion.BrewNameOf(brew)}");
                 var description = new LocString(LocTable, Id.Entry + ".pages.CHOICE_OPTION.description");
-                description.Add("Details", brew.PreviewSummary);
+                description.Add("Details", SCP294Potion.EffectBody(brew));
                 return new EventOption(this, () => ChooseConcentration(concentration), title, description,
                     key, new IHoverTip[] { BrewPreviewHoverTip(brew, key) });
             }).ToArray();
@@ -126,7 +126,11 @@ public sealed partial class Scp294 : OtherworldEvent
         _brewPreviews.TryGetValue(option.TextKey, out brew!);
 
     internal static HoverTip BrewPreviewHoverTip(PotionModel brew, string key) => new(
-        SCP294Potion.MakeTitle(brew), SCP294Potion.MakeDescription(brew), brew.Image) { Id = key + ".brew" };
+        SCP294Potion.MakeTitle(brew), SCP294Potion.MakeDescription(brew), brew.Image)
+#if !STS2_113
+        { Id = key + ".brew" }
+#endif
+        ;
 
     private async Task ChooseConcentration(Concentration concentration)
     {
@@ -154,7 +158,7 @@ public sealed partial class Scp294 : OtherworldEvent
             var fullDescription = PageDescription("FULL");
             fullDescription.Add("Potion", SCP294Potion.BrewNameOf(brew));
             SetEventState(fullDescription, new[] { new EventOption(this, ClaimBrew, InitialOptionKey("CLAIM")) }
-                .Concat(NamedRedoOptions()).Append(Leave()));
+                .Append(Leave()));
             return;
         }
 

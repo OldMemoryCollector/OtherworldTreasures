@@ -27,8 +27,16 @@ namespace OtherworldTreasures.Scripts;
 [RegisterOwnedCardKeyword(nameof(Detonate))]
 [RegisterOwnedCardKeyword(nameof(Cleanse))]
 [RegisterOwnedCardKeyword(nameof(Remove), CardDescriptionPlacement = ModKeywordCardDescriptionPlacement.BeforeCardDescription)]
+[RegisterOwnedCardKeyword(nameof(Knockback))]
+[RegisterOwnedCardKeyword(nameof(Linkage))]
+[RegisterOwnedCardKeyword(nameof(Combo))]
+[RegisterOwnedCardKeyword(nameof(Poise))]
 public class MyKeywords
 {
+    public static readonly CardKeyword Linkage = ModContentRegistry.GetQualifiedKeywordId(Entry.ModId, nameof(Linkage)).GetModCardKeyword();
+
+    // 连招：打出后返回手牌并变为指定阶段，离开手牌时恢复初始形态
+    public static readonly CardKeyword Combo = ModContentRegistry.GetQualifiedKeywordId(Entry.ModId, nameof(Combo)).GetModCardKeyword();
     public static readonly CardKeyword Remove =
         ModContentRegistry.GetQualifiedKeywordId(Entry.ModId, nameof(Remove)).GetModCardKeyword();
     public static readonly CardKeyword Exclude =
@@ -57,4 +65,13 @@ public class MyKeywords
     // 清除：移除灼伤，但不产生引爆伤害
     public static readonly CardKeyword Cleanse =
         ModContentRegistry.GetQualifiedKeywordId(Entry.ModId, nameof(Cleanse)).GetModCardKeyword();
+
+    // 击退：被撞开的敌人撞向身后的敌人
+    public static readonly CardKeyword Knockback =
+        ModContentRegistry.GetQualifiedKeywordId(Entry.ModId, nameof(Knockback)).GetModCardKeyword();
+
+    // 应势：通用触发机制。关键词只解释「满足条件时自动触发卡牌效果」，
+    // 具体条件与效果由卡面正文自己写，避免关键词被写死成某一张卡的专属描述。
+    public static readonly CardKeyword Poise =
+        ModContentRegistry.GetQualifiedKeywordId(Entry.ModId, nameof(Poise)).GetModCardKeyword();
 }

@@ -65,7 +65,8 @@ public class SunflowerPlant : PlantSummonBase
                 .SetTrans(Tween.TransitionType.Quad)
                 .SetEase(Tween.EaseType.In);
             drop.TweenInterval(0.08f);
-            await PlantFx.AwaitTween(sun, drop, 0.6f);
+            if (!await PlantFx.AwaitTween(sun, drop, 0.6f))
+                return;
 
             // 2) 飞向能量计数器（边飞边缩小）
             var target = PlantFx.GetEnergyCounterCanvasPosition(creatureNode.Visuals);

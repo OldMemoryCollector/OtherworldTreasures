@@ -5,11 +5,25 @@
     <LangVersion>13.0</LangVersion>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Ordinary builds are closed by default. Only the local development entry opts in. -->
+    <OtherworldBuildFlavor Condition="'$(OtherworldBuildFlavor)' == ''">Release</OtherworldBuildFlavor>
+    <OtherworldDevelopmentGroup Condition="'$(OtherworldDevelopmentGroup)' == ''">None</OtherworldDevelopmentGroup>
+    <DefineConstants Condition="'$(OtherworldBuildFlavor)' == 'Development'">$(DefineConstants);OW_DEVELOPMENT</DefineConstants>
+    <DefineConstants Condition="'$(OtherworldBuildFlavor)' == 'Development' And '$(OtherworldDevelopmentGroup)' == 'All'">$(DefineConstants);OW_DEV_ALL</DefineConstants>
+    <DefineConstants Condition="'$(OtherworldBuildFlavor)' == 'Development' And '$(OtherworldDevelopmentGroup)' == 'Nine'">$(DefineConstants);OW_DEV_NINE</DefineConstants>
+    <DefineConstants Condition="'$(OtherworldBuildFlavor)' == 'Development' And '$(OtherworldDevelopmentGroup)' == 'Spider'">$(DefineConstants);OW_DEV_SPIDER</DefineConstants>
+    <DefineConstants Condition="'$(OtherworldBuildFlavor)' == 'Development' And '$(OtherworldDevelopmentGroup)' == 'Gintama'">$(DefineConstants);OW_DEV_GINTAMA</DefineConstants>
+    <DefineConstants Condition="'$(OtherworldBuildFlavor)' == 'Development' And '$(OtherworldDevelopmentGroup)' == 'Extras'">$(DefineConstants);OW_DEV_EXTRAS</DefineConstants>
+    <SkipModDeploy Condition="'$(SkipModDeploy)' == ''">true</SkipModDeploy>
     <RitsuLibAutoCopy Condition="'$(SkipModDeploy)' == 'true'">false</RitsuLibAutoCopy>
 
     <!-- 杀戮尖塔2安装目录 -->
     <Sts2Dir>F:\SteamLibrary\steamapps\common\Slay the Spire 2</Sts2Dir>
-    <Sts2DataDir>$(Sts2Dir)\data_sts2_windows_x86_64</Sts2DataDir>
+    <Sts2ApiVersion Condition="'$(Sts2ApiVersion)' == ''">0.113.0</Sts2ApiVersion>
+    <Sts2ReferenceRoot>$(MSBuildProjectDirectory)\..\塔2模组附属内容\02_参考资料\杀戮尖塔</Sts2ReferenceRoot>
+    <Sts2DataDir Condition="'$(Sts2DataDir)' == ''">$(Sts2ReferenceRoot)\v$(Sts2ApiVersion)\程序集</Sts2DataDir>
+    <DefineConstants Condition="'$(Sts2ApiVersion)' == '0.113.0'">$(DefineConstants);STS2_113</DefineConstants>
+    <DefineConstants Condition="'$(Sts2ApiVersion)' == '0.111.0'">$(DefineConstants);STS2_111</DefineConstants>
 
     <!-- Godot 4.5.1 编辑器路径（与游戏版本一致） -->
     <GodotExe>F:\文件\工具\Godot_v4.5.1-stable_mono_win64\Godot_v4.5.1-stable_mono_win64_console.exe</GodotExe>
@@ -38,7 +52,8 @@
   <ItemGroup>
     <Reference Include="sts2">
       <HintPath>$(Sts2DataDir)\sts2.dll</HintPath>
-      <Private>false</Private>
+      <!-- Resolve native overlay interfaces during Godot script indexing; release targets copy only this mod. -->
+      <Private>true</Private>
     </Reference>
 
     <Reference Include="0Harmony">
@@ -47,8 +62,15 @@
     </Reference>
 
     <!-- RitsuLib NuGet包 -->
-    <PackageReference Include="STS2.RitsuLib" Version="0.6.10" />
+    <PackageReference Include="STS2.RitsuLib" Version="0.6.11" Condition="'$(Sts2ApiVersion)' == '0.113.0'" />
+    <PackageReference Include="STS2.RitsuLib.Compat.0.111.0" Version="0.6.11" Condition="'$(Sts2ApiVersion)' == '0.111.0'" />
   </ItemGroup>
+
+  <Target Name="ValidateOtherworldFlavor" BeforeTargets="BeforeBuild">
+    <Error Condition="'$(OtherworldBuildFlavor)' != 'Release' And '$(OtherworldBuildFlavor)' != 'Development'" Text="Unknown OtherworldBuildFlavor." />
+    <Error Condition="'$(OtherworldBuildFlavor)' == 'Release' And '$(OtherworldDevelopmentGroup)' != 'None'" Text="Release builds cannot enable development content." />
+    <Error Condition="'$(OtherworldBuildFlavor)' == 'Development' And '$(OtherworldDevelopmentGroup)' != 'All' And '$(OtherworldDevelopmentGroup)' != 'Nine' And '$(OtherworldDevelopmentGroup)' != 'Spider' And '$(OtherworldDevelopmentGroup)' != 'Gintama' And '$(OtherworldDevelopmentGroup)' != 'Extras'" Text="Select a development group: All, Nine, Spider, Gintama, Extras." />
+  </Target>
 
   <!-- 构建后自动复制dll、pdb、json到mods文件夹 -->
   <Target Name="Copy Mod" AfterTargets="PostBuildEvent" Condition="'$(SkipModDeploy)' != 'true'">

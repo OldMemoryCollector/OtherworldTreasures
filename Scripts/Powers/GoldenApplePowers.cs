@@ -91,7 +91,7 @@ public sealed class AppleFireResistancePower : GoldenApplePower
         Creature? dealer, CardModel? source, CardPlay? play) => target == Owner && source is Burn ? 0m : 1m;
 }
 
-// Only replace the two final HP-loss call sites inside CreatureCmd.Damage.
+// Only replace the native HP-loss call sites inside CreatureCmd.Damage.
 // Native Block, Buffer, Intangible, Osty, hit hooks and kill handling still run.
 // CreatureCmd.Kill and direct HP assignment (e.g. rewinding) are untouched.
 [HarmonyPatch]
@@ -99,9 +99,7 @@ internal static class TemporaryHealthLossAdapter
 {
     private static MethodBase TargetMethod()
     {
-        var method = typeof(CreatureCmd).GetMethods().Single(m => m.Name == nameof(CreatureCmd.Damage) &&
-            m.GetParameters().Length == 7 && m.GetParameters()[1].ParameterType == typeof(IEnumerable<Creature>) &&
-            m.GetParameters()[2].ParameterType == typeof(decimal));
+        var method = OtherworldTreasures.Scripts.Compatibility.NativeDamagePipeline.Method;
         return AccessTools.Method(method.GetCustomAttribute<AsyncStateMachineAttribute>()!.StateMachineType, "MoveNext");
     }
 
@@ -119,7 +117,8 @@ internal static class TemporaryHealthLossAdapter
             }
             yield return instruction;
         }
-        if (count != 2) throw new InvalidOperationException($"Temporary HP: expected 2 health-loss calls, found {count}.");
+        if (count != OtherworldTreasures.Scripts.Compatibility.NativeDamagePipeline.HpLossCallSites)
+            throw new InvalidOperationException($"Temporary HP: expected {OtherworldTreasures.Scripts.Compatibility.NativeDamagePipeline.HpLossCallSites} health-loss calls, found {count}.");
     }
 
     private static DamageResult LoseHealth(Creature creature, decimal amount, ValueProp props)

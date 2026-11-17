@@ -267,7 +267,11 @@ internal static class IsaacRelicReroll
     internal static bool TryRerollShopRelic(Player player)
     {
         if (player.RunState.CurrentRoom is not MerchantRoom room) return false;
+#if STS2_113
+        var inventory = RunManager.Instance.MerchantSynchronizer.GetInventoryFor(player);
+#else
         var inventory = room.Inventories.FirstOrDefault(i => i.Player == player);
+#endif
         if (inventory == null) return false;
         var entries = inventory.RelicEntries.Where(e => e.IsStocked && e.Model != null && e.Model is not LilBattery).ToList();
         if (entries.Count == 0) return false;
@@ -642,7 +646,11 @@ internal static class IsaacBatteryShopPricePatch
     }
 }
 
+#if STS2_113
+[HarmonyPatch(typeof(MerchantEntry), nameof(MerchantEntry.OnTryPurchaseUnsynchronized))]
+#else
 [HarmonyPatch(typeof(MerchantEntry), nameof(MerchantEntry.OnTryPurchaseWrapper))]
+#endif
 internal static class IsaacBatteryRepeatPurchasePatch
 {
     private static readonly MethodInfo? SetModelMethod = AccessTools.Method(typeof(MerchantRelicEntry), "SetModel");

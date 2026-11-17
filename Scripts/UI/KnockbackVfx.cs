@@ -3,6 +3,9 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+#if STS2_113
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+#endif
 
 namespace OtherworldTreasures.Scripts.UI;
 
@@ -26,8 +29,12 @@ internal static partial class KnockbackVfx
         public required Vector2 StartGlobalPosition { get; init; }
         public required float StartRotation { get; init; }
         public TaskCompletionSource ImpactReached { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+#if STS2_113
+        public required OwnedTween Playback { get; init; }
+#else
         public Tween? Tween { get; set; }
         public Action? TreeExitingHandler { get; set; }
+#endif
     }
 
     internal static void ShowSelfHit(Creature target, bool heavy, bool secondSegment = false)
@@ -72,7 +79,7 @@ internal static partial class KnockbackVfx
         var state = BeginMotion(mover, body);
         if (!GodotObject.IsInstanceValid(body) || !mover.IsAlive)
         {
-            state.ImpactReached.TrySetResult();
+            CancelMotion(mover);
             return state.ImpactReached.Task;
         }
 
@@ -80,20 +87,20 @@ internal static partial class KnockbackVfx
         Vector2 collisionPosition = state.StartGlobalPosition
             + collisionNode.Hitbox.GetGlobalRect().GetCenter()
             - moverNode.Hitbox.GetGlobalRect().GetCenter();
-        var tween = body.CreateTween();
-        state.Tween = tween;
-        tween.TweenProperty(body, "global_position", collisionPosition, FirstMoveSeconds)
-            .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
-        float angle = direction.X >= 0f ? -6f : 6f;
-        tween.Parallel().TweenProperty(body, "rotation", state.StartRotation + Mathf.DegToRad(angle), FirstMoveSeconds)
-            .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
-        tween.TweenCallback(Callable.From(() => Guard(() => state.ImpactReached.TrySetResult())));
-        tween.TweenInterval(CollisionHoldSeconds);
-        tween.TweenProperty(body, "global_position", state.StartGlobalPosition, ReturnSeconds)
-            .SetTrans(Tween.TransitionType.Expo).SetEase(Tween.EaseType.Out);
-        tween.Parallel().TweenProperty(body, "rotation", state.StartRotation, ReturnSeconds)
-            .SetTrans(Tween.TransitionType.Expo).SetEase(Tween.EaseType.Out);
-        tween.TweenCallback(Callable.From(() => Guard(() => FinishMotion(mover, state))));
+        PlayMotion(mover, state, tween =>
+        {
+            tween.TweenProperty(body, "global_position", collisionPosition, FirstMoveSeconds)
+                .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+            float angle = direction.X >= 0f ? -6f : 6f;
+            tween.Parallel().TweenProperty(body, "rotation", state.StartRotation + Mathf.DegToRad(angle), FirstMoveSeconds)
+                .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+            tween.TweenCallback(Callable.From(() => Guard(() => state.ImpactReached.TrySetResult())));
+            tween.TweenInterval(CollisionHoldSeconds);
+            tween.TweenProperty(body, "global_position", state.StartGlobalPosition, ReturnSeconds)
+                .SetTrans(Tween.TransitionType.Expo).SetEase(Tween.EaseType.Out);
+            tween.Parallel().TweenProperty(body, "rotation", state.StartRotation, ReturnSeconds)
+                .SetTrans(Tween.TransitionType.Expo).SetEase(Tween.EaseType.Out);
+        });
         return state.ImpactReached.Task;
     }
 
@@ -105,20 +112,53 @@ internal static partial class KnockbackVfx
 
         var state = BeginMotion(creature, body);
         if (!GodotObject.IsInstanceValid(body) || !creature.IsAlive)
+        {
+            CancelMotion(creature);
             return;
+        }
 
-        var tween = body.CreateTween();
-        state.Tween = tween;
-
-        float offset = heavy ? HeavyRecoilPixels : secondSegment ? SecondRecoilPixels : NormalRecoilPixels;
-        float step = heavy ? 0.06f : 0.04f;
-        Vector2 axis = heavy ? Vector2.Up : Vector2.Right;
-        tween.TweenProperty(body, "global_position", state.StartGlobalPosition + axis * offset, step);
-        tween.TweenProperty(body, "global_position", state.StartGlobalPosition - axis * offset, step);
-        tween.TweenProperty(body, "global_position", state.StartGlobalPosition + axis * (offset * 0.65f), step);
-        tween.TweenProperty(body, "global_position", state.StartGlobalPosition, step);
-        tween.TweenCallback(Callable.From(() => Guard(() => FinishMotion(creature, state))));
+        PlayMotion(creature, state, tween =>
+        {
+            float offset = heavy ? HeavyRecoilPixels : secondSegment ? SecondRecoilPixels : NormalRecoilPixels;
+            float step = heavy ? 0.06f : 0.04f;
+            Vector2 axis = heavy ? Vector2.Up : Vector2.Right;
+            tween.TweenProperty(body, "global_position", state.StartGlobalPosition + axis * offset, step);
+            tween.TweenProperty(body, "global_position", state.StartGlobalPosition - axis * offset, step);
+            tween.TweenProperty(body, "global_position", state.StartGlobalPosition + axis * (offset * 0.65f), step);
+            tween.TweenProperty(body, "global_position", state.StartGlobalPosition, step);
+        });
     }
+
+    private static void PlayMotion(Creature creature, MotionState state, Action<Tween> build)
+    {
+#if STS2_113
+        TaskHelper.RunSafely(PlayOwnedMotion(creature, state, build));
+#else
+        var tween = state.Body.CreateTween();
+        state.Tween = tween;
+        build(tween);
+        tween.TweenCallback(Callable.From(() => Guard(() => FinishMotion(creature, state))));
+#endif
+    }
+
+#if STS2_113
+    private static async Task PlayOwnedMotion(Creature creature, MotionState state, Action<Tween> build)
+    {
+        try
+        {
+            await state.Playback.Play(build);
+        }
+        catch (Exception exception)
+        {
+            WarnOnce(exception);
+        }
+        finally
+        {
+            // Release collision waiters on exit/cancellation; never reset a successor's motion.
+            Guard(() => FinishMotion(creature, state));
+        }
+    }
+#endif
 
     private static MotionState BeginMotion(Creature creature, Node2D body)
     {
@@ -128,10 +168,15 @@ internal static partial class KnockbackVfx
             Body = body,
             StartGlobalPosition = body.GlobalPosition,
             StartRotation = body.Rotation,
+#if STS2_113
+            Playback = new OwnedTween(body),
+#endif
         };
         ActiveMotions[creature] = state;
+#if !STS2_113
         state.TreeExitingHandler = () => Guard(() => CancelMotion(creature));
         body.TreeExiting += state.TreeExitingHandler;
+#endif
         return state;
     }
 
@@ -150,8 +195,12 @@ internal static partial class KnockbackVfx
         if (!ActiveMotions.Remove(creature, out var state))
             return;
 
+#if STS2_113
+        state.Playback.Kill();
+#else
         if (state.Tween != null && GodotObject.IsInstanceValid(state.Tween))
             state.Tween.Kill();
+#endif
         state.ImpactReached.TrySetResult();
         RestoreAndDetach(state);
     }
@@ -161,8 +210,10 @@ internal static partial class KnockbackVfx
         if (!GodotObject.IsInstanceValid(state.Body))
             return;
 
+#if !STS2_113
         if (state.TreeExitingHandler != null)
             state.Body.TreeExiting -= state.TreeExitingHandler;
+#endif
         state.Body.GlobalPosition = state.StartGlobalPosition;
         state.Body.Rotation = state.StartRotation;
     }

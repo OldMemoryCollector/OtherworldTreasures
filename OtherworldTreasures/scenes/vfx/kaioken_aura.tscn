@@ -1,0 +1,208 @@
+[gd_scene load_steps=24 format=3 uid="uid://bkaiokenaura01"]
+
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_aura_l1_ring.png" id="1_l1"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_aura_l3_arc.png" id="2_l3"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_aura_l4_triangle.png" id="3_l4"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_aura_l5_spark.png" id="4_l5"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_burst_0001.png" id="5_b1"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_burst_0002.png" id="6_b2"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_burst_0003.png" id="7_b3"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_burst_0004.png" id="8_b4"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_burst_0005.png" id="9_b5"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_radiate_00.png" id="10_r0"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_radiate_01.png" id="11_r1"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_radiate_02.png" id="12_r2"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_radiate_03.png" id="13_r3"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_radiate_04.png" id="14_r4"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_radiate_05.png" id="15_r5"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_radiate_06.png" id="16_r6"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_radiate_07.png" id="17_r7"]
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/vfx/training/kaioken_radiate_08.png" id="18_r8"]
+
+[sub_resource type="SpriteFrames" id="BurstFrames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_b1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_b2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_b3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_b4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_b5")
+}],
+"loop": true,
+"name": &"burst",
+"speed": 5.0
+}]
+
+[sub_resource type="Animation" id="BurstAnim"]
+resource_name = "burst_frames"
+length = 1.2
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Layers/Burst:frame")
+tracks/0/interp = 0
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.45, 0.75, 1.0),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4]
+}
+
+[sub_resource type="AnimationLibrary" id="BurstLib"]
+_data = {
+&"burst_frames": SubResource("BurstAnim")
+}
+
+[sub_resource type="Animation" id="RadiateSpin"]
+resource_name = "radiate_spin"
+length = 14.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Layers/Radiate:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 14.0),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 6.283185]
+}
+
+[sub_resource type="AnimationLibrary" id="RadiateLib"]
+_data = {
+&"radiate_spin": SubResource("RadiateSpin")
+}
+
+[node name="KaiokenAura" type="Node2D"]
+
+[node name="Layers" type="Node2D" parent="."]
+
+[node name="Burst" type="AnimatedSprite2D" parent="Layers"]
+texture_filter = 1
+position = Vector2(0, -20)
+scale = Vector2(1.05, 1.05)
+sprite_frames = SubResource("BurstFrames")
+animation = &"burst"
+frame = 2
+centered = true
+modulate = Color(1, 1, 1, 0.45)
+
+[node name="Ring" type="Sprite2D" parent="Layers"]
+texture_filter = 1
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("1_l1")
+centered = true
+
+[node name="Arc" type="Sprite2D" parent="Layers"]
+texture_filter = 1
+texture = ExtResource("2_l3")
+centered = true
+
+[node name="Triangle" type="Sprite2D" parent="Layers"]
+texture_filter = 1
+texture = ExtResource("3_l4")
+centered = true
+
+[node name="Spark" type="Sprite2D" parent="Layers"]
+texture_filter = 1
+texture = ExtResource("4_l5")
+centered = true
+
+[node name="Radiate" type="Node2D" parent="Layers"]
+
+[node name="R00" type="Sprite2D" parent="Layers/Radiate"]
+texture_filter = 1
+position = Vector2(-3, 185)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("10_r0")
+centered = true
+modulate = Color(1, 1, 1, 0.7)
+
+[node name="R01" type="Sprite2D" parent="Layers/Radiate"]
+texture_filter = 1
+position = Vector2(-75, -131)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("11_r1")
+centered = true
+modulate = Color(1, 1, 1, 0.7)
+
+[node name="R02" type="Sprite2D" parent="Layers/Radiate"]
+texture_filter = 1
+position = Vector2(118, 68)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("12_r2")
+centered = true
+modulate = Color(1, 1, 1, 0.7)
+
+[node name="R03" type="Sprite2D" parent="Layers/Radiate"]
+texture_filter = 1
+position = Vector2(-191, -30)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("13_r3")
+centered = true
+modulate = Color(1, 1, 1, 0.7)
+
+[node name="R04" type="Sprite2D" parent="Layers/Radiate"]
+texture_filter = 1
+position = Vector2(-185, 48)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("14_r4")
+centered = true
+modulate = Color(1, 1, 1, 0.7)
+
+[node name="R05" type="Sprite2D" parent="Layers/Radiate"]
+texture_filter = 1
+position = Vector2(-213, -141)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("15_r5")
+centered = true
+modulate = Color(1, 1, 1, 0.7)
+
+[node name="R06" type="Sprite2D" parent="Layers/Radiate"]
+texture_filter = 1
+position = Vector2(-187, 204)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("16_r6")
+centered = true
+modulate = Color(1, 1, 1, 0.7)
+
+[node name="R07" type="Sprite2D" parent="Layers/Radiate"]
+texture_filter = 1
+position = Vector2(105, -10)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("17_r7")
+centered = true
+modulate = Color(1, 1, 1, 0.7)
+
+[node name="R08" type="Sprite2D" parent="Layers/Radiate"]
+texture_filter = 1
+position = Vector2(206, 191)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("18_r8")
+centered = true
+modulate = Color(1, 1, 1, 0.7)
+
+[node name="BurstAnim" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("BurstLib")
+}
+autoplay = "burst_frames"
+
+[node name="RadiateAnim" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("RadiateLib")
+}
+autoplay = "radiate_spin"

@@ -190,7 +190,11 @@ public sealed class SpiritBombPower : MartialTrainingPower
                 await power.AfterAutoPostPlayPhaseEntered(context, player);
     }
 
+    #if STS2_113
+    public override async Task AfterDeath(PlayerChoiceContext context, Creature creature, MegaCrit.Sts2.Core.Models.CardModel? source, bool prevented, float duration)
+#else
     public override async Task AfterDeath(PlayerChoiceContext context, Creature creature, bool prevented, float duration)
+#endif
     {
         if (creature.IsAlive) return;
         var bombs = Read();

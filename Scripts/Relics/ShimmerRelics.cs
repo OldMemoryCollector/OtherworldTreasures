@@ -88,9 +88,5 @@ public sealed class AegisFruit : CountedShimmerRelic
 [RegisterRelic(typeof(EventRelicPool))]
 public sealed class VitalCrystal : CountedShimmerRelic
 {
-    protected override async Task ApplyAcquisitionEffect()
-    {
-        for (int i = 0; i < Copies; i++)
-            await CreatureCmd.GainMaxHp(Owner.Creature, Math.Max(1m, decimal.Floor(Owner.Creature.MaxHp * .2m)));
-    }
+    protected override Task ApplyAcquisitionEffect() => VitalCrystalHp.Grant(this);
 }

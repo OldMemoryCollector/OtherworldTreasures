@@ -212,7 +212,9 @@ public abstract class PlantSummonBase : ModMonsterTemplate
     public override bool ShouldShowInCompendium => false;
 
     // 原版血条：显示（Osty 等随从也走同一套 NCreature 场景）
+    #if !STS2_113
     public override bool IsHealthBarVisible => true;
+    #endif
 
     // 没有专属死亡音效（我们的怪物在游戏里没有对应音频资源），复用原版植物怪 Chomper 的死亡音效
     public override bool HasDeathSfx => true;

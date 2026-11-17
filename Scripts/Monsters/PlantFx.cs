@@ -2,6 +2,10 @@ using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+#if STS2_113
+using System.Threading;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+#endif
 
 namespace OtherworldTreasures.Scripts.Monsters;
 
@@ -56,13 +60,29 @@ internal static class PlantFx
     }
 
     // 等一个 Tween 跑完；带超时兜底，避免动画异常时卡住回合流程
-    internal static async Task AwaitTween(Node host, Tween tween, float timeoutSeconds)
+    internal static async Task<bool> AwaitTween(Node host, Tween tween, float timeoutSeconds)
     {
+#if STS2_113
+        using var cancellation = new CancellationTokenSource();
+        var finished = tween.AwaitFinished(host, cancellation.Token);
+        var timeout = Cmd.CustomScaledWait(timeoutSeconds, timeoutSeconds);
+        if (await Task.WhenAny(finished, timeout) == timeout)
+        {
+            cancellation.Cancel();
+        }
+        var outcome = await finished;
+        if (outcome != TweenOutcome.Finished && GodotObject.IsInstanceValid(tween))
+            tween.Kill();
+        return outcome == TweenOutcome.Finished;
+#else
         await Task.WhenAny(
             AwaitTweenFinished(host, tween),
             Cmd.CustomScaledWait(timeoutSeconds, timeoutSeconds));
+        return true;
+#endif
     }
 
+#if !STS2_113
     private static async Task AwaitTweenFinished(Node host, Tween tween)
     {
         try
@@ -74,6 +94,8 @@ internal static class PlantFx
             // 节点提前释放等异常情况，忽略即可
         }
     }
+
+#endif
 
     // 能量计数器在当前"战斗画布空间"里的位置（阳光飞过去用）
     internal static Vector2? GetEnergyCounterCanvasPosition(Node2D referenceNode)

@@ -9,6 +9,9 @@ using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Models.RelicPools;
+using MegaCrit.Sts2.Core.Rooms;
+using MegaCrit.Sts2.Core.Saves.Runs;
+using OtherworldTreasures.Scripts.Balance;
 using STS2RitsuLib;
 using STS2RitsuLib.Interactions.RightClick;
 using STS2RitsuLib.Interop.AutoRegistration;
@@ -17,12 +20,32 @@ using OtherworldTreasures.Scripts.Cards;
 
 namespace OtherworldTreasures.Scripts.Relics;
 
-// 缩小灯：右键点击获得一张【缩小灯】卡牌（1 费、消耗），可无限获得。
+// 缩小灯：右键点击获得一张【缩小灯】卡牌（1 费、消耗）；独立平衡版每场只获取一次。
 // 与库拉的骰子/原素瓶一致，右键仅战斗内可用。
 [RegisterRelic(typeof(SharedRelicPool))]
 public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonItem,
     RelicRightClickSync.ICrossEndRightClickEffect
 {
+    private bool Balanced => RelicBalanceRules.ShrinkRay(IsMutable ? Owner : null);
+    private ShrinkRay Progress => Owner?.Relics.OfType<ShrinkRay>().FirstOrDefault() ?? this;
+    private string _balancedGrantCombatKey = string.Empty;
+
+    [SavedProperty]
+    public string SavedBalancedGrantCombatKey
+    {
+        get => _balancedGrantCombatKey;
+        set { AssertMutable(); _balancedGrantCombatKey = value ?? string.Empty; }
+    }
+
+    private bool GrantedThisCombat => Owner.RunState.CurrentRoom is CombatRoom room &&
+        Progress.SavedBalancedGrantCombatKey == RelicBalanceRules.CombatKey(Owner, room);
+
+    public override Task AfterCombatEnd(CombatRoom room)
+    {
+        if (Balanced) Progress.SavedBalancedGrantCombatKey = string.Empty;
+        return base.AfterCombatEnd(room);
+    }
+
     // 哆啦A梦道具：自定义稀有度
     public override RelicRarity Rarity => ModRelicRarity.Doraemon;
 
@@ -46,6 +69,7 @@ public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonIte
     // 遗物获得：注册模型身份令牌（右键同步派发依赖它）
     public override async Task AfterObtained()
     {
+        Progress.SavedBalancedGrantCombatKey = string.Empty;
         var identity = RitsuLibFramework.EnsureModelIdentity(this);
         Entry.Logger.Info($"[ShrinkRay] AfterObtained, EnsureModelIdentity => {identity.Value}");
         await base.AfterObtained();
@@ -66,6 +90,8 @@ public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonIte
     public bool CanExecuteRightClick(ModRightClickExecutionContext context)
     {
         return Owner != null
+            && RelicBalanceRules.Ready(Owner)
+            && (!Balanced || !GrantedThisCombat)
             && CombatManager.Instance.IsInProgress
             && CombatManager.Instance.DebugOnlyGetState() != null;
     }
@@ -83,6 +109,7 @@ public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonIte
 
     async Task RelicRightClickSync.ICrossEndRightClickEffect.ApplyRightClickAsync(PlayerChoiceContext choiceContext)
     {
+        await RelicBalanceRules.WaitReady(Owner);
         await GrantShrinkRayCard();
     }
 
@@ -101,6 +128,8 @@ public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonIte
             return;
         }
 
+        if (Balanced && GrantedThisCombat) return;
+
         var canonical = ModelDb.AllCards.OfType<ShrinkRayCard>().FirstOrDefault();
         if (canonical == null)
         {
@@ -110,6 +139,8 @@ public class ShrinkRay : ModRelicTemplate, IModRightClickableRelic, IDoraemonIte
 
         Flash();
         var card = combatState.CreateCard(canonical, Owner);
+        if (Balanced && Owner.RunState.CurrentRoom is CombatRoom room)
+            Progress.SavedBalancedGrantCombatKey = RelicBalanceRules.CombatKey(Owner, room);
         await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Hand, Owner, CardPilePosition.Random);
         Entry.Logger.Info("[ShrinkRay] Granted 【缩小灯】 card to hand");
     }

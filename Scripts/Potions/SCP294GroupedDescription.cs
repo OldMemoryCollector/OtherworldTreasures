@@ -18,6 +18,8 @@ public sealed partial class SCP294Potion
         foreach (var ingredient in ingredients)
         {
             string text = Describe(ingredient);
+            // A poured potion describes nothing, so it contributes no line and no target group.
+            if (text.Length == 0) continue;
             string prefix = DescriptionTargetPrefix(ingredient.Recipient, language);
             // Some effects describe their own targets (e.g. a splash affecting both sides).
             // Preserve those sentences instead of assigning them a different target label.

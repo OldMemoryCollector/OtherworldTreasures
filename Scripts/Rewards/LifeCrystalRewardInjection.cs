@@ -1,46 +1,50 @@
-using System;
-using System.Linq;
-using HarmonyLib;
-using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Rooms;
+using STS2RitsuLib.Interop.AutoRegistration;
+using STS2RitsuLib.Models;
 
 namespace OtherworldTreasures.Scripts.Rewards;
 
-// === Patch: RewardsCmd.GenerateForRoomEnd（战后奖励生成前注入生命水晶和生命果）===
-// 理由：生命水晶是全模组机制，不属于任何遗物，原版没有"全局追加战后奖励"的钩子；
-// 生命水晶本身已实现为 ModCustomReward（扩展点 1/2），这里只是在原版奖励生成前把它加入房间。
-// 形式为不 return false 的非阻断前缀（优先级 4）：不替换、不拦截原方法，
-// 与原版 RoyaltiesPower / SwipePower 调用的 combatRoom.AddExtraReward 完全同一 API；
-// ExtraReward 与跑局内滚点标记共同保存，重新打开奖励界面不会重复滚点。
-[HarmonyPatch(typeof(RewardsCmd), nameof(RewardsCmd.GenerateForRoomEnd))]
-public static class LifeCrystalRewardInjection
+// Registration and the 111/113 hook lifecycle belong to RitsuLib.
+// ExtraRewards persists the drops; the native hook receives a list already copied from the room.
+[RegisterSingleton]
+public sealed class LifeCrystalRewardInjection : HookedSingletonModel
 {
-    // 每种奖励各自的战后出现概率
     public const float AppearChance = 0.02f;
 
-    static bool Prefix(Player player, AbstractRoom room)
+    public LifeCrystalRewardInjection() : base(HookType.Run) { }
+
+    public override bool TryModifyRewards(Player player, List<Reward> rewards, AbstractRoom? room)
     {
+        if (room is not CombatRoom combatRoom || !combatRoom.Encounter.ShouldGiveRewards || rewards.Count == 0)
+            return false;
+
+        bool modified = false;
         try
         {
-            if (room is not CombatRoom combatRoom)
-            {
-                return true;
-            }
-
-            if (!ShimmerDropData.TryBegin(player, combatRoom)) return true;
+            if (!ShimmerDropData.TryBegin(player, combatRoom)) return false;
             combatRoom.ExtraRewards.TryGetValue(player, out var existing);
-            if (existing?.Any(r => r is LifeCrystalReward or LifeFruitReward) == true) return true;
-            if (existing?.Any(r => r is LifeCrystalReward) != true && player.PlayerRng.Rewards.NextFloat() < AppearChance)
-                combatRoom.AddExtraReward(player, new LifeCrystalReward(player));
-            if (existing?.Any(r => r is LifeFruitReward) != true && player.PlayerRng.Rewards.NextFloat() < AppearChance)
-                combatRoom.AddExtraReward(player, new LifeFruitReward(player));
+            if (existing?.Any(r => r is LifeCrystalReward or LifeFruitReward) == true
+                || rewards.Any(r => r is LifeCrystalReward or LifeFruitReward))
+                return false;
+
+            if (player.PlayerRng.Rewards.NextFloat() < AppearChance)
+                Append(new LifeCrystalReward(player));
+            if (player.PlayerRng.Rewards.NextFloat() < AppearChance)
+                Append(new LifeFruitReward(player));
+
+            void Append(Reward reward)
+            {
+                combatRoom.AddExtraReward(player, reward);
+                rewards.Add(reward);
+                modified = true;
+            }
         }
         catch (Exception e)
         {
-            // 注入失败绝不能阻断原版奖励生成：返回 true 放行
-            Entry.Logger.Warn($"[LifeCrystal] 战后奖励注入失败（已忽略，原版奖励照常生成）：{e}");
+            Entry.Logger.Warn($"[LifeCrystal] 战后奖励追加失败（原版奖励照常生成）：{e}");
         }
-        return true;
+        return modified;
     }
 }

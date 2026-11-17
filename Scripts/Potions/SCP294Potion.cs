@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Collections.Concurrent;
 using System.Text;
@@ -129,23 +130,6 @@ public sealed partial class SCP294Potion : ModPotionTemplate
 
     internal string BrewName => DisplayName(RecipeFor(this));
 
-    internal string PreviewSummary
-    {
-        get
-        {
-            var ingredients = RecipeFor(this).Ingredients;
-            string names = string.Join(LocManager.Instance.Language == "zhs" ? "、" : ", ",
-                ingredients.Select(item => EffectName(item.Effect)).Distinct().Take(3).Select(name => $"[gold]{name}[/gold]"));
-            string text = LocManager.Instance.Language switch
-            {
-                "eng" => $"{names}. Hover for details.",
-                "jpn" => $"{names}。ホバーで詳細。",
-                _ => $"{names}；悬停查看药效。"
-            };
-            return text;
-        }
-    }
-
     internal static SCP294Potion Brew(Scp294 eventModel, Taste taste, Feeling feeling, Concentration concentration) =>
         BrewWithRng(eventModel.Rng, taste, feeling, concentration);
 
@@ -218,8 +202,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
 
     private static string ChooseNativeEntry(Rng rng, IReadOnlyList<string> entries)
     {
-        var available = entries.Where(entry => ModelDb.AllPotions.Any(model =>
-            model.Id.Entry.Equals(entry, StringComparison.OrdinalIgnoreCase))).ToArray();
+        var available = entries.Where(entry => PotionByEntry(entry) is not null).ToArray();
         return available.Length == 0
             ? "strength_potion"
             : available[rng.NextInt(available.Length)];
@@ -229,10 +212,9 @@ public sealed partial class SCP294Potion : ModPotionTemplate
     {
         var available = NativeLiquidEntries.Where(entry =>
             !entry.Equals(bottleEntry, StringComparison.OrdinalIgnoreCase) &&
-            ModelDb.AllPotions.Any(model => model.Id.Entry.Equals(entry, StringComparison.OrdinalIgnoreCase))).ToArray();
+            PotionByEntry(entry) is not null).ToArray();
         if (available.Length == 0)
-            available = NativeLiquidEntries.Where(entry =>
-                ModelDb.AllPotions.Any(model => model.Id.Entry.Equals(entry, StringComparison.OrdinalIgnoreCase))).ToArray();
+            available = NativeLiquidEntries.Where(entry => PotionByEntry(entry) is not null).ToArray();
 
         // The three user choices determine the recipe's effect count; concentration only
         // changes each effect's strength. Use that same count for the visual mixture,
@@ -544,7 +526,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
                 await Scp294PotionSources.Apply<GigantificationPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.ExtraTurn:
-                await Scp294PotionSources.Apply<AmbergrisPower>(context, creature, amount, Owner.Creature, null);
+                await Scp294PotionSources.Apply<ExtraTurnEffectPower>(context, creature, amount, Owner.Creature, null);
                 break;
             case BrewEffect.Weak:
                 await Scp294PotionSources.Apply<WeakPower>(context, creature, amount, Owner.Creature, null);
@@ -776,7 +758,12 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         string payload = id.Entry[SavePrefix.Length..].Replace('-', '+').Replace('_', '/');
         payload = payload.PadRight((payload.Length + 3) / 4 * 4, '=');
         string json = Encoding.UTF8.GetString(Convert.FromBase64String(payload));
-        return JsonSerializer.Deserialize<BrewRecipe>(json) ?? throw new JsonException("Empty SCP-294 recipe");
+        var recipe = JsonSerializer.Deserialize<BrewRecipe>(json) ?? throw new JsonException("Empty SCP-294 recipe");
+        // A brew saved by an older build can carry an effect this build no longer defines; drop those
+        // entries instead of rendering an unknown label for them.
+        if (recipe.Ingredients.Any(item => !Enum.IsDefined(item.Effect)))
+            recipe = recipe with { Ingredients = recipe.Ingredients.Where(item => Enum.IsDefined(item.Effect)).ToArray() };
+        return recipe;
     }
 
     internal static ModelId EncodeId(PotionModel potion, BrewRecipe recipe)
@@ -796,7 +783,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
     internal static PotionModel? NativeIcon(PotionModel potion)
     {
         string entry = RecipeFor(potion).IconEntry;
-        return ModelDb.AllPotions.FirstOrDefault(model => model.Id.Entry.Equals(entry, StringComparison.OrdinalIgnoreCase));
+        return PotionByEntry(entry);
     }
 
     internal static Texture2D? MixedIcon(PotionModel potion, bool large)
@@ -804,8 +791,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         BrewRecipe recipe = RecipeFor(potion);
         PotionModel? bottle = NativeIcon(potion);
         string[] liquidEntries = VisualLiquidEntries(recipe);
-        PotionModel[] liquids = liquidEntries.Select(entry => ModelDb.AllPotions.FirstOrDefault(model =>
-                model.Id.Entry.Equals(entry, StringComparison.OrdinalIgnoreCase)))
+        PotionModel[] liquids = liquidEntries.Select(entry => PotionByEntry(entry))
             .Where(model => model is not null).Cast<PotionModel>().ToArray();
         if (bottle is null || liquids.Length == 0) return null;
 
@@ -814,12 +800,13 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         return MixedIconCache.GetOrAdd(key, _ =>
         {
             // LargeImagePath is a res:// resource inside the game's PCK, so Image.LoadFromFile
-            // cannot read it. Load via the model's ResourceLoader-backed LargeImage instead.
+            // cannot read it. Load via the model's ResourceLoader-backed image instead.
             Godot.Image? vesselImage = ReadPotionLargeImage(bottle);
-            if (vesselImage is null) return bottle.LargeImage;
+            Texture2D vessel = VesselTexture(bottle);
+            if (vesselImage is null) return vessel;
             Godot.Image[] liquidImages = liquids.Select(ReadPotionLargeImage)
                 .OfType<Godot.Image>().ToArray();
-            Texture2D mixed = RecolorLiquid(vesselImage, liquidImages, bottle.LargeImage, recipe.VisualStyle, visualSeed);
+            Texture2D mixed = RecolorLiquid(vesselImage, liquidImages, vessel, recipe.VisualStyle, visualSeed);
             if (mixed is ImageTexture)
             {
                 // Path-based consumers must resolve the same generated texture as Image.
@@ -842,7 +829,7 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         // from their saved recipe so they gain a blend without rerolling after loading.
         string[] available = NativeLiquidEntries.Where(entry =>
             !entry.Equals(recipe.IconEntry, StringComparison.OrdinalIgnoreCase) &&
-            ModelDb.AllPotions.Any(model => model.Id.Entry.Equals(entry, StringComparison.OrdinalIgnoreCase)))
+            PotionByEntry(entry) is not null)
             .ToArray();
         if (available.Length == 0) return entries.Length > 0 ? entries : [recipe.LiquidEntry ?? recipe.IconEntry];
         byte[] seed = SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(recipe)));
@@ -851,13 +838,36 @@ public sealed partial class SCP294Potion : ModPotionTemplate
             .Take(Math.Clamp(recipe.Ingredients.Count, 2, 6)).ToArray();
     }
 
+    // Mod potions only ship the sprite they declare (RitsuLib AssetProfile). LargeImagePath is a
+    // vanilla naming convention, so for them it resolves to missing_potion.png; prefer their own image.
+    private static Texture2D VesselTexture(PotionModel potion)
+    {
+        try
+        {
+            if (ResourceLoader.Exists(potion.LargeImagePath)) return potion.LargeImage;
+            Texture2D? own = potion.Image;
+            if (own is not null) return own;
+        }
+        catch (Exception) { }
+        return potion.LargeImage;
+    }
+
     private static Godot.Image? ReadPotionLargeImage(PotionModel potion)
     {
-        Texture2D? texture = potion.LargeImage;
+        Texture2D? texture;
+        try{texture=VesselTexture(potion);}catch(Exception){return null;}
         if (texture is null) return null;
         Godot.Image? image = texture.GetImage();
         // Some renderers return shared image data; recolor a copy, never the native source.
-        return image is not null && !image.IsEmpty() ? (Godot.Image)image.Duplicate() : null;
+        if (image is null || image.IsEmpty()) return null;
+        var readable = (Godot.Image)image.Duplicate();
+        // Native potion textures may be VRAM-compressed; decode the copy before reading pixels.
+        if (readable.IsCompressed() && readable.Decompress() != Error.Ok)
+        {
+            readable.Dispose();
+            return null;
+        }
+        return readable;
     }
 
     private static Texture2D RecolorLiquid(Godot.Image? vesselImage, IReadOnlyList<Godot.Image> liquidImages, Texture2D fallback,
@@ -1041,17 +1051,46 @@ public sealed partial class SCP294Potion : ModPotionTemplate
     internal static LocString MakeDescription(PotionModel potion)
     {
         var description = new LocString("potions", "OTHERWORLD_TREASURES_POTION_SCP294.description");
-        var recipe = RecipeFor(potion);
-        string effects=GroupedDescription(recipe.Ingredients);
-        if(recipe.NativePotionEntry!=null)
-        {
-            var original=new LocString("potions",recipe.NativePotionEntry+".description");potion.DynamicVars.AddTo(original);
-            string prefix=MegaCrit.Sts2.Core.Helpers.EnergyIconHelper.GetPrefix(potion);original.Add("energyPrefix",prefix);
-            foreach(var variable in original.Variables.Values)if(variable is MegaCrit.Sts2.Core.Localization.DynamicVars.EnergyVar energy)energy.ColorPrefix=prefix;
-            effects=original.GetFormattedText()+"\n"+effects;
-        }
-        description.Add("Effects", effects);
+        description.Add("Effects", EffectBody(RecipeFor(potion)));
         return description;
+    }
+
+    // What this cup actually does, and nothing else. Every surface that shows a brew - the event
+    // option line, the hover card, the item tooltip - prints this same text, so no surface needs
+    // a lead-in sentence telling the player to hover somewhere else.
+    internal static string EffectBody(PotionModel potion) => EffectBody(RecipeFor(potion));
+
+    private static string EffectBody(BrewRecipe recipe)
+    {
+        string effects = GroupedDescription(recipe.Ingredients);
+        if (recipe.NativePotionEntry == null) return effects;
+        // The original model supplies the variables this text uses, so any potion the game
+        // registered - vanilla or from another mod - renders with its own numbers. A brew left
+        // behind by an uninstalled mod simply falls back to the SCP-294 effect list.
+        string native = NativeEffectText(recipe.NativePotionEntry) ?? "";
+        if (native.Length == 0) return effects;
+        return effects.Length > 0 ? native + "\n" + effects : native;
+    }
+
+    // A poured potion's own effect text, with its variables resolved against its own model.
+    // Returns null when that model or its localization is missing (e.g. the mod was uninstalled).
+    private static string? NativeEffectText(string? entry)
+    {
+        if (entry == null) return null;
+        try
+        {
+            if (PotionByEntry(entry) is not { } model) return null;
+            var original = new LocString("potions", entry + ".description");
+            if (!original.Exists()) return null;
+            model.DynamicVars.AddTo(original);
+            string prefix = MegaCrit.Sts2.Core.Helpers.EnergyIconHelper.GetPrefix(model);
+            original.Add("energyPrefix", prefix);
+            foreach (var variable in original.Variables.Values)
+                if (variable is MegaCrit.Sts2.Core.Localization.DynamicVars.EnergyVar energy) energy.ColorPrefix = prefix;
+            string text = original.GetFormattedText().Trim();
+            return text.Length == 0 ? null : text;
+        }
+        catch (Exception) { return null; }
     }
 
     private static string Describe(BrewIngredient ingredient)
@@ -1094,8 +1133,8 @@ public sealed partial class SCP294Potion : ModPotionTemplate
                 : $"このターン、{n}{name}を{(loses ? "失う" : "得る")}。ターン終了時に元に戻る。",
             _ => timing == BrewTiming.NextTurn
                 ? $"下回合开始时{(loses ? "失去" : "获得")}{n}{(defensive && effect != BrewEffect.Absorption ? "层" : "点")}{name}。"
-                : defensive ? $"本轮获得{n}{(effect == BrewEffect.Absorption ? "点" : "层")}{name}；对方回合结束时剩余效果消失。"
-                : $"本回合{(loses ? "失去" : "获得")}{n}点{name}；回合结束时恢复。"
+                : defensive ? $"本轮获得{n}{(effect == BrewEffect.Absorption ? "点" : "层")}{name}。"
+                : $"本回合{(loses ? "失去" : "获得")}{n}点{name}。"
         };
     }
 
@@ -1128,16 +1167,16 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         BrewEffect.DrawPileChoice => "选择抽牌堆中的1张牌加入手牌。",
         BrewEffect.FreeHandCard => "选择手牌中的1张牌，使其在本场战斗中可以免费打出。",
         BrewEffect.RetainHand => $"保留手牌{n}回合。",
-        BrewEffect.ThreeFreeCards => "将1张随机攻击牌、1张随机技能牌和1张随机能力牌加入手牌。这些牌在本回合可以免费打出。",
+        BrewEffect.ThreeFreeCards => "将随机攻击牌、技能牌和能力牌各1张加入手牌，本回合耗能为0。",
         BrewEffect.Shrink => $"攻击造成的伤害降低30%，持续{n}回合。",
         BrewEffect.Demise => $"自身每回合结束时失去{n}点生命。",
         BrewEffect.DuplicateNextCard => $"本回合接下来打出的{n}张牌各额外打出1次。",
         BrewEffect.TripleNextAttack => $"接下来打出的{n}张攻击牌造成3倍伤害。",
-        BrewEffect.RandomizeHandCosts => "本回合随机化手牌中所有可消耗能量牌的耗能。",
+        BrewEffect.RandomizeHandCosts => "本回合随机化手牌耗能。",
         BrewEffect.ExtraTurn => $"本场战斗中，额外进行{n}个回合。",
         BrewEffect.GainStars => $"获得{n}颗星星。",
         BrewEffect.AddOrbSlots => $"获得{n}个充能球栏位。",
-        BrewEffect.ChannelDarkOrbs => "生成与你的充能球栏位数量相同的黑暗充能球；没有栏位时生成1个。",
+        BrewEffect.ChannelDarkOrbs => "生成与充能球栏位数量相同的黑暗充能球。",
         BrewEffect.ShivPlus => $"将{n}张小刀+加入手牌。",
         BrewEffect.SoulCards => $"将{n}张灵魂加入手牌。",
         BrewEffect.UpgradedColorless => $"将{n}张升级的无色牌加入手牌。",
@@ -1154,11 +1193,11 @@ public sealed partial class SCP294Potion : ModPotionTemplate
         BrewEffect.Poison => $"施加{n}层中毒。",
         BrewEffect.DrawCards => $"抽{n}张牌。",
         BrewEffect.GainEnergy => $"获得{n}点能量。",
-        BrewEffect.AttackChoice => "从3张随机攻击牌中选择1张加入手牌。这张牌在本回合可以免费打出。",
-        BrewEffect.SkillChoice => "从3张随机技能牌中选择1张加入手牌。这张牌在本回合可以免费打出。",
-        BrewEffect.PowerChoice => "从3张随机能力牌中选择1张加入手牌。这张牌在本回合可以免费打出。",
-        BrewEffect.ColorlessChoice => "从3张随机无色牌中选择1张加入手牌。这张牌在本回合可以免费打出。",
-        BrewEffect.RetrieveDiscard => "将弃牌堆中的1张牌放入手牌。这张牌在本回合可以免费打出。",
+        BrewEffect.AttackChoice => "从3张随机攻击牌中选择1张加入手牌，本回合耗能为0。",
+        BrewEffect.SkillChoice => "从3张随机技能牌中选择1张加入手牌，本回合耗能为0。",
+        BrewEffect.PowerChoice => "从3张随机能力牌中选择1张加入手牌，本回合耗能为0。",
+        BrewEffect.ColorlessChoice => "从3张随机无色牌中选择1张加入手牌，本回合耗能为0。",
+        BrewEffect.RetrieveDiscard => "从弃牌堆选择1张牌加入手牌，本回合耗能为0。",
         BrewEffect.GambleDiscardDraw => "弃置任意张手牌，然后抽取等量的牌。",
         _ => "效果异常。"
     };
@@ -1415,11 +1454,20 @@ internal static class SCP294DeserializePatch
     private static bool Prefix(SerializablePotion save, ref PotionModel __result)
     {
         if (save.Id == null || !save.Id.Entry.StartsWith("BREW_", StringComparison.Ordinal)) return true;
-        var recipe = SCP294Potion.RecipeForId(save.Id);
-        var canonical = recipe.NativePotionEntry is { } entry
-            ? ModelDb.AllPotions.FirstOrDefault(potion=>potion.Id.Entry==entry)
-            : ModelDb.AllPotions.FirstOrDefault(potion=>potion is SCP294Potion);
-        if(canonical==null)throw new InvalidOperationException("Missing potion model for saved SCP-294 recipe.");
+        BrewRecipe recipe;
+        try { recipe = SCP294Potion.RecipeForId(save.Id); } catch (Exception) { return true; }
+        // The named potion may come from any mod, and that mod may no longer be installed. A missing
+        // model must degrade to an ordinary brew instead of failing the whole save load.
+        var canonical = recipe.NativePotionEntry is { } entry ? SCP294Potion.PotionByEntry(entry) : null;
+        if (canonical == null)
+        {
+            if (recipe.NativePotionEntry != null)
+            {
+                recipe = recipe with { NativePotionEntry = null };
+                Entry.Logger.Warn($"[SCP294] 存档里的药水 {save.Id.Entry} 已不存在，改为按效果列表还原");
+            }
+            canonical = ModelDb.Potion<SCP294Potion>();
+        }
         if(recipe.NativePotionEntry!=null)SCP294Potion.EnsureCatalogUseHook(canonical);
         __result = canonical.ToMutable();
         SCP294Potion.AttachRecipe(__result, recipe);

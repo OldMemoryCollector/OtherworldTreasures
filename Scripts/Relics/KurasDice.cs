@@ -27,6 +27,7 @@ using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using MegaCrit.Sts2.Core.ValueProps;
 using OtherworldTreasures.Scripts.Powers;
+using OtherworldTreasures.Scripts.Balance;
 using STS2RitsuLib;
 using STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels;
 using STS2RitsuLib.Interactions.RightClick;
@@ -48,6 +49,7 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         public readonly Dictionary<CardModel, int> ReplayModifiedCards = new();
     }
 
+    private bool Balanced => RelicBalanceRules.KurasDice(IsMutable ? Owner : null);
     private DiceState State => PerPlayerState<DiceState>.Of(Owner);
     private KurasDice Progress => IsMutable
         ? Owner?.Relics.OfType<KurasDice>().FirstOrDefault() ?? this : this;
@@ -111,6 +113,14 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
 
     protected override IEnumerable<DynamicVar> CanonicalVars => [new DynamicVar("CurrentRoll", 0m)];
 
+    internal static LocString DescriptionForFace(Player? owner, int face)
+    {
+        string key = $"OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_{face}.desc";
+        if (RelicBalanceRules.KurasDice(owner) && LocManager.Instance?.Language == "zhs" &&
+            LocString.Exists("relics", key + ".balance")) key += ".balance";
+        return new LocString("relics", key);
+    }
+
     // 悬浮提示：六个点数的详细能力说明；已用点数 / 六点失效后标注"(已失效)"
     // 注意：局外（图鉴/收藏）不显示运行中的状态，避免把上一局的"已失效"带进图鉴
     protected override IEnumerable<IHoverTip> AdditionalHoverTips
@@ -121,7 +131,7 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
             for (int face = 1; face <= 6; face++)
             {
                 bool unavailable = inRun && IsMutable && (IsBroken || IsFaceUsed(face));
-                var desc = new LocString("relics", $"OTHERWORLD_TREASURES_RELIC_KURAS_DICE.face_{face}.desc");
+                var desc = DescriptionForFace(IsMutable ? Owner : null, face);
                 desc.Add("Status", unavailable
                     ? new LocString("gameplay_ui", "OTHERWORLD_TREASURES_UI_FACE_USED").GetFormattedText()
                     : "");
@@ -270,7 +280,7 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         // 注意：这里绝对不能补骰。右键预检只在"发起者一端"跑，
         // 在这里消费共享随机流（RunState.Rng.Niche）会让两端的 RNG 状态分叉（实测过）。
         // 补骰只在"所有端都会走"的时机做：战斗开始 / 回合开始 / 联机动作执行。
-        bool can = CanUseCurrentFace;
+        bool can = RelicBalanceRules.Ready(IsMutable ? Owner : null) && CanUseCurrentFace;
         Entry.Logger.Info($"[KurasDice-RC] CanExecute => {can} (LastRolled={CurrentRoll}, Broken={IsBroken}, Used=[{Progress.SavedUsedFaces}])");
         return can;
     }
@@ -290,6 +300,8 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
     {
         // 联机动作可能排队到战斗结束之后，执行时再次验证上下文。
         if (Owner == null || CombatManager.Instance.DebugOnlyGetState() == null) return;
+        await RelicBalanceRules.WaitReady(Owner);
+        if (!CombatManager.Instance.IsInProgress) return;
         EnsureRolledInCombat();
         // 点数取自存档权威遗物。
         int face = CurrentRoll;
@@ -319,10 +331,10 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
 
     // === 能力实现 ===
 
-    // 一点恢复：触发篝火休息 + 10 再生
+    // 一点恢复：平衡版只休息；原版另加10再生。
     private async Task AbilityRestore(PlayerChoiceContext choiceContext)
     {
-        Entry.Logger.Info("[KurasDice] AbilityRestore: HealRestSite + 10 Regen");
+        Entry.Logger.Info($"[KurasDice] AbilityRestore: HealRestSite, Regen={(Balanced ? 0 : 10)}");
         var healAmount = HealRestSiteOption.GetHealAmount(Owner);
         await HealRestSiteOption.ExecuteRestSiteHeal(Owner, isMimicked: true);
         // 全屏治疗特效（绿光 + 粒子，与事件治疗一致；ExecuteRestSiteHeal 内部已播治疗音效和十字VFX）
@@ -330,14 +342,17 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         {
             PlayerFullscreenHealVfx.Play(Owner, healAmount, NCombatRoom.Instance?.CombatVfxContainer);
         }
-        await PowerCmd.Apply<RegenPower>(choiceContext, Owner.Creature, 10m, Owner.Creature, null!, false);
+        if (!Balanced)
+            await PowerCmd.Apply<RegenPower>(choiceContext, Owner.Creature, 10m, Owner.Creature, null!, false);
     }
 
-    // 二点复制：给所有卡牌 BaseReplayCount +1（原版重放机制）
+    // 二点复制：平衡版只影响当前手牌；重放沿用原版卡牌机制。
     private async Task AbilityCopy(PlayerChoiceContext choiceContext)
     {
         int count = 0;
-        foreach (var pileType in new[] { PileType.Draw, PileType.Hand, PileType.Discard, PileType.Exhaust })
+        var pileTypes = Balanced ? new[] { PileType.Hand }
+            : new[] { PileType.Draw, PileType.Hand, PileType.Discard, PileType.Exhaust };
+        foreach (var pileType in pileTypes)
         {
             var pile = pileType.GetPile(Owner);
             foreach (var card in pile.Cards.Cast<CardModel>())
@@ -358,40 +373,49 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         await Task.CompletedTask;
     }
 
-    // 三点强化：本回合伤害/格挡 ×3 + 3 能量
+    // 三点强化：本回合伤害/格挡×3，平衡版2能量，原版3能量。
     private async Task AbilityAmplify(PlayerChoiceContext choiceContext)
     {
-        Entry.Logger.Info("[KurasDice] AbilityAmplify: Applying AmplifyPower + 3 Energy");
+        int energy = Balanced ? 2 : 3;
+        Entry.Logger.Info($"[KurasDice] AbilityAmplify: Applying AmplifyPower + {energy} Energy");
         NPowerUpVfx.CreateNormal(Owner.Creature);
         SfxCmd.Play(FmodSfx.buff);
         var applied = await PowerCmd.Apply<AmplifyPower>(choiceContext, Owner.Creature, 1m, Owner.Creature, null!, false);
         Entry.Logger.Info($"[KurasDice] AmplifyPower applied: {applied != null}");
-        await PlayerCmd.GainEnergy(3, Owner);
-        Entry.Logger.Info("[KurasDice] +3 Energy gained");
+        await PlayerCmd.GainEnergy(energy, Owner);
+        Entry.Logger.Info($"[KurasDice] +{energy} Energy gained");
     }
 
-    // 四点结界：8 层缓冲 + 8 层无实体 + 8 层人工制品
+    // 四点结界：平衡版仅4层无实体；原版保留三种8层防护。
     private async Task AbilityBarrier(PlayerChoiceContext choiceContext)
     {
-        Entry.Logger.Info("[KurasDice] AbilityBarrier: 8 Buffer + 8 Intangible + 8 Artifact");
+        Entry.Logger.Info($"[KurasDice] AbilityBarrier: Balanced={Balanced}");
         NPowerUpVfx.CreateGhostly(Owner.Creature);
         SfxCmd.Play(FmodSfx.buff);
-        await PowerCmd.Apply<BufferPower>(choiceContext, Owner.Creature, 8m, Owner.Creature, null!, false);
-        await PowerCmd.Apply<IntangiblePower>(choiceContext, Owner.Creature, 8m, Owner.Creature, null!, false);
-        await PowerCmd.Apply<ArtifactPower>(choiceContext, Owner.Creature, 8m, Owner.Creature, null!, false);
+        if (Balanced)
+        {
+            await PowerCmd.Apply<IntangiblePower>(choiceContext, Owner.Creature, 4m, Owner.Creature, null!, false);
+        }
+        else
+        {
+            await PowerCmd.Apply<BufferPower>(choiceContext, Owner.Creature, 8m, Owner.Creature, null!, false);
+            await PowerCmd.Apply<IntangiblePower>(choiceContext, Owner.Creature, 8m, Owner.Creature, null!, false);
+            await PowerCmd.Apply<ArtifactPower>(choiceContext, Owner.Creature, 8m, Owner.Creature, null!, false);
+        }
     }
 
-    // 五点爆炸：对每个敌人造成联机人数次 300 点伤害（逐次独立结算）
+    // 五点爆炸：每位玩家对应一次爆炸，平衡版每次100点，原版300点。
     private async Task AbilityExplode(PlayerChoiceContext choiceContext)
     {
         var choiceCtx = choiceContext;
         var combatState = CombatManager.Instance.DebugOnlyGetState();
         if (combatState == null) return;
         var playerCount = combatState.Players.Count;
+        decimal damagePerHit = Balanced ? 100m : 300m;
         var enemies = combatState.HittableEnemies.ToList();
         if (enemies.Count == 0) return;
 
-        Entry.Logger.Info($"[KurasDice] AbilityExplode: {playerCount} players × 300 to each of {enemies.Count} enemies, {playerCount} independent hits each");
+        Entry.Logger.Info($"[KurasDice] AbilityExplode: {playerCount} players × {damagePerHit} to each of {enemies.Count} enemies, {playerCount} independent hits each");
 
         // 火焰音效 + 每个敌人脚下火爆特效（与原版 InfernoPower 一致）
         SfxCmd.Play(FmodSfx.fire);
@@ -404,17 +428,17 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
             }
         }
 
-        // 对每个敌人重复 playerCount 次，每次 300 点，逐次独立结算
+        // Keep one independent explosion per player in both variants.
         foreach (var enemy in enemies)
         {
             for (int i = 0; i < playerCount; i++)
             {
-                await CreatureCmd.Damage(choiceCtx, enemy, 300m, ValueProp.Unblockable, null);
+                await CreatureCmd.Damage(choiceCtx, enemy, damagePerHit, ValueProp.Unblockable, null);
             }
         }
     }
 
-    // 六点愿望：999金 + 满血 + 升级所有卡 + 战斗结束6件遗物 + 永久失效
+    // 六点愿望：平衡版999金币、满血、全牌升级、3件遗物；两版都永久失效。
     private async Task AbilityWish(PlayerChoiceContext choiceContext)
     {
         Entry.Logger.Info("[KurasDice] AbilityWish: WISH GRANTED!");
@@ -442,11 +466,12 @@ public class KurasDice : ModRelicTemplate, IModRightClickableRelic,
         NPowerUpVfx.CreateNormal(Owner.Creature);
         Entry.Logger.Info($"[KurasDice] Upgraded {allCards.Count(c => c.IsUpgraded)} cards (now upgraded)");
 
-        // 战斗内直接获得 6 件遗物（走原版遗物池 + 原版获得流程，含获得动画与音效）
-        for (int i = 0; i < 6; i++)
+        // Both variants use native relic rewards and acquisition hooks.
+        int relicCount = Balanced ? 3 : 6;
+        for (int i = 0; i < relicCount; i++)
         {
             var relic = RelicFactory
-                .PullNextRelicFromFront(Owner, RelicFactory.RollRarity(Owner), IsWishRelicAllowed)
+                .PullNextRelicFromFront(Owner, RelicFactory.RollRarity(Owner.PlayerRng.Rewards), IsWishRelicAllowed)
                 .ToMutable();
             await RelicCmd.Obtain(relic, Owner);
             Entry.Logger.Info($"[KurasDice] Wish relic #{i + 1}: {relic.GetType().Name} ({relic.Rarity})");

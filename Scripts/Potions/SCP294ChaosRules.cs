@@ -1,4 +1,5 @@
 using System.Text.Json;
+using OtherworldTreasures.Scripts.Balance;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Helpers;
@@ -15,6 +16,7 @@ namespace OtherworldTreasures.Scripts.Potions;
 public sealed class CrazyPotionRunSave
 {
     public bool Initialized { get; set; }
+    public RelicBalanceOptions? RelicBalance { get; set; }
     public bool? EverywhereMode { get; set; }
     public bool? CrazyMode { get; set; }
     public bool NeowRelics { get; set; }
@@ -57,6 +59,7 @@ internal static class Scp294ChaosRules
     private static CrazyPotionRunSave Capture() => new()
     {
         Initialized = true,
+        RelicBalance = Scp294Settings.Data.RelicBalance?.Copy() ?? new(),
         EverywhereMode = Scp294Settings.Data.EverywhereMode,
         CrazyMode = Scp294Settings.Data.CrazyMode,
         NeowRelics = Scp294Settings.Data.EverywhereMode && Scp294Settings.Data.CrazyNeowRelics,
@@ -107,6 +110,7 @@ internal static class Scp294ChaosRules
     private static void Store(RunState run, CrazyPotionRunSave rules) => _slot.Modify(run, data =>
     {
         data.Initialized = true;
+        data.RelicBalance = rules.RelicBalance?.Copy() ?? new();
         data.EverywhereMode = rules.EverywhereMode;
         data.CrazyMode = rules.CrazyMode;
         data.NeowRelics = rules.NeowRelics;

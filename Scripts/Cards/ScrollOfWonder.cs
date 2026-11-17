@@ -71,6 +71,7 @@ public class ScrollOfWonder : ModCardTemplate
     {
         // 从所有卡牌中随机选一张（排除诅咒/状态/任务/事件/先古，排除衍生牌与自身防止递归/缺目标）
         var allPlayableCards = ModelDb.AllCards
+            .Where(c => ReleaseContent.IsAvailableCard(c, Owner.RunState))
             .Where(c => c.Type != CardType.Curse && c.Type != CardType.Status && c.Type != CardType.Quest)
             .Where(c => c.Rarity != CardRarity.Ancient && c.Rarity != CardRarity.Event)
             .Where(c => c is not IDerivedCard)

@@ -1,0 +1,68 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/characters/nine/attack_vfx/ph201_wind01.png" id="2_atlas"]
+
+[sub_resource type="AtlasTexture" id="Atlas_0"]
+atlas = ExtResource("2_atlas")
+region = Rect2(0, 0, 256, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_1"]
+atlas = ExtResource("2_atlas")
+region = Rect2(256, 0, 256, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_2"]
+atlas = ExtResource("2_atlas")
+region = Rect2(512, 0, 256, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_3"]
+atlas = ExtResource("2_atlas")
+region = Rect2(768, 0, 256, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_4"]
+atlas = ExtResource("2_atlas")
+region = Rect2(0, 256, 256, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_5"]
+atlas = ExtResource("2_atlas")
+region = Rect2(256, 256, 256, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_6"]
+atlas = ExtResource("2_atlas")
+region = Rect2(512, 256, 256, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_7"]
+atlas = ExtResource("2_atlas")
+region = Rect2(768, 256, 256, 256)
+filter_clip = true
+
+[sub_resource type="SpriteFrames" id="Frames"]
+animations = [{
+"frames": [
+{ "duration": 1.0, "texture": SubResource("Atlas_0") },
+{ "duration": 1.0, "texture": SubResource("Atlas_1") },
+{ "duration": 1.0, "texture": SubResource("Atlas_2") },
+{ "duration": 1.0, "texture": SubResource("Atlas_3") },
+{ "duration": 1.0, "texture": SubResource("Atlas_4") },
+{ "duration": 1.0, "texture": SubResource("Atlas_5") },
+{ "duration": 1.0, "texture": SubResource("Atlas_6") },
+{ "duration": 1.0, "texture": SubResource("Atlas_7") }
+],
+"loop": false,
+"name": &"hit",
+"speed": 18
+}]
+
+[node name="KonoewindHit" type="AnimatedSprite2D"]
+texture_filter = 2
+scale = Vector2(1.2325, 0.85)
+sprite_frames = SubResource("Frames")
+animation = &"hit"
+autoplay = "hit"
+flip_h = true

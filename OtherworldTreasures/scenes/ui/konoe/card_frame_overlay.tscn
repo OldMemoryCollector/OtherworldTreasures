@@ -1,0 +1,113 @@
+[gd_scene load_steps=9 format=3 uid="uid://r0igbrxlc8le"]
+
+[ext_resource type="Texture2D" uid="uid://cejouht2cumoy" path="res://OtherworldTreasures/images/characters/nine/card_frame/nine_frame_ornaments.png" id="1_frame"]
+[ext_resource type="Texture2D" uid="uid://qtesid6x0y8a" path="res://OtherworldTreasures/images/characters/nine/card_frame/nine_frame_emblem.png" id="2_emblem"]
+[ext_resource type="Texture2D" uid="uid://b16ru4m1iutrf" path="res://OtherworldTreasures/images/characters/nine/card_frame/nine_frame_complete.png" id="3_complete"]
+
+[sub_resource type="AtlasTexture" id="Atlas_emblem"]
+atlas = ExtResource("2_emblem")
+region = Rect2(148, 138, 216, 236)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_crown"]
+atlas = ExtResource("1_frame")
+region = Rect2(68, 132, 376, 60)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_foot"]
+atlas = ExtResource("1_frame")
+region = Rect2(68, 314, 376, 62)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_left"]
+atlas = ExtResource("3_complete")
+region = Rect2(128, 148, 80, 222)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_right"]
+atlas = ExtResource("3_complete")
+region = Rect2(816, 148, 80, 222)
+filter_clip = true
+
+[node name="KonoeCardFrameOverlay" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="Watermark" type="TextureRect" parent="."]
+self_modulate = Color(1, 0.88, 0.92, 0.065)
+layout_mode = 0
+offset_left = -54.0
+offset_top = 58.0
+offset_right = 54.0
+offset_bottom = 176.0
+mouse_filter = 2
+texture = SubResource("Atlas_emblem")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Ornaments" type="Control" parent="."]
+visible = false
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="Crown" type="TextureRect" parent="Ornaments"]
+visible = false
+layout_mode = 0
+offset_left = -150.0
+offset_top = -224.0
+offset_right = 150.0
+offset_bottom = -176.12766
+mouse_filter = 2
+texture = SubResource("Atlas_crown")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Foot" type="TextureRect" parent="Ornaments"]
+visible = false
+layout_mode = 0
+offset_left = -150.0
+offset_top = 174.0
+offset_right = 150.0
+offset_bottom = 223.46808
+mouse_filter = 2
+texture = SubResource("Atlas_foot")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LeftFlame" type="TextureRect" parent="."]
+visible = false
+self_modulate = Color(1, 1, 1, 0.9)
+layout_mode = 0
+offset_left = -154.0
+offset_top = -140.0
+offset_right = -126.0
+offset_bottom = 204.0
+mouse_filter = 2
+texture = SubResource("Atlas_left")
+expand_mode = 1
+
+[node name="RightFlame" type="TextureRect" parent="."]
+visible = false
+self_modulate = Color(1, 1, 1, 0.9)
+layout_mode = 0
+offset_left = 126.0
+offset_top = -140.0
+offset_right = 154.0
+offset_bottom = 204.0
+mouse_filter = 2
+texture = SubResource("Atlas_right")
+expand_mode = 1
+
+[node name="NinePatchRect" type="NinePatchRect" parent="."]
+layout_mode = 0
+offset_left = -159.0
+offset_top = -220.0
+offset_right = 159.0
+offset_bottom = 225.0
+texture = ExtResource("1_frame")
+region_rect = Rect2(66.17288, 135.5998, 380.60022, 242.0004)
+patch_margin_left = 91
+patch_margin_top = 52
+patch_margin_right = 76
+patch_margin_bottom = 59

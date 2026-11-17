@@ -77,7 +77,10 @@ internal static class Scp294MonsterPotionHoverTip
         if (__instance is not Scp294MonsterPotionIntent potion) return true;
         var display = potion.Plan.DisplayPotion;
         __result = new HoverTip(display.Title, SCP294Potion.MonsterDescription(potion.Plan), display.Image)
-        { Id = $"OtherworldMonsterPotion:{potion.Plan.Monster.Creature.CombatId}:{potion.Plan.Move.Id}:{potion.Plan.Round}" };
+#if !STS2_113
+        { Id = $"OtherworldMonsterPotion:{potion.Plan.Monster.Creature.CombatId}:{potion.Plan.Move.Id}:{potion.Plan.Round}" }
+#endif
+        ;
         return false;
     }
 }

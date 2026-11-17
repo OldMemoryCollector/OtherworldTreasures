@@ -1,0 +1,56 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Texture2D" path="res://OtherworldTreasures/images/characters/nine/attack_vfx/ph202_fire00.png" id="2_atlas"]
+
+[sub_resource type="AtlasTexture" id="Atlas_0"]
+atlas = ExtResource("2_atlas")
+region = Rect2(0, 0, 341, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_1"]
+atlas = ExtResource("2_atlas")
+region = Rect2(341, 0, 341, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_2"]
+atlas = ExtResource("2_atlas")
+region = Rect2(682, 0, 342, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_3"]
+atlas = ExtResource("2_atlas")
+region = Rect2(0, 256, 341, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_4"]
+atlas = ExtResource("2_atlas")
+region = Rect2(341, 256, 341, 256)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Atlas_5"]
+atlas = ExtResource("2_atlas")
+region = Rect2(682, 256, 342, 256)
+filter_clip = true
+
+[sub_resource type="SpriteFrames" id="Frames"]
+animations = [{
+"frames": [
+{ "duration": 1.0, "texture": SubResource("Atlas_0") },
+{ "duration": 1.0, "texture": SubResource("Atlas_1") },
+{ "duration": 1.0, "texture": SubResource("Atlas_2") },
+{ "duration": 1.0, "texture": SubResource("Atlas_3") },
+{ "duration": 1.0, "texture": SubResource("Atlas_4") },
+{ "duration": 1.0, "texture": SubResource("Atlas_5") }
+],
+"loop": false,
+"name": &"hit",
+"speed": 16.666667
+}]
+
+[node name="KonoefireHit" type="AnimatedSprite2D"]
+texture_filter = 2
+scale = Vector2(0.85, 0.85)
+sprite_frames = SubResource("Frames")
+animation = &"hit"
+autoplay = "hit"
+flip_h = true

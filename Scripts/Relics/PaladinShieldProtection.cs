@@ -144,10 +144,8 @@ internal static class PaladinShieldProtection
         return results;
     }
 
-    internal static MethodInfo NativeDamageMethod => typeof(CreatureCmd).GetMethods().Single(method =>
-        method.Name == nameof(CreatureCmd.Damage) && method.GetParameters().Length == 7 &&
-        method.GetParameters()[1].ParameterType == typeof(IEnumerable<Creature>) &&
-        method.GetParameters()[2].ParameterType == typeof(decimal));
+    internal static MethodInfo NativeDamageMethod =>
+        OtherworldTreasures.Scripts.Compatibility.NativeDamagePipeline.Method;
 }
 
 [HarmonyPatch]
@@ -169,8 +167,8 @@ internal static class PaladinShieldDamageAdapter
             }
             yield return instruction;
         }
-        if (hookCount != 3)
-            throw new InvalidOperationException($"PaladinShield expected 3 HP guard calls; found {hookCount}.");
+        if (hookCount != OtherworldTreasures.Scripts.Compatibility.NativeDamagePipeline.HpGuardCallSites)
+            throw new InvalidOperationException($"PaladinShield expected {OtherworldTreasures.Scripts.Compatibility.NativeDamagePipeline.HpGuardCallSites} HP guard calls; found {hookCount}.");
     }
 }
 

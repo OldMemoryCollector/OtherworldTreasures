@@ -194,7 +194,6 @@ internal static class KurasDiceL10n
     public static LocString Flavor => new LocString("relics", Key + ".flavor");
     public static LocString BaseDesc => new LocString("relics", Key + ".description");
     public static LocString Broken => new LocString("relics", Key + ".desc.broken");
-    public static LocString FaceDesc(int face) => new LocString("relics", $"{Key}.face_{face}.desc");
 
     /// <summary>当前状态应该显示的描述文本（不含 DynamicVars）。
     /// 状态按玩家分开（两名玩家可能各有一件骰子），所以要看这件遗物主人的状态。</summary>
@@ -203,13 +202,13 @@ internal static class KurasDiceL10n
         // 局外（图鉴/收藏）只显示基础描述，不显示运行中的点数与"已失效"状态，
         // 否则上一局的骰子状态会被带进图鉴。
         if (!(RunManager.Instance?.IsInProgress ?? false)) return BaseDesc;
-        var owner = relic.Owner;
+        var owner = relic.IsMutable ? relic.Owner : null;
         if (KurasDice.IsBrokenFor(owner)) return Broken;
         int face = KurasDice.RolledFaceFor(owner);
         if (face > 0)
         {
             bool used = KurasDice.IsFaceUsedFor(owner, face);
-            var ls = FaceDesc(face);
+            var ls = KurasDice.DescriptionForFace(owner, face);
             ls.Add("Status", used
                 ? new LocString("gameplay_ui", "OTHERWORLD_TREASURES_UI_FACE_USED").GetFormattedText()
                 : "");
@@ -1025,7 +1024,11 @@ public static class Patch_PotionFactory_ExcludeShopOnly
     }
 }
 
+#if STS2_113
+[HarmonyPatch(typeof(MerchantInventory), nameof(MerchantInventory.CreateForNormalMerchant))]
+#else
 [HarmonyPatch(typeof(MerchantInventory), "PopulatePotionEntries")]
+#endif
 public static class Patch_MerchantInventory_StockGoldenApple
 {
     // 金苹果在商店的出现概率（它是商店专属，这里是唯一的投放渠道，所以别设太高）

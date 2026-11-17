@@ -52,9 +52,7 @@ internal static class ExcaliburFinalDamageAdapter
 {
     private static MethodBase TargetMethod()
     {
-        var method = typeof(CreatureCmd).GetMethods().Single(m => m.Name == nameof(CreatureCmd.Damage) &&
-            m.GetParameters().Length == 7 && m.GetParameters()[1].ParameterType == typeof(IEnumerable<Creature>) &&
-            m.GetParameters()[2].ParameterType == typeof(decimal));
+        var method = OtherworldTreasures.Scripts.Compatibility.NativeDamagePipeline.Method;
         return AccessTools.Method(method.GetCustomAttribute<AsyncStateMachineAttribute>()!.StateMachineType, "MoveNext");
     }
 

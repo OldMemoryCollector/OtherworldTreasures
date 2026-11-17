@@ -37,7 +37,8 @@ internal static partial class Scp294Settings
             _store.Register(Key, "scp294_options.json", SaveScope.Global, static () => new Scp294Config());
         RitsuLibFramework.RegisterModSettings(Entry.ModId, page =>
         {
-            page.WithTitle(Text("随机药水", "Random potions", "ランダムポーション"))
+            RegisterRelicBalance(page);
+            page.WithTitle(Text("异次元乱入", "Random potions", "ランダムポーション"))
                 .WithModDisplayName(Text("异次元乱入", "Otherworld Treasures", "異次元乱入"))
                 .WithDescription(Text("药效设置影响新药水；数值配色可随时切换。", "Effect settings apply to new brews. Number colors can be changed at any time.", "効果設定は新しい薬に適用。数値の配色はいつでも変更できます。"))
                 .AddSection("modes", section =>
@@ -48,7 +49,7 @@ internal static partial class Scp294Settings
                         Text("药水效果数值在0~原来的十倍随机。", "Potion effect values are randomized from 0 to ten times their original values.", "ポーションの効果値が元の0～10倍の範囲でランダムになる。"));
                     section.AddToggle("everywhere", Text("常规模式", "Everywhere mode", "常態モード"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.EverywhereMode, (d, v) => d.EverywhereMode = v),
-                        Text("禁用咖啡机事件，局内新获得的所有药水变为随机调合药水；可与疯狂模式同时开启。", "Disables the coffee-machine event and randomizes every new potion acquired during a run. Can combine with Crazy mode.", "コーヒーマシンのイベントを無効化し、ラン中の新しい薬をすべてランダム化。クレイジーモードと併用できます。"));
+                        Text("禁用咖啡机事件，局内新获得的药水变为随机药水。", "Disables the coffee-machine event and randomizes every new potion acquired during a run. Can combine with Crazy mode.", "コーヒーマシンのイベントを無効化し、ラン中の新しい薬をすべてランダム化。クレイジーモードと併用できます。"));
                     section.AddToggle("rainbow_values", Text("彩虹数值", "Rainbow numbers", "虹色の数値"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.RainbowValues, (d, v) => d.RainbowValues = v),
                         Text("关闭后，可变数值改用原版蓝色。", "Turn off to show variable values in vanilla blue.", "オフにすると可変数値を原作の青色で表示します。"));
@@ -68,7 +69,7 @@ internal static partial class Scp294Settings
                         Text("战斗开始时，怪物会使用一瓶随机药水。", "At the start of combat, monsters use a random potion.", "戦闘開始時、モンスターがランダムなポーションを1本使用する。"));
                     section.AddToggle("potion_intents", Text("为什么会变成这样呢？（测试中，未完善）", "Why did it turn out like this? (Testing, incomplete)", "どうしてこうなった？（テスト中・未完成）"),
                         ModSettingsBindings.Global<Scp294Config, bool>(Entry.ModId, Key, d => d.CrazyPotionIntents, (d, v) => d.CrazyPotionIntents = v),
-                        Text("33%附加药水意图，33%替换，34%保持原意图。", "33% add a potion intent, 33% replace the original intents, 34% keep them unchanged.", "33%でポーション予告追加、33%で置換、34%で元の予告を維持。"));
+                        Text("怪物可能追加一次用药，或用药水替代原本的行动。", "33% add a potion intent, 33% replace the original intents, 34% keep them unchanged.", "33%でポーション予告追加、33%で置換、34%で元の予告を維持。"));
                 });
             RegisterStatusPurge(page);
         }, "scp294");

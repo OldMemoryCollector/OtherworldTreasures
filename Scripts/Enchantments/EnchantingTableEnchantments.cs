@@ -111,7 +111,9 @@ public sealed class Looting : OtherworldEnchantmentBase
 
     internal async Task RewardCardKill(Creature target)
     {
-        if (target.IsAlive || target.Side != CombatSide.Enemy || Card == null || !_paidKills.Add(target)) return;
+        if (target.IsAlive || target.Side != CombatSide.Enemy || Card == null
+            || target.Powers.Any(power => !power.ShouldOwnerDeathTriggerFatal())
+            || !_paidKills.Add(target)) return;
         await PlayerCmd.GainGold(12, Card.Owner);
     }
     public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay play)

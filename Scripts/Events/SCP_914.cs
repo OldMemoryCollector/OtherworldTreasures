@@ -16,7 +16,6 @@ using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
-using MegaCrit.Sts2.Core.Models.Singleton;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 using OtherworldTreasures.Scripts.Ancients;
@@ -519,6 +518,7 @@ public sealed class Scp914 : OtherworldEvent
     {
         IEnumerable<CardModel> pools = Owner.UnlockState.CardPools
             .SelectMany(p => p.GetUnlockedCards(Owner.UnlockState, Owner.RunState.CardMultiplayerConstraint))
+            .Where(c => ReleaseContent.IsAvailableCard(c, Owner.RunState))
             .Where(c => IsOutputCardRarity(c.Rarity, rank) && c.Type != CardType.Quest &&
                         c is not IDerivedCard && c is not IMustDieSeriesCard);
         if (moduleOnly) pools = pools.Where(c => c.GetType().Assembly == typeof(Scp914).Assembly);
